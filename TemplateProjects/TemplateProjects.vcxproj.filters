@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="File di origine">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="File di intestazione">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="File di risorse">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="File di origine\View">
+      <UniqueIdentifier>{b08a0859-1b9a-4e11-b78c-fd0ae0714795}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di origine\Model">
+      <UniqueIdentifier>{7a1856c7-f4a6-4b7e-a788-bb56a419d580}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\Model">
+      <UniqueIdentifier>{b4a2d80d-2fc3-43dc-800f-f505df551fad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\View">
+      <UniqueIdentifier>{4dd19b82-4588-49d4-adce-fb4922197948}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\View\OpenGLView">
+      <UniqueIdentifier>{0a1425f4-6320-453b-a7c8-7e10bfc9d8eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di origine\View\OpenGLView">
+      <UniqueIdentifier>{788a94fa-75fd-4be8-8830-bba58076f41a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di origine\Controller">
+      <UniqueIdentifier>{abfc47da-3759-47b2-ab83-fe50e50f441e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\Controller">
+      <UniqueIdentifier>{3102ac65-82da-442d-abb4-70d607e59759}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\Controller\OpenGL">
+      <UniqueIdentifier>{4af35968-0292-4e39-8370-1cfa6ff068f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di origine\Controller\OpenGL">
+      <UniqueIdentifier>{ddcf7c9d-0f0c-4b9b-93fe-f803f781b897}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di intestazione\Model\Components">
+      <UniqueIdentifier>{f00e028a-08f4-41cc-b11a-1d3546d4d21e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di origine\Model\Components">
+      <UniqueIdentifier>{6f5c97ec-6e38-4a92-9280-2a1eb2845bfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scena di prova">
+      <UniqueIdentifier>{aa8f0af1-ed76-43ea-b557-c51d9a60097d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scena di prova\File di intestazione">
+      <UniqueIdentifier>{aaf11525-5bf3-43e5-8715-1dae637a5754}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scena di prova\File di risorse">
+      <UniqueIdentifier>{c02c9f1d-2399-48be-ad33-bdcbeb7e6353}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application">
+      <UniqueIdentifier>{c119e139-60e2-485f-b4b4-057f8d89fb91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{17fdd5d4-e798-4c5f-8e21-f2d5b19b4458}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{a2cc7343-e265-429c-ba6c-8e953d0bed39}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\OpenGL">
+      <UniqueIdentifier>{63babfc9-525f-4d20-a29c-c2cac9ac2a50}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="View.cpp">
+      <Filter>File di origine\View</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>File di origine\View\OpenGLView</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>File di origine\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLShader.cpp">
+      <Filter>File di origine\Controller\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>File di origine\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>File di origine\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>File di origine\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="TryComponent.cpp">
+      <Filter>Scena di prova\File di risorse</Filter>
+    </ClCompile>
+    <ClCompile Include="Prova.cpp">
+      <Filter>Scena di prova\File di risorse</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>File di origine\Model\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.h">
+      <Filter>File di intestazione\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>File di origine\Controller</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchRenderer.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchRenderer.h">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLBatchRender.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLView.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLBuffer.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLBuffer.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshGPUusage.h">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexArray.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLVertexArray.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="View.h">
+      <Filter>File di intestazione\View</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderingTypeEnum.h">
+      <Filter>File di intestazione\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>File di intestazione\Controller</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLShader.h">
+      <Filter>File di intestazione\Controller\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>File di intestazione\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>File di intestazione\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>File di intestazione\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Prova.h">
+      <Filter>Scena di prova\File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TryComponent.h">
+      <Filter>Scena di prova\File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLBatchRender.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLView.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexArray.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLVertexArray.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="fragmentShaderC.glsl">
+      <Filter>File di risorse</Filter>
+    </None>
+    <None Include="vertexShaderC.glsl">
+      <Filter>File di risorse</Filter>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>
