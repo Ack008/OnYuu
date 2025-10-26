@@ -158,9 +158,7 @@ void OpenGLBatchRender::draw()
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			break;
 		}
-
-		// Calcola il numero di vertici (floats / 7)
-		GLsizei vertexCount = static_cast<GLsizei>(data.size() / 7);
+			GLsizei vertexCount = static_cast<GLsizei>(mesh->position.size());
 		if (vertexCount > 0) {
 			glDrawArrays(rendering, 0, vertexCount);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
