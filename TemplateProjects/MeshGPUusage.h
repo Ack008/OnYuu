@@ -3,12 +3,16 @@
 #include "MeshComponent.h"
 #include <glm/gtc/type_ptr.hpp>
 #include "OpenGLBuffer.h"
+#include "OpenGLVertexArray.h"
 #include "VertexArray.h"
-#include "Renderer.h"
 #include "Buffer.h"
+#include <memory>
+#include <vector>
+
 class MeshGPUusage {
 public:
 	void setMesh(Mesh* m) {
+		uploaded = false;
 		mesh = m;
 	}
 	Mesh* getMesh() const {
@@ -25,28 +29,78 @@ public:
 			std::cerr << "No mesh to upload!" << std::endl;
 			return;
 		}
-		// Create and bind VBO
-		vbo = std::make_shared<OpenGLVertexBuffer>();
-		size_t positionSize = mesh->position.size() * sizeof(glm::vec3);
-		size_t colorSize = mesh->color.size() * sizeof(glm::vec4);
-		size_t totalSize = positionSize + colorSize;
-		std::vector<float> bufferData;
-		bufferData.reserve((positionSize + colorSize) / sizeof(float));
-		for (int i = 0; i < mesh->position.size(); i++) {
-			const float* posPtr = glm::value_ptr(mesh->position[i]);
-			bufferData.insert(bufferData.end(), posPtr, posPtr + 3);
-			const float* colPtr = glm::value_ptr(mesh->color[i]);
-			bufferData.insert(bufferData.end(), colPtr, colPtr + 4);
+		if (mesh->position.empty()) {
+			std::cerr << "Mesh has no positions to upload!" << std::endl;
+			return;
 		}
-		vbo->setData(bufferData.data(), totalSize, BufferUsage::STATIC);
-		vao->setVertexBuffer(*vbo);
-		vao->setIndexBuffer(*ibo);
+		// Ensure colors match positions (simple validation)
+		if (mesh->color.size() != mesh->position.size()) {
+			std::cerr << "Mesh color/position size mismatch: "
+				<< mesh->color.size() << " colors vs " << mesh->position.size() << " positions." << std::endl;
+			return;
+		}
+
+		// Create VAO if missing
+		if (!vao) {
+			vao = std::make_shared<OpenGLVertexArray>();
+		}
+
+		// Create VBO
+		if (!vbo) {
+			vbo = std::make_shared<OpenGLVertexBuffer>();
+		}
+		vao->bind();
+		vbo->setLayout(BufferLayout({
+				{ ShaderDataType::Float3, "aPos", false },
+				{ ShaderDataType::Float4, "Color", false }
+			}));
+
+		// Interleave position (vec3) and color (vec4) into a float buffer
+		std::vector<float> bufferData;
+		for (size_t i = 0; i < mesh->position.size(); ++i) {
+			// Position
+			bufferData.push_back(mesh->position[i].x);
+			bufferData.push_back(mesh->position[i].y);
+			bufferData.push_back(mesh->position[i].z);
+			// Color
+			bufferData.push_back(mesh->color[i].r);
+			bufferData.push_back(mesh->color[i].g);
+			bufferData.push_back(mesh->color[i].b);
+			bufferData.push_back(mesh->color[i].a);
+		}
 		
-		// Define layout
-		Layout layout;
-		layout.elements_.push_back({ VertexAttributeType::FLOAT, 3, false }); // position
-		layout.elements_.push_back({ VertexAttributeType::FLOAT, 4, false }); // color
-		vao->setLayout(layout);
+		// total size in bytes
+		size_t totalSizeBytes = bufferData.size() * sizeof(float);
+		if (totalSizeBytes == 0) {
+			std::cerr << "Computed buffer size is 0 bytes, aborting upload." << std::endl;
+			return;
+		}
+
+		// Upload data to GPU VBO
+		vbo->setData(bufferData.data(), totalSizeBytes, BufferUsage::STATIC);
+		
+
+
+		vao->setVertexBuffer(vbo.get());
+		
+
+		// Attach VBO to VAO (only if vao valid)
+		
+		// If an index buffer is intended to be used, create and bind it safely.
+		if (useIndexBuffer) {
+			if (!ibo) {
+				ibo = std::make_shared<OpenGLIndexBuffer>();
+			}
+			if (vao && ibo) {
+				vao->setIndexBuffer(ibo.get());
+			} else {
+				std::cerr << "Failed to bind IBO to VAO: vao or ibo is null." << std::endl;
+				// non return: può essere opzionale, ma loggato
+			}
+		}
+
+		// Define layout: position (3 floats) then color (4 floats)
+		
 		uploaded = true;
 	}
 	void bind() {
@@ -54,6 +108,7 @@ public:
 			vao->bind();
 		}
 	}
+	VertexBuffer* getVBO() const { return vbo.get(); }
 	
 private:
 	std::shared_ptr<VertexBuffer> vbo;

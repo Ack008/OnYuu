@@ -3,7 +3,7 @@
 int main()
 {
     
-	Application* app = new Application();
+	Application* app = Application::createApplication();
     app->Run();
 	delete app;
 }

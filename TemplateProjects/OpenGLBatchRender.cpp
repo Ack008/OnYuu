@@ -1,4 +1,4 @@
-#include <glm/gtc/type_ptr.hpp>
+ï»¿#include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
 #include <iostream>
 #include "OpenGLBatchRender.h"
@@ -7,8 +7,8 @@
 
 /*
 PSEUDOCODICE / PIANO (dettagliato):
-1. Evitare chiamate OpenGL nel costruttore perché il contesto GL potrebbe non essere ancora creato -> inizializzazione "lazy".
-2. Tenere `vao == 0` come segnale che VAO non è ancora stato creato.
+1. Evitare chiamate OpenGL nel costruttore perchÃ© il contesto GL potrebbe non essere ancora creato -> inizializzazione "lazy".
+2. Tenere `vao == 0` come segnale che VAO non Ã¨ ancora stato creato.
 3. All'inizio di `draw()` creare e bindare il VAO se necessario (lazy init).
 4. In `getData()`:
    - Verificare che la voce `vbosMap[couple]` esista.
@@ -72,7 +72,7 @@ std::vector<float> OpenGLBatchRender::getData(const BatchCouple& couple)
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 	if (!mapped) {
-		// la mappatura è fallita: evitare memcpy su NULL
+		// la mappatura Ã¨ fallita: evitare memcpy su NULL
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		return bufferContent;
 	}
@@ -94,19 +94,13 @@ OpenGLBatchRender::OpenGLBatchRender()
 void OpenGLBatchRender::draw()
 {
 	// Creazione lazy del VAO: assicurarsi che il contesto GL sia attivo prima di chiamare draw()
-	if (vao == 0) {
-		glGenVertexArrays(1, &vao);
-		// bind subito per impostare attribute pointers quando necessario
-		glBindVertexArray(vao);
-	} else {
-		glBindVertexArray(vao);
-	}
+	
 
 	auto batches = getBatches();
 	if (!batches) return;
-
 	for (const auto& pair : *batches) {
 		const BatchCouple& key = pair.first;
+		/*
 		// Verifica che esista il VBO associato
 		auto itV = vbosMap.find(key);
 		if (itV == vbosMap.end()) continue;
@@ -134,48 +128,56 @@ void OpenGLBatchRender::draw()
 
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, colOffset);
-
+		*/
 		// Usa lo shader
 		if (key.first) {
 			key.first->set("u_viewProjectionMatrix", Render::getInstance()->getCameraMatrix());
 			key.first->apply();
 			// Imposta la matrice della camera
 		}
-
-		// Determina il tipo di disegno
-		GLenum rendering = GL_TRIANGLES;
-		switch (key.second) {
-		case RenderingTypeEnum::TRIANGLE:
-			rendering = GL_TRIANGLES;
-			break;
-		case RenderingTypeEnum::TRIANGLE_FAN:
-			rendering = GL_TRIANGLE_FAN;
-			break;
-		case RenderingTypeEnum::TRIANGLE_STRIP:
-			rendering = GL_TRIANGLE_STRIP;
-			break;
-		case RenderingTypeEnum::LINE:
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			break;
-		}
+		for(RenderData rd : pair.second) {
+			//key.first->set("u_modelMatrix", rd.model);
+			Mesh* mesh = rd.renderMesh->mesh;
+			if (meshGPUmap.find(mesh) == meshGPUmap.end()) {
+				meshGPUmap[mesh] = MeshGPUusage();
+				meshGPUmap[mesh].setMesh(mesh);
+			}
+			meshGPUmap[mesh].uploadToGPU();
+			
+			meshGPUmap[mesh].bind();
+			// Determina il tipo di disegno
+			GLenum rendering = GL_TRIANGLES;
+			switch (key.second) {
+			case RenderingTypeEnum::TRIANGLE:
+				rendering = GL_TRIANGLES;
+				break;
+			case RenderingTypeEnum::TRIANGLE_FAN:
+				rendering = GL_TRIANGLE_FAN;
+				break;
+			case RenderingTypeEnum::TRIANGLE_STRIP:
+				rendering = GL_TRIANGLE_STRIP;
+				break;
+			case RenderingTypeEnum::LINE:
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				break;
+			}
 			GLsizei vertexCount = static_cast<GLsizei>(mesh->position.size());
-		if (vertexCount > 0) {
-			glDrawArrays(rendering, 0, vertexCount);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			if (vertexCount > 0) {
+				meshGPUmap[mesh].bind();
+				glDrawArrays(GL_TRIANGLES, 0, vertexCount);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL
+				);
+			}
 		}
 
-		// Unbind VBO (opzionale)
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-
-	// lasciare il VAO bindato o unbindare se desiderato
-	// glBindVertexArray(0);
 }
 
 void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 {
 	BatchRender::addMeshRender(mesh, model);
 	auto couple = std::make_pair(mesh->material, mesh->renderingType);
+	/*
 	if (vbosMap.find(couple) == vbosMap.end()) {
 		GLuint vbo;
 		size_t initialSize = mesh->getSize();
@@ -191,5 +193,5 @@ void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model
 		glBindBuffer(GL_ARRAY_BUFFER, vbosMap[couple].vbo);
 		glBufferData(GL_ARRAY_BUFFER, vbosMap[couple].size, nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
+	}*/
 }

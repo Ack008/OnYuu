@@ -105,7 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies;C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\ImGui;C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies;C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,13 +130,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\imgui.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\imgui_demo.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="..\Dependencies\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="ApplicazioneProva.cpp" />
     <ClCompile Include="BatchRenderer.cpp" />
     <ClCompile Include="BatchRenderer.h" />
+    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="ImGuiLayer.cpp" />
+    <ClCompile Include="LayerProva.cpp" />
     <ClCompile Include="MeshGPUusage.h" />
     <ClCompile Include="OpenGLBuffer.cpp" />
     <ClCompile Include="OpenGLBuffer.h" />
@@ -156,11 +167,24 @@
     <ClCompile Include="View.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imconfig.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imgui.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imstb_textedit.h" />
+    <ClInclude Include="..\Dependencies\ImGui\imstb_truetype.h" />
+    <ClInclude Include="API.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="ImGuiLayer.h" />
+    <ClInclude Include="Layer.h" />
+    <ClInclude Include="LayerProva.h" />
     <ClInclude Include="OpenGLVertexArray.h" />
     <ClInclude Include="TryComponent.h" />
     <ClInclude Include="MeshComponent.h" />

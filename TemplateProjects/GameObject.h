@@ -17,11 +17,6 @@ public:
         if constexpr (std::is_base_of_v<Component, T>) {
             _sceneptr->componentsList.push_back(&comp);
             comp.obj = this;
-		} else if constexpr (std::is_same_v<T, RenderMeshComponent>) {
-            // If the component is RenderMeshComponent, initialize its mesh and material to nullptr
-            comp.mesh = nullptr;
-            comp.material = nullptr;
-			Render::getInstance()->addMeshRender(&comp, glm::mat4(1.0f));
 		}
         return comp;
     }

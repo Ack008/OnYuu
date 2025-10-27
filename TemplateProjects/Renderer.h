@@ -25,4 +25,5 @@ protected:
 private:
 	glm::mat4 cameraMatrix;
     static std::shared_ptr<Render> s_instance;
+	static std::shared_ptr<Render> create();
 };

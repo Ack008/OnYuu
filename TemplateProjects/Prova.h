@@ -16,8 +16,8 @@ private:
 	Mesh triangoloMesh = {
 		std::vector<glm::vec3>{
 			{ 0, 0, 0 },
-			{ 0,100,0 },
-			{ 100,50,0 },
+			{ 0,-0.5,0 },
+			{ 1,1,0 },
 		},
 		std::vector<glm::vec4>{
 			{1,0,0,1},
@@ -27,9 +27,9 @@ private:
 	};
 	Mesh squareMesh = {
 		std::vector<glm::vec3>{
-			{150, 0, 0},
-			{150,150,0 },
-			{100,0,0 }
+			{0, 0, 0},
+			{300,0,0 },
+			{300,300,0 }
 		},
 		std::vector<glm::vec4>{
 			{ 1,0,0,1  },

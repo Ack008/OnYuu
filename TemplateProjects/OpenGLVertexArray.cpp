@@ -1,4 +1,7 @@
 #include "OpenGLVertexArray.h"
+#include "Buffer.h"
+#include <iostream>
+VertexBuffer *vbo_ = NULL;
 OpenGLVertexArray::OpenGLVertexArray()
 {
 	glGenVertexArrays(1, &vao);
@@ -10,67 +13,103 @@ OpenGLVertexArray::~OpenGLVertexArray()
 void OpenGLVertexArray::bind()
 {
 	glBindVertexArray(vao);
+	
+
 }
 void OpenGLVertexArray::unbind()
 {
 	glBindVertexArray(0);
 }
-void OpenGLVertexArray::setVertexBuffer(VertexBuffer& vbo)
-{
-	bind();
-	vbo.bind();
-	unbind();
-}
-void OpenGLVertexArray::setIndexBuffer(IndexBuffer& ibo)
-{
-	bind();
-	ibo.bind();
-	unbind();
-}
-GLenum toOpenGLType(VertexAttributeType type)
+GLenum toOpenGLType(ShaderDataType type)
 {
 	switch (type)
 	{
-	case VertexAttributeType::UINT:
-		return GL_UNSIGNED_INT;
-	case VertexAttributeType::FLOAT:
-		return GL_FLOAT;
-	case VertexAttributeType::BOOL:
-		return GL_BOOL;
-	default:
-		return GL_FLOAT; // Default a FLOAT
+	case ShaderDataType::Float:   return GL_FLOAT;
+	case ShaderDataType::Float2:  return GL_FLOAT;
+	case ShaderDataType::Float3:  return GL_FLOAT;
+	case ShaderDataType::Float4:  return GL_FLOAT;
+	case ShaderDataType::Mat3:    return GL_FLOAT;
+	case ShaderDataType::Mat4:    return GL_FLOAT;
+	case ShaderDataType::Int:     return GL_INT;
+	case ShaderDataType::Int2:    return GL_INT;
+	case ShaderDataType::Int3:    return GL_INT;
+	case ShaderDataType::Int4:    return GL_INT;
+	case ShaderDataType::Bool:    return GL_BOOL;
 	}
+	return 0;
 }
-size_t getTypeSize(VertexAttributeType type)
-{
-	switch (type)
+void OpenGLVertexArray::setVertexBuffer(VertexBuffer *vbo)
+{	
+
+	
+	glBindVertexArray(vao);
+	vbo->bind();
+	
+	unsigned int m_VertexBufferIndex = 0;
+	const auto& layout = vbo->getLayout();
+	for (const auto& element : layout)
 	{
-	case VertexAttributeType::UINT:
-		return sizeof(unsigned int);
-	case VertexAttributeType::FLOAT:
-		return sizeof(float);
-	case VertexAttributeType::BOOL:
-		return sizeof(bool);
-	default:
-		return sizeof(float); // Default a FLOAT
+		switch (element.type)
+		{
+		case ShaderDataType::Float:
+		case ShaderDataType::Float2:
+		case ShaderDataType::Float3:
+		case ShaderDataType::Float4:
+		{
+			glEnableVertexAttribArray(m_VertexBufferIndex);
+			glVertexAttribPointer(m_VertexBufferIndex,
+				element.GetComponentCount(),
+				toOpenGLType(element.type),
+				element.normalized ? GL_TRUE : GL_FALSE,
+				layout.GetStride(),
+				(const void*)element.offset);
+			m_VertexBufferIndex++;
+			break;
+		}
+		case ShaderDataType::Int:
+		case ShaderDataType::Int2:
+		case ShaderDataType::Int3:
+		case ShaderDataType::Int4:
+		case ShaderDataType::Bool:
+		{
+			glEnableVertexAttribArray(m_VertexBufferIndex);
+			glVertexAttribIPointer(m_VertexBufferIndex,
+				element.GetComponentCount(),
+				toOpenGLType(element.type),
+				layout.GetStride(),
+				(const void*)element.offset);
+			m_VertexBufferIndex++;
+			break;
+		}
+		case ShaderDataType::Mat3:
+		case ShaderDataType::Mat4:
+		{
+			uint8_t count = element.GetComponentCount();
+			for (uint8_t i = 0; i < count; i++)
+			{
+				glEnableVertexAttribArray(m_VertexBufferIndex);
+				glVertexAttribPointer(m_VertexBufferIndex,
+					count,
+					toOpenGLType(element.type),
+					element.normalized ? GL_TRUE : GL_FALSE,
+					layout.GetStride(),
+					(const void*)(element.offset + sizeof(float) * count * i));
+				glVertexAttribDivisor(m_VertexBufferIndex, 1);
+				m_VertexBufferIndex++;
+			}
+			break;
+		}
+		default:
+			break;
+		}	
+		
 	}
+	vertexBuffer = vbo;
 }
-void OpenGLVertexArray::setLayout(const Layout& layout)
+void OpenGLVertexArray::setIndexBuffer(IndexBuffer *ibo)
 {
 	bind();
-	size_t offset = 0;
-	for (size_t i = 0; i < layout.elements_.size(); i++) {
-		const LayoutElement& element = layout.elements_[i];
-		glEnableVertexAttribArray(static_cast<GLuint>(i));
-		glVertexAttribPointer(
-			static_cast<GLuint>(i),
-			element.count,
-			toOpenGLType(element.type),
-			element.normalized ? GL_TRUE : GL_FALSE,
-			static_cast<GLsizei>(layout.getStride()),
-			reinterpret_cast<const void*>(offset)
-		);
-		offset += element.count * getTypeSize(element.type); // Assumendo GLfloat per semplicità
-	}
-	unbind();
+	ibo->bind();
+	indexBuffer = ibo;
 }
+

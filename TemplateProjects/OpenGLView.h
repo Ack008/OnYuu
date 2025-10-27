@@ -14,6 +14,8 @@ public:
     virtual void draw() override;
     virtual double getFrameTime() override;
     virtual bool shouldClose() override;
+    virtual void beginFrame() override;
+	virtual void* getNativeWindow() const override { return window; }
 private:
 	double lastTime = 0.0;
 };

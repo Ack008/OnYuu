@@ -8,12 +8,10 @@ Prova::Prova()
 	:Scene(), Triangle(this), Square(this), Camera(this), shader(std::make_shared<OpenGLShader>("vertexShaderC.glsl", "fragmentShaderC.glsl")), material(shader)
 {
 	
-	RenderMeshComponent& renderMesh = Triangle.addComponent<RenderMeshComponent>();
-	renderMesh.material = &material;
-	renderMesh.mesh = &triangoloMesh;
+
 	RenderMeshComponent& renderMesh2 = Square.addComponent<RenderMeshComponent>();
 	renderMesh2.material = &material;
-	renderMesh2.renderingType = RenderingTypeEnum::LINE;
+	renderMesh2.renderingType = RenderingTypeEnum::TRIANGLE;
 	renderMesh2.mesh = &squareMesh;
 
 

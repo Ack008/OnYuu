@@ -145,11 +145,13 @@ OpenGLWindow::~OpenGLWindow()
     glfwTerminate();           // Termina GLFW e libera risorse residue
 
 }
-
-void OpenGLWindow::draw()
+void OpenGLWindow::beginFrame()
 {
     glClearColor(0.1,0.2,0.7, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT); // Pulisce il buffer colore
+}
+void OpenGLWindow::draw()
+{
     Render::getInstance()->draw();
     Render::getInstance()->clear();
     glfwSwapBuffers(window);

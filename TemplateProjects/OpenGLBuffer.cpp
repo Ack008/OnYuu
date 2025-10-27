@@ -17,6 +17,14 @@ void OpenGLVertexBuffer::unbind()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+void OpenGLVertexBuffer::setLayout(const BufferLayout& layout)
+{
+	bufferLayout = layout;
+}
+const BufferLayout& OpenGLVertexBuffer::getLayout() const
+{
+	return bufferLayout;
+}
 void OpenGLVertexBuffer::setData(const void* data, size_t size, BufferUsage usage)
 {
 	GLenum glUsage = GL_STATIC_DRAW;
@@ -35,14 +43,13 @@ void OpenGLVertexBuffer::setData(const void* data, size_t size, BufferUsage usag
 	glBufferData(GL_ARRAY_BUFFER, size, data, glUsage);
 	bufferSize = size;
 	usedSize = size;
-	unbind();
 }
+
 void OpenGLVertexBuffer::updateData(const void* data, size_t size, size_t offset)
 {
 	bind();
 	glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
 	usedSize = std::max(usedSize, offset + size);
-	unbind();
 }
 void OpenGLVertexBuffer::resize(size_t newSize)
 {
@@ -50,7 +57,6 @@ void OpenGLVertexBuffer::resize(size_t newSize)
 	glBufferData(GL_ARRAY_BUFFER, newSize, nullptr, GL_DYNAMIC_DRAW);
 	bufferSize = newSize;
 	usedSize = 0;
-	unbind();
 }
 
 OpenGLIndexBuffer::OpenGLIndexBuffer()
@@ -87,14 +93,12 @@ void OpenGLIndexBuffer::setData(const void* data, size_t size, BufferUsage usage
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, glUsage);
 	bufferSize = size;
 	usedSize = size;
-	unbind();
 }
 void OpenGLIndexBuffer::updateData(const void* data, size_t size, size_t offset)
 {
 	bind();
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
 	usedSize = std::max(usedSize, offset + size);
-	unbind();
 }
 void OpenGLIndexBuffer::resize(size_t newSize)
 {
@@ -102,7 +106,6 @@ void OpenGLIndexBuffer::resize(size_t newSize)
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, newSize, nullptr, GL_DYNAMIC_DRAW);
 	bufferSize = newSize;
 	usedSize = 0;
-	unbind();
 }
 
 

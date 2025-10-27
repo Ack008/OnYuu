@@ -1,4 +1,5 @@
-#include <iostream>
+﻿#include <iostream>
+#include <vector>
 #include "OpenGLShader.h"
 #pragma warning(disable:4996)
 
@@ -97,7 +98,6 @@ GLuint OpenGLShader::createProgram(const char* vertexfilename, const char* fragm
 	glAttachShader(programId, vertexShaderId);
 	glAttachShader(programId, fragmentShaderId);
 	glLinkProgram(programId);
-
 	return programId;
 }
 

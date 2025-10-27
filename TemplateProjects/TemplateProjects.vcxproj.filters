@@ -70,6 +70,15 @@
     <Filter Include="Platform\OpenGL">
       <UniqueIdentifier>{63babfc9-525f-4d20-a29c-c2cac9ac2a50}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{24118ec5-96dd-47d5-a72e-0a885a0392cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Application\Layers">
+      <UniqueIdentifier>{3d5dc69e-d97d-4723-adf3-7f223cc29bf4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\backends">
+      <UniqueIdentifier>{b3a17a5c-a85d-400e-acc4-ff8efc46255a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -144,6 +153,39 @@
     <ClCompile Include="OpenGLVertexArray.cpp">
       <Filter>Platform\OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="ImGuiLayer.cpp">
+      <Filter>Application\Layers</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.cpp">
+      <Filter>ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.cpp">
+      <Filter>ImGui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="ApplicazioneProva.cpp">
+      <Filter>Scena di prova</Filter>
+    </ClCompile>
+    <ClCompile Include="LayerProva.cpp">
+      <Filter>Scena di prova</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View.h">
@@ -202,6 +244,45 @@
     </ClInclude>
     <ClInclude Include="OpenGLVertexArray.h">
       <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Layer.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiLayer.h">
+      <Filter>Application\Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="API.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3_loader.h">
+      <Filter>ImGui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="LayerProva.h">
+      <Filter>Scena di prova</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

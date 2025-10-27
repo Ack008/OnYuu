@@ -6,13 +6,14 @@ class OpenGLVertexArray :
 {
 	public:
 	OpenGLVertexArray();
-	virtual ~OpenGLVertexArray();
+	virtual ~OpenGLVertexArray() override;
 	// Inherited via VertexArray
 	virtual void bind() override;
 	virtual void unbind() override;
-	virtual void setVertexBuffer( VertexBuffer& vbo) override;
-	virtual void setIndexBuffer( IndexBuffer& ibo) override;
-	virtual void setLayout(const Layout& layout) override;
+	virtual void setVertexBuffer(VertexBuffer* vbo) override;
+	virtual void setIndexBuffer( IndexBuffer *ibo) override;
 private:
 	GLuint vao;
+	VertexBuffer* vertexBuffer = nullptr;
+	IndexBuffer* indexBuffer = nullptr;
 };
