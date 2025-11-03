@@ -4,7 +4,7 @@
 class LayerProva : public Layer {
 
 public:
-	LayerProva() : Layer("LayerProva") {}
+	LayerProva(Scene* scene) : Layer("LayerProva"), currentScene(scene) {}
 	virtual ~LayerProva() = default;
 	virtual void onUpdate(float deltaTime) override;
 	virtual void onEvent(/*Event& event*/) override;
@@ -13,5 +13,5 @@ public:
 	virtual void onAttach() override;
 	virtual void onDetach() override;
 private:
-	Scene* currentScene;
+	Scene* currentScene = nullptr;
 };

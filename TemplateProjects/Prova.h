@@ -10,33 +10,8 @@ public:
 	~Prova() = default;
 	void OnResize(uint32_t width, uint32_t height) override;
 private:
-	GameObject Square;
-	GameObject Triangle;
-	GameObject Camera;
-	Mesh triangoloMesh = {
-		std::vector<glm::vec3>{
-			{ 0, 0, 0 },
-			{ 0,-0.5,0 },
-			{ 1,1,0 },
-		},
-		std::vector<glm::vec4>{
-			{1,0,0,1},
-			{ 0,1,0,1 },
-			{ 0,0,1,1 },
-		}
-	};
-	Mesh squareMesh = {
-		std::vector<glm::vec3>{
-			{0, 0, 0},
-			{300,0,0 },
-			{300,300,0 }
-		},
-		std::vector<glm::vec4>{
-			{ 1,0,0,1  },
-			{ 0,1,0,1 },
-			{ 0,0,1,1 },
-		}
-	};
-	std::shared_ptr <Shader> shader;
-	Material material;
+	GameObject Player = createEntity();
+	GameObject Asteroide = createEntity();
+	GameObject Camera = createEntity();
+	
 };

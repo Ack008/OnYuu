@@ -8,6 +8,7 @@
 struct Mesh {
 	std::vector<glm::vec3> position;
 	std::vector<glm::vec4> color;
+	std::vector<uint32_t> indices;
 };
 struct RenderMeshComponent {
 	Mesh* mesh = nullptr;

@@ -19,10 +19,11 @@ public:
 	virtual ~Material() = default;
 	// Add material properties and methods here
 	void set(const std::string& name, const UniformValue& value);
-	void apply() const;
-
+	void apply();
+	void bind();
 	std::shared_ptr<Shader> getShader() const { return _shader; }
 private:
 	std::shared_ptr<Shader> _shader;
 	std::unordered_map<std::string, UniformValue> uniforms_;
+	std::unordered_map<std::string, bool> alreadySet_;
 };

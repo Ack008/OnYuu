@@ -16,6 +16,7 @@ void Application::Run()
 		for (Layer* layer : layers) {
 			layer->onUpdate(static_cast<float>(window->getFrameTime()));
 		}
+		
 		//imgui drawing
 		imGuiLayer->begin();
 		for (Layer* layer : layers) {

@@ -8,12 +8,14 @@
 #include "Buffer.h"
 #include <memory>
 #include <vector>
+#include "RenderCommand.h"
 
 class MeshGPUusage {
 public:
 	void setMesh(Mesh* m) {
 		uploaded = false;
 		mesh = m;
+		useIndexBuffer = mesh->indices.size() > 0;
 	}
 	Mesh* getMesh() const {
 		return mesh;
@@ -89,7 +91,8 @@ public:
 		// If an index buffer is intended to be used, create and bind it safely.
 		if (useIndexBuffer) {
 			if (!ibo) {
-				ibo = std::make_shared<OpenGLIndexBuffer>();
+				ibo = IndexBuffer::create();
+				ibo->setData(mesh->indices.data(), mesh->indices.size() * sizeof(uint32_t), BufferUsage::STATIC);
 			}
 			if (vao && ibo) {
 				vao->setIndexBuffer(ibo.get());
@@ -109,7 +112,18 @@ public:
 		}
 	}
 	VertexBuffer* getVBO() const { return vbo.get(); }
-	
+	void draw(RenderingTypeEnum renderingMode) {
+		if (!uploaded) {
+			std::cerr << "Mesh not uploaded to GPU, cannot draw!" << std::endl;
+			return;
+		}
+		bind();
+		if (useIndexBuffer && ibo) {
+			RenderCommand::DRAW_ELEMENTS(renderingMode, mesh->indices.size());
+		} else {
+			RenderCommand::DRAW_ARRAYS(renderingMode, 0, mesh->position.size());
+		}
+	}
 private:
 	std::shared_ptr<VertexBuffer> vbo;
 	std::shared_ptr<IndexBuffer> ibo;

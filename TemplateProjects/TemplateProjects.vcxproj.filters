@@ -79,6 +79,15 @@
     <Filter Include="ImGui\backends">
       <UniqueIdentifier>{b3a17a5c-a85d-400e-acc4-ff8efc46255a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Application\Input">
+      <UniqueIdentifier>{9cd8ad2c-3e8a-4856-822c-9f92a366cfec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform\OpenGL\Input">
+      <UniqueIdentifier>{c3910ef6-96da-4d82-830b-0fe29c4c6c2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{acb377e0-8b18-4a69-832f-20c5a261a3dc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -105,7 +114,7 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>File di origine\Model</Filter>
     </ClCompile>
-    <ClCompile Include="TryComponent.cpp">
+    <ClCompile Include="FirstCustomComponent.cpp">
       <Filter>Scena di prova\File di risorse</Filter>
     </ClCompile>
     <ClCompile Include="Prova.cpp">
@@ -186,6 +195,27 @@
     <ClCompile Include="LayerProva.cpp">
       <Filter>Scena di prova</Filter>
     </ClCompile>
+    <ClCompile Include="Input.cpp">
+      <Filter>Application\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>File di origine\Model\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugLayer.cpp">
+      <Filter>Scena di prova</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsEngine.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderCommand.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLRenderCommand.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetManager.cpp">
+      <Filter>Application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="View.h">
@@ -215,7 +245,7 @@
     <ClInclude Include="Prova.h">
       <Filter>Scena di prova\File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="TryComponent.h">
+    <ClInclude Include="FirstCustomComponent.h">
       <Filter>Scena di prova\File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="MeshComponent.h">
@@ -283,6 +313,45 @@
     </ClInclude>
     <ClInclude Include="LayerProva.h">
       <Filter>Scena di prova</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>Application\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLInput.h">
+      <Filter>Platform\OpenGL\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyCode.h">
+      <Filter>Application\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeComponent.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugLayer.h">
+      <Filter>Scena di prova</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsEngine.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderCommand.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLRenderCommand.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetManager.h">
+      <Filter>Application</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptingSystem.h">
+      <Filter>File di intestazione\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectileComponent.h">
+      <Filter>Scena di prova\File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

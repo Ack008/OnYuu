@@ -16,7 +16,8 @@ public:
 	glm::mat4 getVPMatrix() const { return projection * view; }
 	void setPosition(const glm::vec3& pos) { position = pos; updateViewMatrix(); }
 	void setRotation(const glm::vec3& rot) { rotation = rot; updateViewMatrix(); }
-
+	void setActive(bool active) { isActive = active; }
+	bool getActive() const { return isActive; }
 protected:
 	glm::vec3 position;
 	glm::vec3 rotation;
@@ -24,7 +25,7 @@ protected:
 	glm::mat4 view;
 	virtual void updateViewMatrix();
 private:
-	bool isActive = false;
+	bool isActive = true;
 };
 
 class Perspective : public Camera

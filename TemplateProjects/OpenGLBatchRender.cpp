@@ -131,12 +131,18 @@ void OpenGLBatchRender::draw()
 		*/
 		// Usa lo shader
 		if (key.first) {
+			key.first->bind();
 			key.first->set("u_viewProjectionMatrix", Render::getInstance()->getCameraMatrix());
 			key.first->apply();
 			// Imposta la matrice della camera
 		}
 		for(RenderData rd : pair.second) {
-			//key.first->set("u_modelMatrix", rd.model);
+			if (key.first) {
+				key.first->bind();
+				key.first->set("u_modelMatrix", rd.model);
+				key.first->apply();
+			}
+
 			Mesh* mesh = rd.renderMesh->mesh;
 			if (meshGPUmap.find(mesh) == meshGPUmap.end()) {
 				meshGPUmap[mesh] = MeshGPUusage();
@@ -146,27 +152,10 @@ void OpenGLBatchRender::draw()
 			
 			meshGPUmap[mesh].bind();
 			// Determina il tipo di disegno
-			GLenum rendering = GL_TRIANGLES;
-			switch (key.second) {
-			case RenderingTypeEnum::TRIANGLE:
-				rendering = GL_TRIANGLES;
-				break;
-			case RenderingTypeEnum::TRIANGLE_FAN:
-				rendering = GL_TRIANGLE_FAN;
-				break;
-			case RenderingTypeEnum::TRIANGLE_STRIP:
-				rendering = GL_TRIANGLE_STRIP;
-				break;
-			case RenderingTypeEnum::LINE:
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				break;
-			}
+			
 			GLsizei vertexCount = static_cast<GLsizei>(mesh->position.size());
 			if (vertexCount > 0) {
-				meshGPUmap[mesh].bind();
-				glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL
-				);
+				meshGPUmap[mesh].draw(key.second);
 			}
 		}
 

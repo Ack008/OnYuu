@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 class Shader
 {
 public:
@@ -12,6 +13,8 @@ public:
 	virtual void setUniformVec4(const char* name, const float* value) = 0;
 	virtual void setUniformMat3(const char* name, const float* value) = 0;
 	virtual void setUniformMat4(const char* name, const float* value, int count) = 0;
+	virtual bool isBatchingSupported() const = 0;
+	static std::shared_ptr<Shader> create(const char* vertexfilename, const char* fragmentfilename);
 
 };
 

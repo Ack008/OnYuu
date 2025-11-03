@@ -152,8 +152,6 @@ void OpenGLWindow::beginFrame()
 }
 void OpenGLWindow::draw()
 {
-    Render::getInstance()->draw();
-    Render::getInstance()->clear();
     glfwSwapBuffers(window);
     glfwPollEvents();
 }

@@ -22,7 +22,7 @@ void Perspective::OnResize(uint32_t width, uint32_t height)
 
 Orthographic::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
-	projection = glm::ortho(left, right, bottom, top);
+	projection = glm::ortho(left, right, bottom, top,nearPlane,farPlane);
 	this->updateViewMatrix();
 }
 
