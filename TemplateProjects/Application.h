@@ -6,6 +6,7 @@ class Application {
 public:
 	Application();
 	void Run();
+	void sendGlobalShaderData();
 	void onResize(uint32_t width, uint32_t height);
 	void pushLayer(Layer* layer);
 	void removeLayer(Layer* layer);

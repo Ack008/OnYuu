@@ -19,6 +19,7 @@ public:
     void setUniformVec4(const char* name, const float* value) override;
     void setUniformMat3(const char* name, const float* value) override;
 	void setUniformMat4(const char* name, const float* value, int count) override;
+	void flushCostants() override {}
 	virtual bool isBatchingSupported() const override { return false; }
 private:
     char* readShaderSource(const char* shaderFile);

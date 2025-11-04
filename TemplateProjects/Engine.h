@@ -1,5 +1,6 @@
 #pragma once
-
+// Engine.h: include centrale per il motore di gioco. Include tutte le
+// classi e componenti principali necessari per lo sviluppo di giochi
 // Standard / third-party
 #include <memory>
 #include <vector>

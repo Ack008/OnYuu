@@ -6,7 +6,7 @@ class ApplicazioneProva : public Application {
 public:
 	ApplicazioneProva() : Application() {
 		pushLayer(new LayerProva(currentScene));
-		//pushLayer(new DebugLayer(currentScene));
+	pushLayer(new DebugLayer(currentScene));
 		currentScene->start();
 	}
 private:

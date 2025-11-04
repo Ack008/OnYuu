@@ -14,12 +14,7 @@ void Application::Run()
 {
 	while (!window->shouldClose()) {
 		window->beginFrame();
-		GlobalData data;
-		data.iTime = window->getTime();
-		data.iResolution[0] = window->getWidth();
-		data.iResolution[1] = window->getHeight();
-		data.iFrame = data.iTime / window->getFrameTime();
-		globalDataUBO->updateData(&data, sizeof(GlobalData), 0);
+		sendGlobalShaderData();
 		
 		//Updating layers
 		for (Layer* layer : layers) {
@@ -34,6 +29,16 @@ void Application::Run()
 		imGuiLayer->end();
 		window->draw();
 	}
+}
+
+void Application::sendGlobalShaderData()
+{
+	GlobalData data;
+	data.iTime = window->getTime();
+	data.iResolution[0] = window->getWidth();
+	data.iResolution[1] = window->getHeight();
+	data.iFrame = data.iTime / window->getFrameTime();
+	globalDataUBO->updateData(&data, sizeof(GlobalData), 0);
 }
 
 void Application::onResize(uint32_t width, uint32_t height)

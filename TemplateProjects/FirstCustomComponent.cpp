@@ -22,7 +22,7 @@ void FirstCustomComponent::update(float dt)
 	if (Input::isKeyPressed(KeyCode::D)) {
 		transform.position += glm::vec3(2000 * dt, 0.0f, 0.0f);
 	}
-	if (Input::isKeyReleased(KeyCode::Space)) {
+	if (Input::isKeyPressedOnce(KeyCode::Space)) {
 		istantiateProjectile(transform);
 	}
 	//std::cout << "Position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;

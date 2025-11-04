@@ -5,16 +5,29 @@
 #include "RenderingTypeEnum.h"
 #include "Shader.h"
 #include "Material.h"
+
+// Mesh: struttura che contiene i dati geometrici in CPU.
+// - `position`: posizione dei vertici
+// - `color`: colore per vertice (opzionale)
+// - `indices`: indici per l'index buffer
 struct Mesh {
 	std::vector<glm::vec3> position;
 	std::vector<glm::vec4> color;
 	std::vector<uint32_t> indices;
 };
+
+// RenderMeshComponent: semplice wrapper che collega una `Mesh` a un
+// `Material` e definisce il tipo di primitiva da disegnare.
+//
+// Nota: questo è un componente di alto livello, il renderer lo tradurrà in
+// chiamate a `MeshGPUusage` per uploadare i dati in GPU e disegnarli.
 struct RenderMeshComponent {
-	Mesh* mesh = nullptr;
-	Material* material = nullptr;
+	Mesh* mesh = nullptr; // puntatore non-owning alla mesh
+	Material* material = nullptr; // materiale utilizzato per il draw
 	RenderingTypeEnum renderingType = RenderingTypeEnum::TRIANGLE;
+
 	size_t getSize() {
+		// Calcola la dimensione approssimativa in byte dei dati del vertice.
 		return mesh->position.size() * sizeof(glm::vec3) +mesh->color.size() * sizeof(glm::vec4);
 	}
 } ;

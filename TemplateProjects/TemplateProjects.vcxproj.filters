@@ -334,9 +334,11 @@
     <ClInclude Include="HermitInterpolationMesh.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="earcut.hpp" />
     <ClInclude Include="BackGround2DRender.h">
       <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="earcut.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
