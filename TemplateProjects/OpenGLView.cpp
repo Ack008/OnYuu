@@ -1,8 +1,8 @@
-﻿
-#include <iostream>
+﻿#include <iostream>
 #include "OpenGLView.h"
 #include "Application.h"
 #include "OpenGLBatchRender.h"
+
 double mousex, mousey;
 double xpos, ypos;
 
@@ -26,9 +26,6 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
         glfwGetCursorPos(window, &xpos, &ypos);
     }
 }
-
-
-
 
 
 
@@ -57,17 +54,24 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-	float w_update = 0;
-	float h_update = 0;
-    float x_offset = 0.0, y_offset = 0.0; // Offset per centrare la viewport
+    float w_update = 0;
+    float h_update = 0;
+    float x_offset = 0.0f, y_offset = 0.0f; // Offset per centrare la viewport
 
     // Prevenzione di divisione per zero
     if (height == 0) height = 1;
 
+    // Ottieni l'istanza OpenGLWindow associata alla finestra GLFW
+    OpenGLWindow* view = (OpenGLWindow*)glfwGetWindowUserPointer(window);
+    if (!view) {
+        // Se non abbiamo un puntatore valido, evitiamo di dereferenziare e usciamo
+        return;
+    }
+
     // Aggiorna la matrice di proiezione ortografica in base alle dimensioni del mondo virtuale
 
-    // Calcola il rapporto di aspetto del �mondo�  
-    float AspectRatio_mondo = (float)Application::getInstance()->getWindow()->getWidth()/ (float)Application::getInstance()->getWindow()->getHeight();
+    // Calcola il rapporto di aspetto del "mondo" usando l'istanza view (evitiamo Application singleton)
+    float AspectRatio_mondo = (float)view->getWidth() / (float)view->getHeight();
 
     // Adatta la viewport a seconda del rapporto tra il mondo e la finestra
     if (AspectRatio_mondo > (float)width / (float)height)
@@ -90,14 +94,15 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     }
 
     // Imposta la viewport OpenGL con offset e dimensioni calcolate per centrarla e mantenere il giusto aspect ratio
-    glViewport(x_offset, y_offset, w_update, h_update);
-	Application::getInstance()->onResize(width, height);
+    glViewport((int)0, (int)0, (int)width, (int)height);
 
+    // Aggiorna lo stato della finestra (evitiamo di chiamare Application singleton che potrebbe non essere inizializzato)
+    view->resize((uint32_t)width, (uint32_t)height);
 }
 
 
 OpenGLWindow::OpenGLWindow(uint32_t width, uint32_t height)
-	:Window(width,height)
+    :Window(width,height)
 {
     /* Inizializza GLFW */
     if (!glfwInit())  // Se l’inizializzazione fallisce, esce dal programma con codice -1
@@ -137,6 +142,7 @@ OpenGLWindow::OpenGLWindow(uint32_t width, uint32_t height)
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetWindowAspectRatio(window, 16, 9);
 }
 
 OpenGLWindow::~OpenGLWindow()
@@ -161,11 +167,11 @@ void OpenGLWindow::draw()
 
 double OpenGLWindow::getFrameTime()
 {
-   
-	return deltaTime;
+
+    return deltaTime;
 }
 
 bool OpenGLWindow::shouldClose()
 {
-	return glfwWindowShouldClose(window);
+    return glfwWindowShouldClose(window);
 }

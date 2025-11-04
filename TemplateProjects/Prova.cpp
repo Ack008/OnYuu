@@ -24,7 +24,6 @@ Prova::Prova()
 	//sfondo
 	Background2DRender& backgroundRender = background.addComponent<Background2DRender>();
 	backgroundRender.material = (AssetManager::instance().getMaterial("backgroundMaterial"));
-	background.getComponent<Trasform>().scale = glm::vec3(300, 300, 1);
 
 	Player.addComponent<FirstCustomComponent>();
 	Camera.addComponent<Orthographic>(0,1600,0,900,0,-20);
