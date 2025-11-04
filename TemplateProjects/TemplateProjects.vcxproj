@@ -149,6 +149,7 @@
     <ClCompile Include="DebugLayer.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="HermitInterpolationMesh.cpp" />
     <ClCompile Include="ImGuiLayer.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="LayerProva.cpp" />
@@ -186,16 +187,21 @@
     <ClInclude Include="API.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="AssetManager.h" />
+    <ClInclude Include="BackGround2DRender.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="DebugLayer.h" />
+    <ClInclude Include="earcut.hpp" />
+    <ClInclude Include="Engine.h" />
+    <ClInclude Include="HermitInterpolationMesh.h" />
     <ClInclude Include="OpenGLRenderCommand.h" />
     <ClInclude Include="PhysicsEngine.h" />
     <ClInclude Include="ProjectileComponent.h" />
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ScriptingSystem.h" />
+    <ClInclude Include="TagComponent.h" />
     <ClInclude Include="TreeComponent.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="GameObject.h" />
@@ -223,6 +229,7 @@
   <ItemGroup>
     <None Include="fragmentShaderC.glsl" />
     <None Include="packages.config" />
+    <None Include="sfondoFragShader.glsl" />
     <None Include="vertexShaderC.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -138,7 +138,6 @@ void OpenGLBatchRender::draw()
 		}
 		for(RenderData rd : pair.second) {
 			if (key.first) {
-				key.first->bind();
 				key.first->set("u_modelMatrix", rd.model);
 				key.first->apply();
 			}

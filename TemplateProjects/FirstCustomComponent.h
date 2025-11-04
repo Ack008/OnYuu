@@ -1,14 +1,12 @@
 #pragma once
-#include "Component.h"
-#include "Collider.h"
-#include "MeshComponent.h"
+#include "Engine.h"
 class Trasform;
 class FirstCustomComponent : public Component
 {
 	// Ereditato tramite Component
 	virtual void update(float dt) override;
 
-	void istantiate(Trasform& transform);
+	void istantiateProjectile(Trasform& transform);
 
 	virtual void start() override;
 	virtual void onCollisionStay(Collider* other) override;

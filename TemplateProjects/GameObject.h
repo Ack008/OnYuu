@@ -63,10 +63,22 @@ public:
         }
         _sceneptr->reg->remove<T>(id);
     }
-    void onCollosion(Collider* other) {
+    void onCollisionStay(Collider* other) {
 		if (hasComponent<ScriptingSystem>()) {
             auto& scriptList = getComponent<ScriptingSystem>();
             scriptList.onCollisionStay(other);
+        }
+    }
+    void onCollisionEnter(Collider* other) {
+        if (hasComponent<ScriptingSystem>()) {
+            auto& scriptList = getComponent<ScriptingSystem>();
+            scriptList.onCollisionEnter(other);
+        }
+    }
+    void onCollisionEnd(Collider* other) {
+        if (hasComponent<ScriptingSystem>()) {
+            auto& scriptList = getComponent<ScriptingSystem>();
+            scriptList.onCollisionEnd(other);
         }
     }
     void Destroy() {

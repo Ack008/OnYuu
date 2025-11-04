@@ -32,3 +32,18 @@ class OpenGLIndexBuffer :
 private:
 	GLuint ibo;
 };
+
+class OpenGLUniformBuffer :
+	public UniformBuffer
+{
+	public:
+	OpenGLUniformBuffer();
+	~OpenGLUniformBuffer();
+	void bind() override;
+	void unbind() override;
+	void setData(const void* data, size_t size, BufferUsage usage) override;
+	void updateData(const void* data, size_t size, size_t offset) override;
+	void resize(size_t newSize) override;
+private:
+	GLuint ubo;
+};

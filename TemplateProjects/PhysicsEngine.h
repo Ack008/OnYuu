@@ -17,5 +17,6 @@ public:
 
 private:
 	std::vector<Collider*> colliders;
+	std::set<std::pair<Collider*, Collider*>> collisionPairs;
 	
 };

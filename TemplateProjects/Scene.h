@@ -4,6 +4,7 @@
 #include "Component.h"
 #include "Collider.h"
 #include "PhysicsEngine.h"
+#include "Camera.h"
 class Scene {
 public:
     Scene();
@@ -25,7 +26,7 @@ private:
 	std::vector<BoxCollider*> boxColliderList;
     std::vector<GameObject*> toDestroy;
 	PhysicsEngine physicsEngine;
-
+	Camera* editorCamera = nullptr;
     friend class GameObject;
     friend class Layer;
 	friend class DebugLayer;

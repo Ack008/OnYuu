@@ -6,12 +6,21 @@ Application::Application()
 	window = Window::create(1280, 720);
 	imGuiLayer = new ImGuiLayer();
 	imGuiLayer->onAttach();
+	globalDataUBO = UniformBuffer::create();
+	globalDataUBO->setData(nullptr, sizeof(GlobalData), BufferUsage::DYNAMIC);
 }
 
 void Application::Run()
 {
 	while (!window->shouldClose()) {
 		window->beginFrame();
+		GlobalData data;
+		data.iTime = window->getTime();
+		data.iResolution[0] = window->getWidth();
+		data.iResolution[1] = window->getHeight();
+		data.iFrame = data.iTime / window->getFrameTime();
+		globalDataUBO->updateData(&data, sizeof(GlobalData), 0);
+		
 		//Updating layers
 		for (Layer* layer : layers) {
 			layer->onUpdate(static_cast<float>(window->getFrameTime()));

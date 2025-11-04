@@ -1,9 +1,5 @@
 #pragma once
-#include "Scene.h"
-#include "GameObject.h"
-#include "MeshComponent.h"
-#include "Material.h"
-#include "Shader.h"
+#include "Engine.h"
 class Prova : public Scene {
 public:
 	Prova();
@@ -13,5 +9,6 @@ private:
 	GameObject Player = createEntity();
 	GameObject Asteroide = createEntity();
 	GameObject Camera = createEntity();
+	GameObject background = createEntity();
 	
 };

@@ -23,13 +23,13 @@ void FirstCustomComponent::update(float dt)
 		transform.position += glm::vec3(2000 * dt, 0.0f, 0.0f);
 	}
 	if (Input::isKeyReleased(KeyCode::Space)) {
-		istantiate(transform);
-		std::cout << "Shoot!\n";
+		istantiateProjectile(transform);
 	}
-
+	//std::cout << "Position: " << transform.position.x << ", " << transform.position.y << ", " << transform.position.z << std::endl;
+	std::cout << "Frame Time: " << 1/dt << std::endl;
 }
 
-void FirstCustomComponent::istantiate(Trasform& transform)
+void FirstCustomComponent::istantiateProjectile(Trasform& transform)
 {
 	GameObject projectile = obj->getScene()->createEntity();
 	RenderMeshComponent& renderMesh = projectile.addComponent<RenderMeshComponent>();
@@ -39,9 +39,6 @@ void FirstCustomComponent::istantiate(Trasform& transform)
 	Trasform& projTransform = projectile.getComponent<Trasform>();
 	projTransform.position = transform.position + glm::vec3(10, 0.0f, 0.0f);
 	projTransform.scale = glm::vec3(50.0f, 50.0f, 1.0f);
-	RigidBody& rb = projectile.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC, 1.0f);
-	rb.setUseGravity(false);
-	rb.setVelocity(glm::vec3(1000.0f, 0.0f, 0.0f));
 	projectile.addComponent<BoxCollider>();
 	projectile.addComponent<ProjectileComponent>();
 }

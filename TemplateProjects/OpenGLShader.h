@@ -1,6 +1,8 @@
 #pragma once
 #include "Shader.h"
 #include <glad/glad.h>
+#include <unordered_map>
+#include <string>
 class OpenGLShader :
     public Shader
 {
@@ -21,7 +23,9 @@ public:
 private:
     char* readShaderSource(const char* shaderFile);
     GLuint createProgram(const char* vertexfilename, const char* fragmentfilename);
+	GLint getUniformLocation(const std::string& name);
 private:
     unsigned int shader;
+	std::unordered_map<std::string, GLint> uniformLocationCache;
 };
 

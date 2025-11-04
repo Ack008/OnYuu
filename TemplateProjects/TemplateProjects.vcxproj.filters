@@ -1,53 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="File di origine">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="File di intestazione">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="File di risorse">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="File di origine\View">
-      <UniqueIdentifier>{b08a0859-1b9a-4e11-b78c-fd0ae0714795}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di origine\Model">
-      <UniqueIdentifier>{7a1856c7-f4a6-4b7e-a788-bb56a419d580}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\Model">
-      <UniqueIdentifier>{b4a2d80d-2fc3-43dc-800f-f505df551fad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\View">
-      <UniqueIdentifier>{4dd19b82-4588-49d4-adce-fb4922197948}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\View\OpenGLView">
-      <UniqueIdentifier>{0a1425f4-6320-453b-a7c8-7e10bfc9d8eb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di origine\View\OpenGLView">
-      <UniqueIdentifier>{788a94fa-75fd-4be8-8830-bba58076f41a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di origine\Controller">
-      <UniqueIdentifier>{abfc47da-3759-47b2-ab83-fe50e50f441e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\Controller">
-      <UniqueIdentifier>{3102ac65-82da-442d-abb4-70d607e59759}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\Controller\OpenGL">
-      <UniqueIdentifier>{4af35968-0292-4e39-8370-1cfa6ff068f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di origine\Controller\OpenGL">
-      <UniqueIdentifier>{ddcf7c9d-0f0c-4b9b-93fe-f803f781b897}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di intestazione\Model\Components">
-      <UniqueIdentifier>{f00e028a-08f4-41cc-b11a-1d3546d4d21e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="File di origine\Model\Components">
-      <UniqueIdentifier>{6f5c97ec-6e38-4a92-9280-2a1eb2845bfc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Scena di prova">
       <UniqueIdentifier>{aa8f0af1-ed76-43ea-b557-c51d9a60097d}</UniqueIdentifier>
@@ -88,31 +44,25 @@
     <Filter Include="Physics">
       <UniqueIdentifier>{acb377e0-8b18-4a69-832f-20c5a261a3dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{d9077232-b9aa-4a3b-b14f-b4647d8921d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\View">
+      <UniqueIdentifier>{18d07a03-e234-4591-ae60-a4ea384ba42b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Model">
+      <UniqueIdentifier>{2ce913f7-553d-426c-87fd-47eb3e8bf301}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="File di risorse\OpenGLView">
+      <UniqueIdentifier>{788a94fa-75fd-4be8-8830-bba58076f41a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Model\Components">
+      <UniqueIdentifier>{6f5c97ec-6e38-4a92-9280-2a1eb2845bfc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>File di origine</Filter>
-    </ClCompile>
-    <ClCompile Include="View.cpp">
-      <Filter>File di origine\View</Filter>
-    </ClCompile>
     <ClCompile Include="glad.c">
-      <Filter>File di origine\View\OpenGLView</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>File di origine\Controller</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLShader.cpp">
-      <Filter>File di origine\Controller\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>File di origine\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>File di origine\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObject.cpp">
-      <Filter>File di origine\Model</Filter>
+      <Filter>File di risorse\OpenGLView</Filter>
     </ClCompile>
     <ClCompile Include="FirstCustomComponent.cpp">
       <Filter>Scena di prova\File di risorse</Filter>
@@ -121,16 +71,10 @@
       <Filter>Scena di prova\File di risorse</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>File di origine\Model\Components</Filter>
+      <Filter>Core\Model\Components</Filter>
     </ClCompile>
     <ClCompile Include="Application.cpp">
       <Filter>Application</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.h">
-      <Filter>File di intestazione\Controller</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>File di origine\Controller</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
       <Filter>Render</Filter>
@@ -199,7 +143,7 @@
       <Filter>Application\Input</Filter>
     </ClCompile>
     <ClCompile Include="Collider.cpp">
-      <Filter>File di origine\Model\Components</Filter>
+      <Filter>Core\Model\Components</Filter>
     </ClCompile>
     <ClCompile Include="DebugLayer.cpp">
       <Filter>Scena di prova</Filter>
@@ -216,43 +160,41 @@
     <ClCompile Include="AssetManager.cpp">
       <Filter>Application</Filter>
     </ClCompile>
+    <ClCompile Include="View.cpp">
+      <Filter>Core\View</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenGLShader.cpp">
+      <Filter>Platform\OpenGL</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Core\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.h">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Component.cpp">
+      <Filter>Core\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Core\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="HermitInterpolationMesh.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="View.h">
-      <Filter>File di intestazione\View</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderingTypeEnum.h">
-      <Filter>File di intestazione\Controller</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>File di intestazione\Controller</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLShader.h">
-      <Filter>File di intestazione\Controller\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="GameObject.h">
-      <Filter>File di intestazione\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>File di intestazione\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>File di intestazione\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
     <ClInclude Include="Prova.h">
       <Filter>Scena di prova\File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="FirstCustomComponent.h">
       <Filter>Scena di prova\File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshComponent.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>File di intestazione\Model\Components</Filter>
     </ClInclude>
     <ClInclude Include="Application.h">
       <Filter>Application</Filter>
@@ -323,12 +265,6 @@
     <ClInclude Include="KeyCode.h">
       <Filter>Application\Input</Filter>
     </ClInclude>
-    <ClInclude Include="TreeComponent.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Collider.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
     <ClInclude Include="DebugLayer.h">
       <Filter>Scena di prova</Filter>
     </ClInclude>
@@ -344,14 +280,63 @@
     <ClInclude Include="AssetManager.h">
       <Filter>Application</Filter>
     </ClInclude>
-    <ClInclude Include="RigidBody.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptingSystem.h">
-      <Filter>File di intestazione\Model\Components</Filter>
-    </ClInclude>
     <ClInclude Include="ProjectileComponent.h">
       <Filter>Scena di prova\File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="View.h">
+      <Filter>Core\View</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshComponent.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptingSystem.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="TagComponent.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="TreeComponent.h">
+      <Filter>Core\Model\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>Core\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>Core\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Core\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenGLShader.h">
+      <Filter>Platform\OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderingTypeEnum.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="HermitInterpolationMesh.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="earcut.hpp" />
+    <ClInclude Include="BackGround2DRender.h">
+      <Filter>Core\Model\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -362,5 +347,8 @@
       <Filter>File di risorse</Filter>
     </None>
     <None Include="packages.config" />
+    <None Include="sfondoFragShader.glsl">
+      <Filter>File di risorse</Filter>
+    </None>
   </ItemGroup>
 </Project>

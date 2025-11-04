@@ -1,4 +1,4 @@
-#include "Material.h"
+#include "Engine.h"
 
 Material::Material(std::shared_ptr<Shader> shader)
 	: _shader(shader)
@@ -12,6 +12,7 @@ void Material::set(const std::string& name, const UniformValue& value)
 void Material::bind()
 {
 	_shader->useShader();
+	
 	for (auto& [name, _] : alreadySet_) {
 		alreadySet_[name] = false; // Reset all uniforms to not set
 	}

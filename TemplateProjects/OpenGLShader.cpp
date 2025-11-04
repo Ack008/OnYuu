@@ -6,7 +6,10 @@
 OpenGLShader::OpenGLShader(const char* vertexfilename,const char* fragmentfilename)
 {
 	shader = createProgram(vertexfilename,fragmentfilename);
-
+	GLuint blockIndex = glGetUniformBlockIndex(shader, "GlobalData");
+	if (blockIndex != GL_INVALID_INDEX) {
+		glUniformBlockBinding(shader, blockIndex, 0);
+	}
 	//shader = createProgram("vertexShaderC.glsl", "fragmentShaderC.glsl");
 }
 
@@ -101,39 +104,64 @@ GLuint OpenGLShader::createProgram(const char* vertexfilename, const char* fragm
 	return programId;
 }
 
+GLint OpenGLShader::getUniformLocation(const std::string& name)
+{
+	if (uniformLocationCache.find(name) != uniformLocationCache.end())
+		return uniformLocationCache[name];
+	GLint location = glGetUniformLocation(shader, name.c_str());
+	if (location == -1)
+		std::cout << "Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+	uniformLocationCache[name] = location;
+	return location;
+}
+
 void OpenGLShader::setUniformInt(const char* name, int value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniform1i(loc, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniform1i(loc, value);
+	}
 }
 void OpenGLShader::setUniformFloat(const char* name, float value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniform1f(loc, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniform1f(loc, value);
+	}
 }
 void OpenGLShader::setUniformVec2(const char* name, const float* value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniform2fv(loc, 1, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniform2fv(loc, 1, value);
+	}
 }
 void OpenGLShader::setUniformVec3(const char* name, const float* value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniform3fv(loc, 1, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniform3fv(loc, 1, value);
+	}
 }
 void OpenGLShader::setUniformVec4(const char* name, const float* value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniform4fv(loc, 1, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniform4fv(loc, 1, value);
+	}
 }
 void OpenGLShader::setUniformMat3(const char* name, const float* value)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniformMatrix3fv(loc, 1, GL_FALSE, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniformMatrix3fv(loc, 1, GL_FALSE, value);
+	}
 }
 void OpenGLShader::setUniformMat4(const char* name, const float* value, int count)
 {
-	GLint loc = glGetUniformLocation(shader, name);
-	glUniformMatrix4fv(loc, count, GL_FALSE, value);
+	GLint loc = getUniformLocation(name);
+	if (loc != -1) {
+		glUniformMatrix4fv(loc, count, GL_FALSE, value);
+	}
 }
 

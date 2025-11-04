@@ -27,3 +27,16 @@ std::shared_ptr<IndexBuffer> IndexBuffer::create()
 		break;
 	}
 }
+
+std::shared_ptr<UniformBuffer> UniformBuffer::create()
+{
+	switch (apiInUse)
+	{
+	case API::OpenGL:
+		// Return OpenGLVertexArray instance
+		return std::make_shared<OpenGLUniformBuffer>();
+		break;
+	default:
+		break;
+	}
+}

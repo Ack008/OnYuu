@@ -1,13 +1,5 @@
-#include <iostream>
 #include "Prova.h"
 #include "FirstCustomComponent.h"
-#include "Transform.h"
-#include "MeshComponent.h"
-#include "OpenGLShader.h"
-#include "Camera.h"
-#include "Collider.h"
-#include "RigidBody.h"
-#include "AssetManager.h"
 Prova::Prova()
 	:Scene()
 {
@@ -22,13 +14,17 @@ Prova::Prova()
 	RenderMeshComponent& asteroideRender = Asteroide.addComponent<RenderMeshComponent>();
 	asteroideRender.material = AssetManager::instance().getMaterial("defaultMaterial");;
 	asteroideRender.renderingType = RenderingTypeEnum::TRIANGLE;
-	asteroideRender.mesh = AssetManager::instance().getMesh("triangoloMesh");
+	asteroideRender.mesh = AssetManager::instance().getMesh("hermiteMesh1");
 	Asteroide.addComponent<BoxCollider>();
 	Asteroide.getComponent<Trasform>().position = glm::vec3(800, 400, 0);
 	Asteroide.getComponent<Trasform>().scale = glm::vec3(100, 100, 1);
+	Asteroide.getComponent<TagComponent>().tag = "Asteroide";
 	//Asteroide.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC, 10.0f).setUseGravity(true);
 	
-	
+	//sfondo
+	Background2DRender& backgroundRender = background.addComponent<Background2DRender>();
+	backgroundRender.material = (AssetManager::instance().getMaterial("backgroundMaterial"));
+	background.getComponent<Trasform>().scale = glm::vec3(300, 300, 1);
 
 	Player.addComponent<FirstCustomComponent>();
 	Camera.addComponent<Orthographic>(0,1600,0,900,0,-20);
