@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #include <glm/glm.hpp>
 #include "Component.h"
 #include "Transform.h"
@@ -11,13 +11,13 @@
 // Componente fisico che fornisce comportamento cinematico di base per un
 // GameObject. Supporta tre tipi di corpo tramite `BodyType`:
 // - STATIC: corpo immobile (non integrato)
-// - DYNAMIC: corpo fisico soggetto a forze/gravit‡ e integrazione della velocit‡
+// - DYNAMIC: corpo fisico soggetto a forze/gravit√† e integrazione della velocit√†
 // - KINEMATIC: corpo animato dall'utente ma non influenzato direttamente dalla fisica
 //
-// Responsabilit‡ principali:
-// - integra posizione e velocit‡ (nell'method `update`) quando il body Ë DYNAMIC
+// Responsabilit√† principali:
+// - integra posizione e velocit√† (nell'method `update`) quando il body √® DYNAMIC
 // - applica forza tramite `applyForce`
-// - risposta semplificata alle collisioni in `onCollisionEnter` (invertendo la velocit‡)
+// - risposta semplificata alle collisioni in `onCollisionEnter` (invertendo la velocit√†)
 //
 class RigidBody : public Component {
 public:
@@ -30,36 +30,81 @@ public:
     // Costruttore:
     // - `type`: tipo del corpo (default DYNAMIC)
     // - `mass`: massa del corpo (default 1.0f)
-    // Il costruttore inizializza velocit‡/accelerazione. Per i corpi DYNAMIC la
-    // accelerazione viene impostata a zero di default; per gli altri tipi puÚ
+    // Il costruttore inizializza velocit√†/accelerazione. Per i corpi DYNAMIC la
+    // accelerazione viene impostata a zero di default; per gli altri tipi pu√≤
     // essere utilizzata una accelerazione iniziale (qui esempio con valore non-zero).
-    RigidBody(BodyType type = BodyType::DYNAMIC, float mass = 1.0f)
-        : bodyType(type), mass(mass), velocity(0.0f), acceleration(type == BodyType::DYNAMIC ? glm::vec3(0.0f) : glm::vec3(0,-9.81,0)) {
+    RigidBody(BodyType type = BodyType::DYNAMIC, float mass = 1.0f, float bouncingCoefficent = -0.5)
+        : bodyType(type), mass(mass), velocity(0.0f), acceleration(type == BodyType::DYNAMIC ? glm::vec3(0.0f) : glm::vec3(0, -9.81, 0)), debouncingCoefficent(bouncingCoefficent)
+    {
     }
 
     // update: chiamato ogni frame (dt in secondi).
-    // Per corpi DYNAMIC integra accelerazione -> velocit‡ -> posizione.
-    // Nota: la gravit‡ viene sommata all'accelerazione solo se `_useGravity` Ë true.
+    // Per corpi DYNAMIC integra accelerazione -> velocit√† -> posizione.
+    // Nota: la gravit√† viene sommata all'accelerazione solo se `_useGravity` √® true.
     virtual void update(float dt) override {
         if (bodyType == BodyType::DYNAMIC) {
-            if(_useGravity)
+            if (_useGravity && !m_isGrounded)
                 acceleration += glm::vec3(0.0f, -GRAVITY_ACCELERATION, 0.0f); // Apply gravity
             velocity += acceleration * dt;
             obj->getComponent<Trasform>().position += velocity * dt;
             acceleration = glm::vec3(0.0f); // Reset acceleration after each update
         }
+		m_isGrounded = false;
     }
 
-    // Risposta alle collisioni: semplice comportamento che inverte la velocit‡
-    // con damping quando si verifica un enter di collisione. PuÚ essere sovrascritto
-    // per comportamenti pi˘ realistici.
+    // Risposta alle collisioni: semplice comportamento che inverte la velocit√†
+    // con damping quando si verifica un enter di collisione. Pu√≤ essere sovrascritto
+    // per comportamenti pi√π realistici.
     virtual void onCollisionEnter(Collider* other) override {
-        // Simple collision response: invert velocity
-        if (bodyType == BodyType::DYNAMIC) {
-            velocity = -velocity * 0.5f; // simple bounce with damping
+        
+    }
+    virtual void onCollisionStay(Collider* other) override {
+        if (!other) return;
+        if (bodyType == BodyType::STATIC || !obj->hasComponent<BoxCollider>() || !other->obj->hasComponent<BoxCollider>())
+            return;
+
+        BoxCollider& mine = obj->getComponent<BoxCollider>();
+        BoxCollider& otherBox = other->obj->getComponent<BoxCollider>();
+        Trasform& mineTransform = obj->getComponent<Trasform>();
+        Trasform& otherTransform = other->obj->getComponent<Trasform>();
+
+        glm::vec3 mineMin = mine.getMinPoint() * mineTransform.scale + mineTransform.position;
+        glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.scale + mineTransform.position;
+        glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.scale + otherTransform.position;
+        glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.scale + otherTransform.position;
+
+        // Calcola le penetrazioni su ogni asse
+        float overlapX = std::min(mineMax.x, otherMax.x) - std::max(mineMin.x, otherMin.x);
+        float overlapY = std::min(mineMax.y, otherMax.y) - std::max(mineMin.y, otherMin.y);
+
+        glm::vec3 normal(0.0f);
+
+        // L'asse con la minor penetrazione determina la direzione della collisione
+        if (overlapY < overlapX) {
+            // Collisione verticale
+            normal = glm::vec3(0.0f, (mineMax.y > otherMax.y) ? 1.0f : -1.0f, 0.0f);
+
+            // Se la normale punta verso l'alto ‚Üí stiamo toccando il pavimento
+            if (normal.y > 0.0f)
+                m_isGrounded = true;
+        }
+        else {
+            // Collisione orizzontale
+            normal = glm::vec3((mineMax.x > otherMax.x) ? 1.0f : -1.0f, 0.0f, 0.0f);
+        }
+
+        // --- RISOLUZIONE DELLA PENETRAZIONE (push-out) ---
+        float penetration = std::min(overlapX, overlapY);
+        mineTransform.position += normal * (penetration + 0.001f);
+
+        // --- RIMBALZO (debounce) ---
+        // Proietta la velocit√† sulla normale e inverte con il coefficiente di rimbalzo
+        float vn = glm::dot(velocity, normal);
+        if (vn < 0.0f) { // solo se si sta muovendo verso la superficie
+            glm::vec3 vBounce = -vn * normal * (1.0f + debouncingCoefficent);
+            velocity += vBounce;
         }
     }
-
     // Aggiunge una forza al corpo (F = m * a) -> modifica l'accelerazione
     void applyForce(const glm::vec3& force) {
         if (bodyType == BodyType::DYNAMIC) {
@@ -72,10 +117,11 @@ public:
     float getMass() const { return mass; }
     glm::vec3 getVelocity() const { return velocity; }
     void setVelocity(const glm::vec3& vel) { velocity = vel; }
+	bool isGrounded() const { return m_isGrounded; }
 
-    // Abilita/disabilita l'applicazione della gravit‡ a questo corpo.
+    // Abilita/disabilita l'applicazione della gravit√† a questo corpo.
     // ATTENZIONE: implementazione originale contiene un bug: assegna il parametro
-    // `useGravity` a sÈ stesso invece di impostare `_useGravity`.
+    // `useGravity` a s√© stesso invece di impostare `_useGravity`.
     // Corretto sarebbe: `_useGravity = useGravity;`
     void setUseGravity(bool useGravity) 
     
@@ -88,10 +134,12 @@ private:
     float mass;
     glm::vec3 velocity;
     glm::vec3 acceleration;
-    bool _useGravity = false; // flag che abilita la gravit‡
+    bool _useGravity = false; // flag che abilita la gravit√†
+    float debouncingCoefficent = 1.0;
+	bool m_isGrounded = false;
 
 
-    // Implementazione di `start` ereditata da Component: qui Ë vuota.
+    // Implementazione di `start` ereditata da Component: qui √® vuota.
     void start() {};
 
 };

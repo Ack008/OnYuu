@@ -7,7 +7,7 @@
 #include <entt/entt.hpp>
 #include <vector>
 #include "ScriptingSystem.h"
-
+#include "TagComponent.h"
 // GameObject.h
 // Wrapper leggero attorno a `entt::entity` che espone API comode per gestire
 // componenti, script e interazioni con la `Scene`.
@@ -69,7 +69,9 @@ public:
         }
         return _sceneptr->reg->get<T>(id);
     }
-
+	void istantiatePrefab(Prefab* prefab) {
+        _sceneptr->toInstantiate.push_back(prefab);
+	}
 	// Verifica se l'entity possiede un componente `T`.
 	// Per script controlla la presenza di `ScriptingSystem` e poi se contiene lo script.
     template<typename T>
@@ -97,7 +99,29 @@ public:
         }
         _sceneptr->reg->remove<T>(id);
     }
-
+	//trova un gameobject dato un tag
+    GameObject findGameObjectByTag(const std::string& tag) {
+        auto view = _sceneptr->reg->view<TagComponent>();
+        for (auto entity : view) {
+            auto& tagComp = view.get<TagComponent>(entity);
+            if (tagComp.tag == tag) {
+                return GameObject(entity, _sceneptr);
+            }
+        }
+        throw std::runtime_error("GameObject with tag " + tag + " not found");
+	}
+	//Trova tutti i gameobject con un dato tag
+    std::vector<GameObject> findGameObjectsByTag(const std::string& tag) {
+        std::vector<GameObject> results;
+        auto view = _sceneptr->reg->view<TagComponent>();
+        for (auto entity : view) {
+            auto& tagComp = view.get<TagComponent>(entity);
+            if (tagComp.tag == tag) {
+				results.push_back(GameObject(entity, _sceneptr));
+            }
+        }
+        return results;
+	}
 	// Eventi di collisione: vengono passati ai metodi del `ScriptingSystem` se presente
     void onCollisionStay(Collider* other) {
 		if (hasComponent<ScriptingSystem>()) {
@@ -121,8 +145,12 @@ public:
 	// Segnala la distruzione dell'oggetto: la rimozione effettiva avverrà in un
 	// punto sicuro (tipicamente a fine frame) dalla `Scene`.
     void Destroy() {
-        _sceneptr->addToDestroy(this);
+        _sceneptr->addToDestroy(new GameObject(id,_sceneptr));
     }
+    bool operator ==(const GameObject& other) const {
+        return id == other.id && _sceneptr == other._sceneptr;
+	}
+
     Scene* getScene() { return _sceneptr; }
 private:
     Scene* _sceneptr; // scena proprietaria (non possiede)

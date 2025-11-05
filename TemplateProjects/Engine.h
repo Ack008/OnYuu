@@ -28,6 +28,7 @@
 #include "TagComponent.h"
 #include "ScriptingSystem.h"
 #include "BackGround2DRender.h"
+#include "Prefab.h"
 
 // Physics / collision
 #include "Collider.h"
@@ -57,6 +58,14 @@
 
 // Utility / helpers
 #include "MeshGPUusage.h"
+
+//ImGui
+#include <ImGui/imgui.h>
+
+//Math
+#include "math.h"
+
+
 
 // Small helper macro
 #ifndef ENGINE_UNUSED

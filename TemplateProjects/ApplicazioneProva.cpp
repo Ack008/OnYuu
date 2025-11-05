@@ -6,13 +6,10 @@ class ApplicazioneProva : public Application {
 public:
 	ApplicazioneProva() : Application() {
 		pushLayer(new LayerProva(currentScene));
-	pushLayer(new DebugLayer(currentScene));
+		pushLayer(new DebugLayer(currentScene));
 		currentScene->start();
 	}
 private:
 	Scene* currentScene = new Prova();
 };
 
-Application* Application::createApplication() {
-	return new ApplicazioneProva();
-}

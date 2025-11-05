@@ -24,7 +24,7 @@ class Layer {
 		virtual void onEvent(/*Event& event*/) = 0;
 		// Renderizzazione della UI (ImGui)
 		virtual void onImGuiRender() = 0;
-		virtual const char* getName() const = 0;
+		virtual const char* getName() { return m_name.c_str(); };
 	private:
 	std::string m_name;
 };

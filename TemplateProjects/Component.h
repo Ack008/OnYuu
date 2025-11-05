@@ -30,6 +30,8 @@ public:
 	virtual void onCollisionEnd(Collider* other) {};
 	virtual void onCollisionEnter(Collider* other) {};
 
+	//Callback di distruzione, chiamato quando il GameObject viene distrutto
+	virtual void onDestroy() {};
     // Puntatore al GameObject proprietario. Usare con attenzione: la policy di
     // ownership è decisa dalla Scene/GameObject, non dalla classe Component.
     std::shared_ptr<GameObject> obj;

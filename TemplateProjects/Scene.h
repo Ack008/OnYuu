@@ -13,6 +13,7 @@
 // - eseguire l'aggiornamento della fisica e le collisioni
 // - inoltrare gli oggetti da renderizzare
 // Nota: molti metodi delegano il lavoro a sistemi/engine esterni come PhysicsEngine.
+class Prefab;
 class Scene {
 public:
     Scene();
@@ -42,6 +43,8 @@ private:
 
     // Distrugge gli enti segnati con addToDestroy.
     void destroyEntities();
+	// Istanzia i prefab segnati per l'instanziazione.
+	void instantiatePrefabs();
 private:
     // Registro di entità utilizzato per componenti e sistemi (entt).
     // È allocato dinamicamente qui: la classe è responsabile della sua vita.
@@ -49,7 +52,8 @@ private:
 
     // Vettore di puntatori a GameObject che devono essere distrutti.
     std::vector<GameObject*> toDestroy;
-
+	//vector di prefab da istanziare nel prossimo frame
+	std::vector<Prefab*> toInstantiate;
     // Sistema di fisica usato dalla scena per simulazioni e risoluzioni di collisione.
     PhysicsEngine physicsEngine;
 

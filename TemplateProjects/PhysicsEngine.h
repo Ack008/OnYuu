@@ -4,6 +4,11 @@
 #include "Collider.h"
 class PhysicsEngine {
 public:
+	struct CollisionInfo {
+		Collider* other;
+		glm::vec3 normal; // direzione dalla quale l’altro collider “spinge”
+		float penetrationDepth;
+	};
 	static bool checkCollision(Collider* a, Collider* b) {
 		return a->hasCollided(b);
 	}

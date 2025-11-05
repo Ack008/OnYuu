@@ -59,6 +59,15 @@
     <Filter Include="Core\Model\Components">
       <UniqueIdentifier>{6f5c97ec-6e38-4a92-9280-2a1eb2845bfc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="2DGame">
+      <UniqueIdentifier>{5b65ca11-ef3f-46af-83d8-603c9ab8ae19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="2DGame\Components">
+      <UniqueIdentifier>{7d0bf565-d013-473a-ac55-e53b8e2e6994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="2DGame\Prefab">
+      <UniqueIdentifier>{39c76032-6be8-40ee-94e0-d5754ccfadca}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
@@ -187,6 +196,15 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="HermitInterpolationMesh.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="2DGameApplication.cpp">
+      <Filter>2DGame</Filter>
+    </ClCompile>
+    <ClCompile Include="GameLayer.cpp">
+      <Filter>2DGame</Filter>
+    </ClCompile>
+    <ClCompile Include="GameScene.cpp">
+      <Filter>2DGame</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -339,6 +357,27 @@
     </ClInclude>
     <ClInclude Include="earcut.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="GameLayer.h">
+      <Filter>2DGame</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene.h">
+      <Filter>2DGame</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerScripts.h">
+      <Filter>2DGame\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Prefab.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy1.h">
+      <Filter>2DGame\Prefab</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyScripts.h">
+      <Filter>2DGame\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ControllerScript.h">
+      <Filter>2DGame\Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

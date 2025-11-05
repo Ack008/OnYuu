@@ -38,7 +38,6 @@ class DebugLayer : public Layer {
 	// layer, statistiche, proprietà dei materiali/mesh di debug).
 	virtual void onImGuiRender() override;
 
-	virtual const char* getName() const override { return "DebugLayer"; }
 	virtual void onAttach() override;
 	virtual void onDetach() override;
 
