@@ -21,6 +21,9 @@ public:
 	void update(float dt);
 
 private:
+	void bruteForceCollisionDetection();
+	void collisionForPlayerAndBallOnly();
+private:
 	std::vector<Collider*> colliders;
 	std::set<std::pair<Collider*, Collider*>> collisionPairs;
 	

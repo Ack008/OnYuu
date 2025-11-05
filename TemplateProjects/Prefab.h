@@ -2,7 +2,7 @@
 #include "Engine.h"
 class Prefab {
 	public:
-		virtual void istantiateObject(Scene* scene) = 0;
+		virtual GameObject istantiateObject(Scene* scene) = 0;
 	//possibile implementazione di prefab statici
 	/*
 	static GameObject createPlayer(Scene* scene) {

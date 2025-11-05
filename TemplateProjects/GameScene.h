@@ -11,6 +11,7 @@ private:
 	GameObject background = createEntity();
 	GameObject pavimento = createEntity();
 	GameObject controller = createEntity();
+	GameObject ball = createEntity();
 	uint32_t width = Application::getInstance()->getWindow()->getWidth();
 	uint32_t height = Application::getInstance()->getWindow()->getHeight();
 	friend class GameLayer;

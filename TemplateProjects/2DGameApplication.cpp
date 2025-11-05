@@ -7,7 +7,7 @@ class Game2dApplication :
 public:
 	Game2dApplication() {
 		pushLayer(new GameLayer(&scene));
-		pushLayer(new DebugLayer(&scene));
+		//pushLayer(new DebugLayer(&scene));
 	}
 private:
 	GameScene scene;

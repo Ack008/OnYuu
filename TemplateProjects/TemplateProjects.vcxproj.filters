@@ -206,6 +206,9 @@
     <ClCompile Include="GameScene.cpp">
       <Filter>2DGame</Filter>
     </ClCompile>
+    <ClCompile Include="BallScript.cpp">
+      <Filter>2DGame\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Prova.h">
@@ -379,6 +382,9 @@
     <ClInclude Include="ControllerScript.h">
       <Filter>2DGame\Components</Filter>
     </ClInclude>
+    <ClInclude Include="BallScript.h">
+      <Filter>2DGame\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
@@ -389,6 +395,9 @@
     </None>
     <None Include="packages.config" />
     <None Include="sfondoFragShader.glsl">
+      <Filter>File di risorse</Filter>
+    </None>
+    <None Include="colorUniformSupporterShader.glsl">
       <Filter>File di risorse</Filter>
     </None>
   </ItemGroup>

@@ -141,6 +141,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="ApplicazioneProva.cpp" />
     <ClCompile Include="AssetManager.cpp" />
+    <ClCompile Include="BallScript.cpp" />
     <ClCompile Include="BatchRenderer.cpp" />
     <ClCompile Include="BatchRenderer.h" />
     <ClCompile Include="Buffer.cpp" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BackGround2DRender.h" />
+    <ClInclude Include="BallScript.h" />
     <ClInclude Include="Buffer.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.h" />
@@ -237,6 +239,7 @@
     <ClInclude Include="View.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="colorUniformSupporterShader.glsl" />
     <None Include="fragmentShaderC.glsl" />
     <None Include="packages.config" />
     <None Include="sfondoFragShader.glsl" />

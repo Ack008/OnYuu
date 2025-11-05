@@ -69,9 +69,12 @@ public:
         }
         return _sceneptr->reg->get<T>(id);
     }
-	void istantiatePrefab(Prefab* prefab) {
+	//Istanzia un prefab in modo ritardato
+	void delayedIstantiatePrefab(Prefab* prefab) {
         _sceneptr->toInstantiate.push_back(prefab);
 	}
+	//Istanzia un prefab immediatamente 
+    GameObject instantiatePrefabNow(Prefab* prefab);
 	// Verifica se l'entity possiede un componente `T`.
 	// Per script controlla la presenza di `ScriptingSystem` e poi se contiene lo script.
     template<typename T>
@@ -150,7 +153,7 @@ public:
     bool operator ==(const GameObject& other) const {
         return id == other.id && _sceneptr == other._sceneptr;
 	}
-
+    entt::entity getID() const { return id; }
     Scene* getScene() { return _sceneptr; }
 private:
     Scene* _sceneptr; // scena proprietaria (non possiede)

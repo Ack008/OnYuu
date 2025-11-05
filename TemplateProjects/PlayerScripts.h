@@ -7,6 +7,8 @@ public:
 	// Ereditato tramite Component
 	virtual void start() override
 	{
+		Trasform& transform = obj->getComponent<Trasform>();
+		transform.position = glm::vec3(0, -35, 0);
 	};
 	virtual void update(float dt) override
 	{
@@ -15,23 +17,16 @@ public:
 		if (Input::isKeyPressed(KeyCode::A))
 		{
 			if (transform.position.x > -45)
-				obj->getComponent<Trasform>().position.x -= 20 * dt;
+				transform.position.x -= 100 * dt;
 		}
 		if (Input::isKeyPressed(KeyCode::D))
 		{
 			if (transform.position.x < 45)
-				transform.position.x += 20 * dt;
+				transform.position.x += 100 * dt;
 		}
 		if (isGrounded)
 		{
-			if (Input::isKeyPressedOnce(KeyCode::Space))
-			{
-				if (obj->hasComponent<RigidBody>())
-					obj->getComponent<RigidBody>().applyForce(glm::vec3(0.0f, 5000, 0));
-				for(GameObject& obj : obj->findGameObjectsByTag("Enemy")){
-					obj.Destroy();
-				}
-			}
+			
 		}
 		isGrounded = false;
 	};
@@ -47,20 +42,7 @@ public:
 
 	virtual void onCollisionEnter(Collider* other) override
 	{
-		if (other->obj->hasComponent<TagComponent>())
-		{
-			TagComponent& tagComp = other->obj->getComponent<TagComponent>();
-			if (tagComp.tag == "Enemy")
-			{
-				vite -= 1.0f;
-				obj->istantiatePrefab(new Enemy1());
-				if (vite <= 0.0f)
-				{
-					std::cout << "Game Over!" << std::endl;
-				}
-			}
-			
-		}
+		
 	}
 	int getVite() const {
 		return vite;

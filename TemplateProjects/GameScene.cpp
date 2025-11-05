@@ -1,6 +1,7 @@
 #include "GameScene.h"
 #include "PlayerScripts.h"
 #include "ControllerScript.h"
+#include "BallScript.h"
 GameScene::GameScene() 
 	:Scene()
 {
@@ -10,23 +11,33 @@ GameScene::GameScene()
 	renderSquare.mesh = AssetManager::instance().getMesh("squareMesh");
 	renderSquare.material = AssetManager::instance().getMaterial("defaultMaterial");
 	player.addComponent<BoxCollider>();
-	player.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC,1.0,0.2).setUseGravity(true);
 	player.addComponent<PlayerScripts>();
-	player.getComponent<Trasform>().scale = glm::vec3(5,5.f, 1.0f);
+	player.getComponent<Trasform>().scale = glm::vec3(5,2, 1.0f);
 	player.getComponent<TagComponent>().tag = "Player";
+
+	//defining ball
+	auto &rd = ball.addComponent<RenderMeshComponent>();
+	rd.mesh = AssetManager::instance().getMesh("ballMesh");
+	rd.material = AssetManager::instance().getMaterial("defaultMaterial");
+	ball.addComponent<BoxCollider>();
+	ball.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC, 1.0f, 1.1f).setUseGravity(false);
+	ball.getComponent<Trasform>().scale = glm::vec3(2, 2, 1.0f);
+	ball.getComponent<TagComponent>().tag = "Ball";
+	ball.addComponent<BallScript>();
 	//defining the floor
 	pavimento.addComponent<RenderMeshComponent>().mesh = AssetManager::instance().getMesh("pavimentoMesh");
 	pavimento.getComponent<RenderMeshComponent>().material = AssetManager::instance().getMaterial("defaultMaterial");
 	Trasform& pavimentoTrasform = pavimento.getComponent<Trasform>();
-	pavimentoTrasform.scale = glm::vec3(100, 30, 0.0f);
-	pavimentoTrasform.position = glm::vec3(0, -50, 0);   
+	pavimentoTrasform.scale = glm::vec3(100, 20, 0.0f);
+	pavimentoTrasform.position = glm::vec3(0, -60, 0);   
 	pavimento.addComponent<BoxCollider>();
+	pavimento.getComponent<TagComponent>().tag = "Pavimento";
 	auto& rb = pavimento.addComponent<RigidBody>(RigidBody::BodyType::STATIC);
 	rb.setUseGravity(false);
 	//controller script
+	
+	
 	controller.addComponent<ControllerScript>(player.getComponent<PlayerScripts>());
-
-
 	//defining game enviroment objects
 	background.addComponent<Background2DRender>().material = AssetManager::instance().getMaterial("backgroundMaterial");
 

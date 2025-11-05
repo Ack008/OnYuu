@@ -56,7 +56,55 @@ public:
     // con damping quando si verifica un enter di collisione. Può essere sovrascritto
     // per comportamenti più realistici.
     virtual void onCollisionEnter(Collider* other) override {
-        
+        if (!other) return;
+        if (bodyType == BodyType::STATIC || !obj->hasComponent<BoxCollider>() || !other->obj->hasComponent<BoxCollider>())
+            return;
+
+        BoxCollider& mine = obj->getComponent<BoxCollider>();
+        BoxCollider& otherBox = other->obj->getComponent<BoxCollider>();
+        Trasform& mineTransform = obj->getComponent<Trasform>();
+        Trasform& otherTransform = other->obj->getComponent<Trasform>();
+
+        glm::vec3 mineMin = mine.getMinPoint() * mineTransform.scale + mineTransform.position;
+        glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.scale + mineTransform.position;
+        glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.scale + otherTransform.position;
+        glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.scale + otherTransform.position;
+
+        // Calcola le penetrazioni su ogni asse
+        float overlapX = std::min(mineMax.x, otherMax.x) - std::max(mineMin.x, otherMin.x);
+        float overlapY = std::min(mineMax.y, otherMax.y) - std::max(mineMin.y, otherMin.y);
+
+        glm::vec3 normal(0.0f);
+
+        // L'asse con la minor penetrazione determina la direzione della collisione
+        if (overlapY < overlapX) {
+            // Collisione verticale
+            normal = glm::vec3(0.0f, (mineMax.y > otherMax.y) ? 1.0f : -1.0f, 0.0f);
+
+            // Se la normale punta verso l'alto → stiamo toccando il pavimento
+            if (normal.y > 0.0f)
+                m_isGrounded = true;
+        }
+        else {
+            // Collisione orizzontale
+            glm::vec3 delta = otherTransform.position - mineTransform.position;
+            normal = glm::vec3((delta.x > 0.0f) ? -1.0f : 1.0f, 0.0f, 0.0f);
+        }
+        if (glm::dot(normal, otherTransform.position - mineTransform.position) > 0.0f)
+            normal = -normal;
+
+        // --- RISOLUZIONE DELLA PENETRAZIONE (push-out) ---
+        float penetration = std::min(overlapX, overlapY);
+        mineTransform.position += normal * ( penetration + 0.001f);
+
+        // --- RIMBALZO (debounce) ---
+        // Proietta la velocità sulla normale e inverte con il coefficiente di rimbalzo
+        float vn = glm::dot(velocity, normal);
+        if (vn < 0.0f) { // solo se si sta muovendo verso la superficie
+            glm::vec3 vBounce = -vn * normal * (1.0f + debouncingCoefficent);
+            velocity += vBounce;
+        }
+     
     }
     virtual void onCollisionStay(Collider* other) override {
         if (!other) return;
@@ -137,7 +185,7 @@ private:
     bool _useGravity = false; // flag che abilita la gravità
     float debouncingCoefficent = 1.0;
 	bool m_isGrounded = false;
-
+	float friction = 1.f; // coefficiente di attrito semplice
 
     // Implementazione di `start` ereditata da Component: qui è vuota.
     void start() {};
