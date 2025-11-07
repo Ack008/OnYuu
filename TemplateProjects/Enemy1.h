@@ -36,7 +36,7 @@ public:
 	virtual GameObject istantiateObject(Scene* scene) override {
 		GameObject enemy = scene->createEntity();
 		auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
-		renderSquare.mesh = AssetManager::instance().getMesh("enemyMesh2");
+		renderSquare.mesh = AssetManager::instance().getMesh("LoveJapanese");
 		renderSquare.material = AssetManager::instance().getMaterial("colorUniformSupporterMaterial");
 		r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
 		g = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
@@ -44,7 +44,7 @@ public:
 		renderSquare.material->set("uColor", glm::vec4(r, g, b, 1.0));
 		enemy.addComponent<BoxCollider>();
 		enemy.addComponent<RigidBody>(RigidBody::BodyType::STATIC).setUseGravity(true);
-		enemy.getComponent<Trasform>().scale = glm::vec3(3, 3.f, 1.0f);
+		enemy.getComponent<Trasform>().scale = glm::vec3(5, 5.f, 1.0f);
 		enemy.getComponent<Trasform>().position = glm::vec3(0, 0, 0);
 		enemy.addComponent<EnemyScripts>();
 		enemy.getComponent<TagComponent>().tag = "Enemy";

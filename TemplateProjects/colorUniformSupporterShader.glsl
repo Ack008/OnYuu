@@ -1,3 +1,4 @@
+#version 330 core
 // Per ogni pixel (frammento) questa contiene il colore calcolato e interpolato tra i vertici del triangolo.
 
 in vec4 colore_frag;
