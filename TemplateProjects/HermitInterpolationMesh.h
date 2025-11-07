@@ -19,12 +19,32 @@ public:
         static HermitInterpolationMesh instance;
         return instance.generateHermitMesh(controlPoints, {},10);
     }
+
+    static Mesh generateMesh(const std::vector<std::vector<glm::vec3>>& controlPoints, std::vector<glm::vec4> colorTop, std::vector<glm::vec4 >colorBottom) {
+        static HermitInterpolationMesh instance;
+        return instance.generateHermitMesh(controlPoints, {}, 10,colorTop, colorBottom);
+    }
+
+    static Mesh generateMesh(const std::vector<std::vector<glm::vec3>>& controlPoints, glm::vec4 colorTop,glm::vec4 colorBottom) {
+        static HermitInterpolationMesh instance;
+        std::vector<glm::vec4> colorBottomVector;
+        for (int i = 0; i < controlPoints.size(); i++) {
+            colorBottomVector.push_back(colorBottom);
+        }
+
+        std::vector<glm::vec4> colorTopVector;
+        for (int i = 0; i < controlPoints.size(); i++) {
+            colorTopVector.push_back(colorBottom);
+        }
+        return instance.generateHermitMesh(controlPoints, {}, 10, colorTopVector, colorBottomVector);
+    }
 private:
     // Funzioni interne per la generazione della mesh (sovraccaricate):
     // - version con colori top/bottom
     Mesh generateHermitMesh(const std::vector<glm::vec3>& controlPoints, const std::vector<glm::vec3>& tangents, int segmentsPerCurve, glm::vec4 colorTop,glm::vec4 colorBottom);
     // - versione base che usa colori di default
     Mesh generateHermitMesh(const std::vector<glm::vec3>& controlPoints, const std::vector<glm::vec3>& tangents, int segmentsPerCurve);
+    Mesh generateHermitMesh(const std::vector<std::vector<glm::vec3>>& controlPoints, const std::vector<std::vector<glm::vec3>>& tangents, int segmentsPerCurve, std::vector<glm::vec4> colorTop, std::vector<glm::vec4 >colorBottom);
 
     // Calcola parametri t equispaziati per i punti di controllo (usato nella parametrizzazione)
     void t_equispaced(int numCurves);

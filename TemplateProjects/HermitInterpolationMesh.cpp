@@ -170,6 +170,25 @@ Mesh HermitInterpolationMesh::generateHermitMesh(const std::vector<glm::vec3>& c
 	return generateHermitMesh(controlPoints, tangents, segmentsPerCurve, glm::vec4{ 1 }, glm::vec4{ 1,1,1,1 });
 }
 
+Mesh HermitInterpolationMesh::generateHermitMesh(const std::vector<std::vector<glm::vec3>>& controlPoints, const std::vector<std::vector<glm::vec3>>& tangents, int segmentsPerCurve, std::vector<glm::vec4> colorTop, std::vector<glm::vec4> colorBottom)
+{
+	Mesh mesh;
+	for (int i = 0; i < controlPoints.size(); i++)
+	{
+		Mesh curvaMesh = generateHermitMesh(controlPoints[i], {}, segmentsPerCurve, colorTop[i], colorBottom[i]);
+		// Unisci la mesh della curva corrente con la mesh complessiva
+		uint32_t indexOffset = static_cast<uint32_t>(mesh.position.size());
+		// Aggiungi le posizioni e i colori
+		mesh.position.insert(mesh.position.end(), curvaMesh.position.begin(), curvaMesh.position.end());
+		mesh.color.insert(mesh.color.end(), curvaMesh.color.begin(), curvaMesh.color.end());
+		// Aggiungi gli indici, aggiustandoli con l'offset
+		for (uint32_t index : curvaMesh.indices) {
+			mesh.indices.push_back(index + indexOffset);
+		}
+	}
+	return mesh;
+}
+
 void HermitInterpolationMesh::t_equispaced(int numCurves)
 {
     t.clear();

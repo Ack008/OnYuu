@@ -34,6 +34,8 @@ public:
 
     // Aggiunge un GameObject alla lista di quelli da distruggere a fine frame.
     void addToDestroy(GameObject* obj) { toDestroy.push_back(obj); };
+	// Istanzia i prefab segnati per l'instanziazione.
+	void instantiatePrefabs();
 private:
     // Calcola le collisioni tra i collider presenti e notifica gli oggetti coinvolti.
     void calculateCollisions(float dt);
@@ -43,8 +45,6 @@ private:
 
     // Distrugge gli enti segnati con addToDestroy.
     void destroyEntities();
-	// Istanzia i prefab segnati per l'instanziazione.
-	void instantiatePrefabs();
 private:
     // Registro di entità utilizzato per componenti e sistemi (entt).
     // È allocato dinamicamente qui: la classe è responsabile della sua vita.
