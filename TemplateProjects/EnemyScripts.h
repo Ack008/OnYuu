@@ -6,11 +6,13 @@ public:
 	// Ereditato tramite Component
 	virtual void start() override
 	{
-		
+		Trasform& transform = obj->getComponent<Trasform>();
 	};
 	virtual void update(float dt) override
 	{
-		
+		time += dt;
+		Trasform& transform = obj->getComponent<Trasform>();
+		transform.position.y += amplitude * sinf(6.28 * frequency * time + rand()) * dt;
 	};
 	void setFrequency(float freq) {
 		frequency = freq;
@@ -33,5 +35,6 @@ public:
 private:
 	float frequency = 2.0f;
 	float amplitude = 5.0f;
+	float time = 0.0f;
 private:
 };

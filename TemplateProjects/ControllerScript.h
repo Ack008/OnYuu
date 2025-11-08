@@ -11,6 +11,8 @@ class ControllerScript : public Component
 	virtual void start() override
 	{
 		//istanzio una riga e colonne di nemici all'inizio del gioco
+		AssetManager& am = AssetManager::instance();
+		am.getMaterial("colorUniformSupporterMaterial")->set("uColor", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 		setGame();
 	}
 	void setGame()
@@ -25,7 +27,11 @@ class ControllerScript : public Component
 				}
 				GameObject enemy = obj->instantiatePrefabNow(enemyPrefab);
 				Trasform& enemyTransform = enemy.getComponent<Trasform>();
-				enemyTransform.position = glm::vec3((j - numCols / 2) * spacingCol, (i + 1) * spacingRow + 10.0f, 0);
+				enemyTransform.position = glm::vec3(
+					(j - numCols / 2) * spacingCol,
+					(i + 2) * spacingRow,
+					0.0f
+				);
 			}
 		}
 	}

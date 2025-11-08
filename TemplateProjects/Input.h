@@ -28,12 +28,15 @@ public:
 	static bool isKeyPressed(KeyCode key) {
 		return instance->_isKeyPressed(key);
 	}
+	// Ritorna true solo la prima volta che il tasto viene premuto
 	static bool isKeyPressedOnce(KeyCode key) {
 		return instance->_isKeyPressedOnce(key);
 	}
+	// Ritorna true se il tasto del mouse è premuto
 	static bool isMouseButtonPressed(int button) {
 		return instance->_isMouseButtonPressed(button);
 	}
+	// Ritorna la posizione corrente del mouse
 	static void getMousePosition(double& xpos, double& ypos) {
 		instance->_getMousePosition(xpos, ypos);
 	}
