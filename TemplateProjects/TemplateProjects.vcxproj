@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PublicIncludeDirectories>$(SolutionDir)\$(SolutionName);$(PublicIncludeDirectories)</PublicIncludeDirectories>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -105,12 +108,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\ImGui;C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies;C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\franc\Documents\computer-graphics-projects\TemplateProjects\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -137,46 +140,42 @@
     <ClCompile Include="..\Dependencies\ImGui\imgui_draw.cpp" />
     <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp" />
     <ClCompile Include="..\Dependencies\ImGui\imgui_widgets.cpp" />
-    <ClCompile Include="2DGameApplication.cpp" />
-    <ClCompile Include="Application.cpp" />
-    <ClCompile Include="ApplicazioneProva.cpp" />
-    <ClCompile Include="AssetManager.cpp" />
-    <ClCompile Include="BallScript.cpp" />
-    <ClCompile Include="BatchRenderer.cpp" />
-    <ClCompile Include="BatchRenderer.h" />
-    <ClCompile Include="Buffer.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Collider.cpp" />
-    <ClCompile Include="Component.cpp" />
-    <ClCompile Include="DebugLayer.cpp" />
-    <ClCompile Include="GameLayer.cpp" />
-    <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="GameScene.cpp" />
+    <ClCompile Include="2DGame\2DGameApplication.cpp" />
+    <ClCompile Include="Application\Application.cpp" />
+    <ClCompile Include="Application\AssetManager.cpp" />
+    <ClCompile Include="2DGame\Component\BallScript.cpp" />
+    <ClCompile Include="Render\BatchRenderer.cpp" />
+    <ClCompile Include="Render\BatchRenderer.h" />
+    <ClCompile Include="Render\Buffer.cpp" />
+    <ClCompile Include="Core\Model\Components\Camera.cpp" />
+    <ClCompile Include="Core\Model\Components\Collider.cpp" />
+    <ClCompile Include="Core\Model\Component.cpp" />
+    <ClCompile Include="2DGame\DebugLayer.cpp" />
+    <ClCompile Include="2DGame\GameLayer.cpp" />
+    <ClCompile Include="Core\Model\GameObject.cpp" />
+    <ClCompile Include="2DGame\GameScene.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="HermitInterpolationMesh.cpp" />
-    <ClCompile Include="ImGuiLayer.cpp" />
-    <ClCompile Include="Input.cpp" />
-    <ClCompile Include="LayerProva.cpp" />
-    <ClCompile Include="MeshGPUusage.h" />
-    <ClCompile Include="OpenGLBuffer.cpp" />
-    <ClCompile Include="OpenGLBuffer.h" />
-    <ClCompile Include="OpenGLRenderCommand.cpp" />
-    <ClCompile Include="OpenGLVertexArray.cpp" />
-    <ClCompile Include="PhysicsEngine.cpp" />
-    <ClCompile Include="FirstCustomComponent.cpp" />
+    <ClCompile Include="Core\HermitInterpolationMesh.cpp" />
+    <ClCompile Include="Application\Layer\ImGuiLayer.cpp" />
+    <ClCompile Include="Application\Input\Input.cpp" />
+    <ClCompile Include="Render\MeshGPUusage.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBuffer.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLRenderCommand.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLVertexArray.cpp" />
+    <ClCompile Include="Physics\PhysicsEngine.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Material.h" />
-    <ClCompile Include="OpenGLBatchRender.cpp" />
-    <ClCompile Include="OpenGLShader.cpp" />
-    <ClCompile Include="OpenGLView.cpp" />
-    <ClCompile Include="Prova.cpp" />
-    <ClCompile Include="RenderCommand.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="VertexArray.cpp" />
-    <ClCompile Include="View.cpp" />
+    <ClCompile Include="Core\Material.cpp" />
+    <ClCompile Include="Core\Material.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBatchRender.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLShader.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLView.cpp" />
+    <ClCompile Include="Render\RenderCommand.cpp" />
+    <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Core\Model\Scene.cpp" />
+    <ClCompile Include="Core\Shader.cpp" />
+    <ClCompile Include="Render\VertexArray.cpp" />
+    <ClCompile Include="Core\View\View.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h" />
@@ -188,55 +187,51 @@
     <ClInclude Include="..\Dependencies\ImGui\imstb_rectpack.h" />
     <ClInclude Include="..\Dependencies\ImGui\imstb_textedit.h" />
     <ClInclude Include="..\Dependencies\ImGui\imstb_truetype.h" />
-    <ClInclude Include="API.h" />
-    <ClInclude Include="Application.h" />
-    <ClInclude Include="AssetManager.h" />
-    <ClInclude Include="BackGround2DRender.h" />
-    <ClInclude Include="BallScript.h" />
-    <ClInclude Include="Buffer.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Collider.h" />
-    <ClInclude Include="ControllerScript.h" />
-    <ClInclude Include="DebugLayer.h" />
-    <ClInclude Include="earcut.hpp" />
-    <ClInclude Include="Enemy1.h" />
-    <ClInclude Include="EnemyScripts.h" />
-    <ClInclude Include="Engine.h" />
-    <ClInclude Include="GameLayer.h" />
-    <ClInclude Include="GameScene.h" />
-    <ClInclude Include="HermitInterpolationMesh.h" />
-    <ClInclude Include="OpenGLRenderCommand.h" />
-    <ClInclude Include="PhysicsEngine.h" />
-    <ClInclude Include="PlayerScripts.h" />
-    <ClInclude Include="Prefab.h" />
-    <ClInclude Include="ProjectileComponent.h" />
-    <ClInclude Include="RenderCommand.h" />
-    <ClInclude Include="RigidBody.h" />
-    <ClInclude Include="ScriptingSystem.h" />
-    <ClInclude Include="TagComponent.h" />
-    <ClInclude Include="TreeComponent.h" />
-    <ClInclude Include="Component.h" />
-    <ClInclude Include="GameObject.h" />
-    <ClInclude Include="ImGuiLayer.h" />
-    <ClInclude Include="Input.h" />
-    <ClInclude Include="KeyCode.h" />
-    <ClInclude Include="Layer.h" />
-    <ClInclude Include="LayerProva.h" />
-    <ClInclude Include="OpenGLInput.h" />
-    <ClInclude Include="OpenGLVertexArray.h" />
-    <ClInclude Include="FirstCustomComponent.h" />
-    <ClInclude Include="MeshComponent.h" />
-    <ClInclude Include="OpenGLBatchRender.h" />
-    <ClInclude Include="OpenGLShader.h" />
-    <ClInclude Include="OpenGLView.h" />
-    <ClInclude Include="Prova.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="RenderingTypeEnum.h" />
-    <ClInclude Include="Scene.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Transform.h" />
-    <ClInclude Include="VertexArray.h" />
-    <ClInclude Include="View.h" />
+    <ClInclude Include="Platform\API.h" />
+    <ClInclude Include="Application\Application.h" />
+    <ClInclude Include="Application\AssetManager.h" />
+    <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
+    <ClInclude Include="2DGame\Component\BallScript.h" />
+    <ClInclude Include="Render\Buffer.h" />
+    <ClInclude Include="Core\Model\Components\Camera.h" />
+    <ClInclude Include="Core\Model\Components\Collider.h" />
+    <ClInclude Include="2DGame\Component\ControllerScript.h" />
+    <ClInclude Include="2DGame\DebugLayer.h" />
+    <ClInclude Include="Core\earcut.hpp" />
+    <ClInclude Include="2DGame\Prefab\Enemy1.h" />
+    <ClInclude Include="2DGame\Component\EnemyScripts.h" />
+    <ClInclude Include="Core\Engine.h" />
+    <ClInclude Include="2DGame\GameLayer.h" />
+    <ClInclude Include="2DGame\GameScene.h" />
+    <ClInclude Include="Core\HermitInterpolationMesh.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLRenderCommand.h" />
+    <ClInclude Include="Physics\PhysicsEngine.h" />
+    <ClInclude Include="2DGame\Component\PlayerScripts.h" />
+    <ClInclude Include="Core\Prefab.h" />
+    <ClInclude Include="Render\RenderCommand.h" />
+    <ClInclude Include="Core\Model\Components\RigidBody.h" />
+    <ClInclude Include="Core\Model\Components\ScriptingSystem.h" />
+    <ClInclude Include="Core\Model\Components\TagComponent.h" />
+    <ClInclude Include="Core\Model\Components\TreeComponent.h" />
+    <ClInclude Include="Core\Model\Component.h" />
+    <ClInclude Include="Core\Model\GameObject.h" />
+    <ClInclude Include="Application\Layer\ImGuiLayer.h" />
+    <ClInclude Include="Application\Input\Input.h" />
+    <ClInclude Include="Application\Input\KeyCode.h" />
+    <ClInclude Include="Application\Layer.h" />
+    <ClInclude Include="Platform\OpenGL\Input\OpenGLInput.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLVertexArray.h" />
+    <ClInclude Include="Core\Model\Components\MeshComponent.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLBatchRender.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLShader.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLView.h" />
+    <ClInclude Include="Render\Renderer.h" />
+    <ClInclude Include="Core\RenderingTypeEnum.h" />
+    <ClInclude Include="Core\Model\Scene.h" />
+    <ClInclude Include="Core\Shader.h" />
+    <ClInclude Include="Core\Model\Components\Transform.h" />
+    <ClInclude Include="Render\VertexArray.h" />
+    <ClInclude Include="Core\View\View.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="colorUniformSupporterShader.glsl" />
