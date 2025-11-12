@@ -4,7 +4,7 @@
 #include <vector>
 #include "Render/BatchRenderer.h"
 #include "Core/Shader.h"
-
+#include "Platform/OpenGL/MeshGPUusage.h"
 
 class OpenGLBatchRender 
 	: public BatchRender

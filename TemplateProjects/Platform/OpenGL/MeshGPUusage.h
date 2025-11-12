@@ -10,6 +10,21 @@
 #include "Render/RenderCommand.h"
 #include "Core/RenderingTypeEnum.h"
 
+// MeshGPUusage
+// -----------------
+// Scopo:
+//   - Gestire il caricamento di una Mesh sulla GPU e fornire le operazioni di
+//     bind/draw per il rendering. Contiene la logica per creare VBO, IBO e VAO,
+//     interlecciare i dati di posizione/colore e inviarli alla GPU.
+//
+// Nota importante - OpenGL-specific:
+//   - Questa classe e fortemente legata a OpenGL: usa esplicitamente
+//     `OpenGLVertexBuffer`, `OpenGLVertexArray`, chiamate a `RenderCommand` e
+//     il layout degli attributi atteso da GLSL. Non e progettata per essere
+//     riutilizzata con altre API grafiche (DirectX, Vulkan, Metal) nello stato
+//     attuale. 
+//
+
 class MeshGPUusage {
 public:
 	void setMesh(Mesh* m) {

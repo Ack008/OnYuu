@@ -5,8 +5,6 @@
 #include "Core/RenderingTypeEnum.h"
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Shader.h"
-#include "Render/MeshGPUusage.h"
-class MeshGPUusage;
 
 // Render: interfaccia astratta che rappresenta il sistema di rendering di alto
 // livello. Contiene funzioni virtuali che dovranno essere implementate da una

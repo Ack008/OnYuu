@@ -2,6 +2,7 @@
 #include "Component/PlayerScripts.h"
 #include "Component/ControllerScript.h"
 #include "Component/BallScript.h"
+#include <iostream>
 GameScene::GameScene() 
 	:Scene()
 {

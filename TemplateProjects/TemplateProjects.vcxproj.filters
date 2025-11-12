@@ -73,54 +73,6 @@
     <ClCompile Include="glad.c">
       <Filter>File di risorse\OpenGLView</Filter>
     </ClCompile>
-    <ClCompile Include="FirstCustomComponent.cpp">
-      <Filter>Scena di prova\File di risorse</Filter>
-    </ClCompile>
-    <ClCompile Include="Prova.cpp">
-      <Filter>Scena di prova\File di risorse</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Core\Model\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Application</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="BatchRenderer.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="BatchRenderer.h">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLBatchRender.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLView.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLBuffer.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLBuffer.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="MeshGPUusage.h">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="VertexArray.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLVertexArray.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="ImGuiLayer.cpp">
-      <Filter>Application\Layers</Filter>
-    </ClCompile>
-    <ClCompile Include="Buffer.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
     <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
@@ -142,111 +94,43 @@
     <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.cpp">
       <Filter>ImGui\backends</Filter>
     </ClCompile>
-    <ClCompile Include="ApplicazioneProva.cpp">
-      <Filter>Scena di prova</Filter>
-    </ClCompile>
-    <ClCompile Include="LayerProva.cpp">
-      <Filter>Scena di prova</Filter>
-    </ClCompile>
-    <ClCompile Include="Input.cpp">
-      <Filter>Application\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="Collider.cpp">
-      <Filter>Core\Model\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugLayer.cpp">
-      <Filter>Scena di prova</Filter>
-    </ClCompile>
-    <ClCompile Include="PhysicsEngine.cpp">
-      <Filter>Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderCommand.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLRenderCommand.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="AssetManager.cpp">
-      <Filter>Application</Filter>
-    </ClCompile>
-    <ClCompile Include="View.cpp">
-      <Filter>Core\View</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGLShader.cpp">
-      <Filter>Platform\OpenGL</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Core\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.h">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>Core\Model</Filter>
-    </ClCompile>
-    <ClCompile Include="GameObject.cpp">
-      <Filter>Core\Model</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="HermitInterpolationMesh.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="2DGameApplication.cpp">
-      <Filter>2DGame</Filter>
-    </ClCompile>
-    <ClCompile Include="GameLayer.cpp">
-      <Filter>2DGame</Filter>
-    </ClCompile>
-    <ClCompile Include="GameScene.cpp">
-      <Filter>2DGame</Filter>
-    </ClCompile>
-    <ClCompile Include="BallScript.cpp">
-      <Filter>2DGame\Components</Filter>
-    </ClCompile>
+    <ClCompile Include="2DGame\2DGameApplication.cpp" />
+    <ClCompile Include="Application\Application.cpp" />
+    <ClCompile Include="Application\AssetManager.cpp" />
+    <ClCompile Include="2DGame\Component\BallScript.cpp" />
+    <ClCompile Include="Render\BatchRenderer.cpp" />
+    <ClCompile Include="Render\BatchRenderer.h" />
+    <ClCompile Include="Render\Buffer.cpp" />
+    <ClCompile Include="Core\Model\Components\Camera.cpp" />
+    <ClCompile Include="Core\Model\Components\Collider.cpp" />
+    <ClCompile Include="Core\Model\Component.cpp" />
+    <ClCompile Include="2DGame\DebugLayer.cpp" />
+    <ClCompile Include="2DGame\GameLayer.cpp" />
+    <ClCompile Include="Core\Model\GameObject.cpp" />
+    <ClCompile Include="2DGame\GameScene.cpp" />
+    <ClCompile Include="Core\HermitInterpolationMesh.cpp" />
+    <ClCompile Include="Application\Layer\ImGuiLayer.cpp" />
+    <ClCompile Include="Application\Input\Input.cpp" />
+    <ClCompile Include="Platform\OpenGL\MeshGPUusage.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBuffer.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBuffer.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLRenderCommand.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLVertexArray.cpp" />
+    <ClCompile Include="Physics\PhysicsEngine.cpp" />
+    <ClCompile Include="Core\Material.cpp" />
+    <ClCompile Include="Core\Material.h" />
+    <ClCompile Include="Platform\OpenGL\OpenGLBatchRender.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLShader.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLView.cpp" />
+    <ClCompile Include="Render\RenderCommand.cpp" />
+    <ClCompile Include="Render\Renderer.cpp" />
+    <ClCompile Include="Core\Model\Scene.cpp" />
+    <ClCompile Include="Core\Shader.cpp" />
+    <ClCompile Include="Render\VertexArray.cpp" />
+    <ClCompile Include="Core\View\View.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Prova.h">
-      <Filter>Scena di prova\File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="FirstCustomComponent.h">
-      <Filter>Scena di prova\File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Application</Filter>
-    </ClInclude>
-    <ClInclude Include="Buffer.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLBatchRender.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLView.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="VertexArray.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLVertexArray.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Layer.h">
-      <Filter>Application</Filter>
-    </ClInclude>
-    <ClInclude Include="ImGuiLayer.h">
-      <Filter>Application\Layers</Filter>
-    </ClInclude>
-    <ClInclude Include="API.h">
-      <Filter>Platform</Filter>
-    </ClInclude>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
       <Filter>ImGui</Filter>
     </ClInclude>
@@ -274,117 +158,51 @@
     <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3_loader.h">
       <Filter>ImGui\backends</Filter>
     </ClInclude>
-    <ClInclude Include="LayerProva.h">
-      <Filter>Scena di prova</Filter>
-    </ClInclude>
-    <ClInclude Include="Input.h">
-      <Filter>Application\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLInput.h">
-      <Filter>Platform\OpenGL\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="KeyCode.h">
-      <Filter>Application\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugLayer.h">
-      <Filter>Scena di prova</Filter>
-    </ClInclude>
-    <ClInclude Include="PhysicsEngine.h">
-      <Filter>Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderCommand.h">
-      <Filter>Render</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLRenderCommand.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="AssetManager.h">
-      <Filter>Application</Filter>
-    </ClInclude>
-    <ClInclude Include="ProjectileComponent.h">
-      <Filter>Scena di prova\File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="View.h">
-      <Filter>Core\View</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Collider.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshComponent.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="RigidBody.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ScriptingSystem.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="TagComponent.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="TreeComponent.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>Core\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="GameObject.h">
-      <Filter>Core\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.h">
-      <Filter>Core\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGLShader.h">
-      <Filter>Platform\OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderingTypeEnum.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="HermitInterpolationMesh.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="BackGround2DRender.h">
-      <Filter>Core\Model\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="earcut.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="GameLayer.h">
-      <Filter>2DGame</Filter>
-    </ClInclude>
-    <ClInclude Include="GameScene.h">
-      <Filter>2DGame</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerScripts.h">
-      <Filter>2DGame\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="Prefab.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Enemy1.h">
-      <Filter>2DGame\Prefab</Filter>
-    </ClInclude>
-    <ClInclude Include="EnemyScripts.h">
-      <Filter>2DGame\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="ControllerScript.h">
-      <Filter>2DGame\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="BallScript.h">
-      <Filter>2DGame\Components</Filter>
-    </ClInclude>
+    <ClInclude Include="Platform\API.h" />
+    <ClInclude Include="Application\Application.h" />
+    <ClInclude Include="Application\AssetManager.h" />
+    <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
+    <ClInclude Include="2DGame\Component\BallScript.h" />
+    <ClInclude Include="Render\Buffer.h" />
+    <ClInclude Include="Core\Model\Components\Camera.h" />
+    <ClInclude Include="Core\Model\Components\Collider.h" />
+    <ClInclude Include="2DGame\Component\ControllerScript.h" />
+    <ClInclude Include="2DGame\DebugLayer.h" />
+    <ClInclude Include="Core\earcut.hpp" />
+    <ClInclude Include="2DGame\Prefab\Enemy1.h" />
+    <ClInclude Include="2DGame\Component\EnemyScripts.h" />
+    <ClInclude Include="Core\Engine.h" />
+    <ClInclude Include="2DGame\GameLayer.h" />
+    <ClInclude Include="2DGame\GameScene.h" />
+    <ClInclude Include="Core\HermitInterpolationMesh.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLRenderCommand.h" />
+    <ClInclude Include="Physics\PhysicsEngine.h" />
+    <ClInclude Include="2DGame\Component\PlayerScripts.h" />
+    <ClInclude Include="Core\Prefab.h" />
+    <ClInclude Include="Render\RenderCommand.h" />
+    <ClInclude Include="Core\Model\Components\RigidBody.h" />
+    <ClInclude Include="Core\Model\Components\ScriptingSystem.h" />
+    <ClInclude Include="Core\Model\Components\TagComponent.h" />
+    <ClInclude Include="Core\Model\Components\TreeComponent.h" />
+    <ClInclude Include="Core\Model\Component.h" />
+    <ClInclude Include="Core\Model\GameObject.h" />
+    <ClInclude Include="Application\Layer\ImGuiLayer.h" />
+    <ClInclude Include="Application\Input\Input.h" />
+    <ClInclude Include="Application\Input\KeyCode.h" />
+    <ClInclude Include="Application\Layer.h" />
+    <ClInclude Include="Platform\OpenGL\Input\OpenGLInput.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLVertexArray.h" />
+    <ClInclude Include="Core\Model\Components\MeshComponent.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLBatchRender.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLShader.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLView.h" />
+    <ClInclude Include="Render\Renderer.h" />
+    <ClInclude Include="Core\RenderingTypeEnum.h" />
+    <ClInclude Include="Core\Model\Scene.h" />
+    <ClInclude Include="Core\Shader.h" />
+    <ClInclude Include="Core\Model\Components\Transform.h" />
+    <ClInclude Include="Render\VertexArray.h" />
+    <ClInclude Include="Core\View\View.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

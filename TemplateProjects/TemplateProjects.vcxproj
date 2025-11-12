@@ -158,7 +158,7 @@
     <ClCompile Include="Core\HermitInterpolationMesh.cpp" />
     <ClCompile Include="Application\Layer\ImGuiLayer.cpp" />
     <ClCompile Include="Application\Input\Input.cpp" />
-    <ClCompile Include="Render\MeshGPUusage.h" />
+    <ClCompile Include="Platform\OpenGL\MeshGPUusage.h" />
     <ClCompile Include="Platform\OpenGL\OpenGLBuffer.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLBuffer.h" />
     <ClCompile Include="Platform\OpenGL\OpenGLRenderCommand.cpp" />
