@@ -6,7 +6,7 @@ class Enemy1 : public Prefab {
 		virtual GameObject istantiateObject(Scene* scene) override {
 			GameObject enemy = scene->createEntity();
 			auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
-			renderSquare.mesh = AssetManager::instance().getMesh("EnemyJapanese");
+			renderSquare.mesh = AssetManager::instance().getMesh("enemyJapanese");
 			renderSquare.material = AssetManager::instance().getMaterial("defaultMaterial");
 
 
