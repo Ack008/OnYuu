@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <entt/entt.hpp>
-
+#include "Model/Ray.h"
 // Core application / window / input
 #include "Application/Application.h"
 #include "Application/Layer.h"

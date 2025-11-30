@@ -35,13 +35,13 @@ std::shared_ptr<IndexBuffer> IndexBuffer::create()
 	return nullptr;
 }
 
-std::shared_ptr<UniformBuffer> UniformBuffer::create()
+std::shared_ptr<UniformBuffer> UniformBuffer::create(uint32_t bindingPoint)
 {
 	switch (apiInUse)
 	{
 	case API::OpenGL:
 		// Restituisce l'implementazione OpenGL di UniformBuffer
-		return std::make_shared<OpenGLUniformBuffer>();
+		return std::make_shared<OpenGLUniformBuffer>(bindingPoint);
 		break;
 	default:
 		break;

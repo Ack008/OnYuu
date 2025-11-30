@@ -17,6 +17,15 @@ void BoxCollider::update(float dt) {
     
 }
 
+void BoxCollider::setDimensions(float w, float h, float d) {
+    width = w;
+    height = h;
+	depth = d;
+	// Aggiorna i punti min/max basandosi sulle nuove dimensioni
+    minPoint = glm::vec3(-width / 2.0f, -height / 2.0f, -depth/2.0);
+	maxPoint = glm::vec3(width / 2.0f, height / 2.0f, depth/ 2.0);
+}
+
 // BoxCollider::start
 // Inizializza dimensioni e punti min/max del box basandosi (se presente)
 // sul Mesh associato al RenderMeshComponent dell'oggetto.
@@ -35,16 +44,20 @@ void BoxCollider::start() {
                 float maxX = renderMeshComp.mesh->position[0].x;
                 float minY = renderMeshComp.mesh->position[0].y;
                 float maxY = renderMeshComp.mesh->position[0].y;
+				float minZ = renderMeshComp.mesh->position[0].z;
+				float maxZ = renderMeshComp.mesh->position[0].z;
                 for (const auto& pos : renderMeshComp.mesh->position) {
                     if (pos.x < minX) minX = pos.x;
                     if (pos.x > maxX) maxX = pos.x;
                     if (pos.y < minY) minY = pos.y;
                     if (pos.y > maxY) maxY = pos.y;
+					if (pos.z < minZ) minZ = pos.z;
+					if (pos.z > maxZ) maxZ = pos.z;
                 }
                 width = maxX - minX;
                 height = maxY - minY;
-                maxPoint = glm::vec3(maxX, maxY, 0.0f);
-                minPoint = glm::vec3(minX, minY, 0.0f);
+                maxPoint = glm::vec3(maxX, maxY, maxZ);
+                minPoint = glm::vec3(minX, minY, minZ);
             }
         }
     }
@@ -73,7 +86,8 @@ bool BoxCollider::collideWith(BoxCollider* other) {
     // Verifica sovrapposizione sugli assi X e Y
     bool overlapX = thisMin.x <= otherMax.x && thisMax.x >= otherMin.x;
     bool overlapY = thisMin.y <= otherMax.y && thisMax.y >= otherMin.y;
-    return overlapX && overlapY;
+	bool overlapZ = thisMin.z <= otherMax.z && thisMax.z >= otherMin.z;
+    return overlapX && overlapY && overlapZ;
 }
 
 // BoxCollider::collideWith(CircleCollider*)
@@ -81,6 +95,11 @@ bool BoxCollider::collideWith(BoxCollider* other) {
 bool BoxCollider::collideWith(CircleCollider* other) {
     // TODO: implementare test box-circle (closest point on AABB -> distance vs radius)
     return false; // Placeholder return value
+}
+
+bool BoxCollider::colliteWith(Ray ray)
+{
+    return false;
 }
 
 // CircleCollider::hasCollided

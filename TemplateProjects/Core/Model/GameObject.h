@@ -76,6 +76,16 @@ public:
 	//Istanzia un prefab immediatamente 
     GameObject instantiatePrefabNow(Prefab* prefab);
 	// Verifica se l'entity possiede un componente `T`.
+	// Ottieni tutti i game objects associati a un componente
+	template<typename T>
+    std::vector< GameObject > getGameObjectsByComponent() {
+        std::vector< GameObject > results;
+        auto view = _sceneptr->reg->view<T>();
+        for (auto entity : view) {
+            results.push_back(GameObject(entity, _sceneptr));
+        }
+        return results;
+	}
 	// Per script controlla la presenza di `ScriptingSystem` e poi se contiene lo script.
     template<typename T>
     bool hasComponent() {
@@ -155,6 +165,9 @@ public:
 	}
     entt::entity getID() const { return id; }
     Scene* getScene() { return _sceneptr; }
+    operator bool() const {
+        return id != entt::null && _sceneptr != nullptr;
+	}
 private:
     Scene* _sceneptr; // scena proprietaria (non possiede)
     entt::entity id{ entt::null };

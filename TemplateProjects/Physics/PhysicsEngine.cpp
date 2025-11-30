@@ -2,8 +2,8 @@
 #include <iostream>
 #include "Core/Model/GameObject.h"
 void PhysicsEngine::update(float dt) {
-	//bruteForceCollisionDetection();
-	collisionForPlayerAndBallOnly();
+	bruteForceCollisionDetection();
+	//collisionForPlayerAndBallOnly();
 }
 
 void PhysicsEngine::bruteForceCollisionDetection()

@@ -13,6 +13,8 @@
 struct Mesh {
 	std::vector<glm::vec3> position;
 	std::vector<glm::vec4> color;
+	std::vector<glm::vec2> texCoord;
+	std::vector<glm::vec3> normal;
 	std::vector<uint32_t> indices;
 };
 

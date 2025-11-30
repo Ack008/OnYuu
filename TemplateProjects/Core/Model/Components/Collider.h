@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include "Core/Model/Component.h"
-
+#include "Core/Model/Ray.h"
 // Collider.h
 // Definizione della gerarchia di collider usata dal motore di fisica.
 // - `Collider` è una classe astratta che estende `Component` e definisce
@@ -31,6 +31,7 @@ public:
 	virtual bool hasCollided(Collider* other) = 0;
 	virtual bool collideWith(BoxCollider* other) = 0;
 	virtual bool collideWith(CircleCollider* other) = 0;
+	virtual bool colliteWith(Ray ray) { return false; };
 
 	// Flag interno che indica se il collider è di tipo trigger (non genera risposta fisica)
 private:
@@ -50,13 +51,18 @@ public:
 	virtual bool hasCollided(Collider* other) override;
 	virtual bool collideWith(BoxCollider* other) override;
 	virtual bool collideWith(CircleCollider* other) override;
+	virtual bool colliteWith(Ray ray) override;
 
 	glm::vec3 getMinPoint() const { return minPoint; }
 	glm::vec3 getMaxPoint() const { return maxPoint; }
+	void setMinPoint(const glm::vec3& minP) { minPoint = minP; }
+	void setMaxPoint(const glm::vec3& maxP) { maxPoint = maxP; }
+	void setDimensions(float w, float h, float d);
 
 private:
 	float width;
 	float height;
+	float depth;
 	glm::vec3 minPoint;
 	glm::vec3 maxPoint;
 };

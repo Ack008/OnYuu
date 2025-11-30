@@ -68,10 +68,15 @@ public:
 		}
 		vao->bind();
 		std::vector<BufferElement> elements;
-		vbo->setLayout(BufferLayout({
-				{ ShaderDataType::Float3, "aPos", false },
-				{ ShaderDataType::Float4, "Color", false }
-			}));
+		if (mesh->position.size() > 0)
+			elements.push_back({ ShaderDataType::Float3, "aPos", false });
+		if (mesh->color.size() > 0)
+			elements.push_back({ ShaderDataType::Float4, "Color", false });
+		if (mesh->texCoord.size() > 0)
+			elements.push_back({ ShaderDataType::Float2, "aTexCoord", false });
+		if (mesh->normal.size() > 0)
+			elements.push_back({ ShaderDataType::Float3, "aNormal", false });
+		vbo->setLayout(BufferLayout(elements));
 
 		// Interleave position (vec3) and color (vec4) into a float buffer
 		std::vector<float> bufferData;
@@ -85,6 +90,17 @@ public:
 			bufferData.push_back(mesh->color[i].g);
 			bufferData.push_back(mesh->color[i].b);
 			bufferData.push_back(mesh->color[i].a);
+			// TexCoord
+			if (mesh->texCoord.size() > 0) {
+				bufferData.push_back(mesh->texCoord[i].x);
+				bufferData.push_back(mesh->texCoord[i].y);
+			}
+			// Normal
+			if (mesh->normal.size() > 0) {
+				bufferData.push_back(mesh->normal[i].x);
+				bufferData.push_back(mesh->normal[i].y);
+				bufferData.push_back(mesh->normal[i].z);
+			}
 		}
 		
 		// total size in bytes

@@ -5,6 +5,8 @@ public:
 	GameScene();
 	// Ereditato tramite Scene
 	void OnResize(uint32_t width, uint32_t height) override;
+	virtual void initializeMaterials() override;
+	virtual void initializeScene()  override;
 private:
 	GameObject camera = createEntity();
 	GameObject player = createEntity();

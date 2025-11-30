@@ -36,6 +36,11 @@ public:
     void addToDestroy(GameObject* obj) { toDestroy.push_back(obj); };
 	// Istanzia i prefab segnati per l'instanziazione.
 	void instantiatePrefabs();
+	// Imposta ed inizializza i materiali specifici della scena.
+    virtual void initializeMaterials() = 0;
+
+    //Imposta la scena ed i suoi oggetti
+    virtual void initializeScene() = 0;
 private:
     // Calcola le collisioni tra i collider presenti e notifica gli oggetti coinvolti.
     void calculateCollisions(float dt);

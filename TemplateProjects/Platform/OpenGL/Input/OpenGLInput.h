@@ -36,6 +36,11 @@ private:
 			return;
 		}
 		glfwGetCursorPos(window, &xpos, &ypos);
+		uint32_t width = Application::getInstance()->getWindow()->getWidth();
+		uint32_t height = Application::getInstance()->getWindow()->getHeight();
+		xpos = (2.0 * xpos) / width - 1.0;
+		ypos = 1.0 - (2.0 * ypos) / height;
+
 	}
 
 	// Rileva un evento di "rilascio" del tasto (transizione da premuto->rilasciato)

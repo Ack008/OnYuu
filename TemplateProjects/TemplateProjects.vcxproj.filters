@@ -129,6 +129,9 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Render\VertexArray.cpp" />
     <ClCompile Include="Core\View\View.cpp" />
+    <ClCompile Include="3DGame\Game3DApplication.cpp" />
+    <ClCompile Include="3DGame\Scene3D.cpp" />
+    <ClCompile Include="3DGame\scripts\Controller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
@@ -203,6 +206,11 @@
     <ClInclude Include="Core\Model\Components\Transform.h" />
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
+    <ClInclude Include="3DGame\Game3DLayer.h" />
+    <ClInclude Include="3DGame\Scene3D.h" />
+    <ClInclude Include="3DGame\scripts\CameraScript.h" />
+    <ClInclude Include="3DGame\scripts\Controller.h" />
+    <ClInclude Include="Core\Model\Ray.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
@@ -218,5 +226,6 @@
     <None Include="colorUniformSupporterShader.glsl">
       <Filter>File di risorse</Filter>
     </None>
+    <None Include="MeshVertexShader.glsl" />
   </ItemGroup>
 </Project>
