@@ -19,7 +19,7 @@ void Scene3D::initializeScene()
 	//defining cube
 	auto& renderSquare = cube.addComponent<RenderMeshComponent>();
 	renderSquare.mesh = AssetManager::instance().getMesh("cubeMesh");
-	renderSquare.material = AssetManager::instance().getMaterial("blingMat1");
+	renderSquare.material = AssetManager::instance().getMaterial("phongMat1");
 	cube.addComponent<BoxCollider>();
 	cube.getComponent<TagComponent>().tag = "cube";
 	cube.getComponent<Trasform>().position = glm::vec3(0.0f, 0.0f, -5.0f);
@@ -27,7 +27,7 @@ void Scene3D::initializeScene()
 	//defining sphere
 	auto& renderSphere = sphere.addComponent<RenderMeshComponent>();
 	renderSphere.mesh = AssetManager::instance().getMesh("sphereMesh");
-	renderSphere.material = AssetManager::instance().getMaterial("blingMat1");
+	renderSphere.material = AssetManager::instance().getMaterial("phongMat1");
 	sphere.getComponent<Trasform>().position = glm::vec3(2.0f, 0.0f, -5.0f);
 	sphere.getComponent<TagComponent>().tag = "Sphere";
 	sphere.addComponent<BoxCollider>();
@@ -35,7 +35,7 @@ void Scene3D::initializeScene()
 	// defining toro
 	auto& renderToro = toro.addComponent<RenderMeshComponent>();
 	renderToro.mesh = AssetManager::instance().getMesh("toroMesh");
-	renderToro.material = AssetManager::instance().getMaterial("blingMat1");
+	renderToro.material = AssetManager::instance().getMaterial("phongMat1");
 	toro.getComponent<Trasform>().position = glm::vec3(-2.0f, 0.0f, -5.0f);
 	toro.getComponent<TagComponent>().tag = "Toro";
 	toro.addComponent<BoxCollider>();
@@ -48,7 +48,6 @@ void Scene3D::initializeScene()
 
 void Scene3D::settingLight()
 {
-	lightDirectional = createEntity();
 	lightDirectional.getComponent<Trasform>().position = glm::vec3(0.0f, 1.0f, 0.0f);
 	auto &rb = lightDirectional.addComponent<RenderMeshComponent>();
 	rb.mesh = AssetManager::instance().getMesh("sphereMesh");
@@ -203,18 +202,43 @@ void Scene3D::initializeMaterials()
 	createPyramid();
 	createToro({0,1,1,1});
 	std::shared_ptr<Shader> shader = Shader::create("MeshVertexShader.glsl", "fragmentShaderC.glsl");
-	std::shared_ptr<Shader> shaderBling = Shader::create("phongVer.glsl", "phongFrag.glsl");
+	std::shared_ptr<Shader> shaderPhongInter = Shader::create("Asset/Shader/phongVerInter.glsl", "Asset/Shader/phongFragInter.glsl");
+	std::shared_ptr<Shader> shaderPhong = Shader::create("Asset/Shader/phongVer.glsl", "Asset/Shader/phongFrag.glsl");	
+	std::shared_ptr<Shader> shaderBlingPhong = Shader::create("Asset/Shader/bling-phong-ver.glsl", "Asset/Shader/bling-phong-frag.glsl");
+	std::shared_ptr<Shader> shaderBlingPhongInter = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter.glsl");
 
 
 	AssetManager::instance().addMaterial("defaultMaterial", std::make_shared<Material>(shader));
-	AssetManager::instance().addMaterial("blingMat1", std::make_shared<Material>(shaderBling));
-	auto mat = AssetManager::instance().getMaterial("blingMat1");
-	mat->set("material.ambient",glm::vec3( 0.19125f, 0.0735f, 0.0225f));
-	mat->set("material.shininess",32);
-	mat->set("material.diffuse", glm::vec3( 0.7038f, 0.27048f, 0.0828f ));
+
+	AssetManager::instance().addMaterial("phongInterMat1", std::make_shared<Material>(shaderPhongInter));
+	auto mat = AssetManager::instance().getMaterial("phongInterMat1");
+	mat->set("material.ambient",glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat->set("material.shininess",13.f);
+	mat->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 
+	AssetManager::instance().addMaterial("phongMat1", std::make_shared<Material>(shaderPhong));
+	auto mat2 = AssetManager::instance().getMaterial("phongMat1");
+	mat2->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat2->set("material.shininess", 13.f);
+	mat2->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat2->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 
+
+
+	AssetManager::instance().addMaterial("bling-phong", std::make_shared<Material>(shaderBlingPhong));
+	auto mat3 = AssetManager::instance().getMaterial("bling-phong");
+	mat3->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat3->set("material.shininess", 13.f);
+	mat3->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat3->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
+
+	AssetManager::instance().addMaterial("bling-phong-Inter", std::make_shared<Material>(shaderBlingPhongInter));
+	auto mat4 = AssetManager::instance().getMaterial("bling-phong-Inter");
+	mat4->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat4->set("material.shininess", 13.f);
+	mat4->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat4->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 
 
 	

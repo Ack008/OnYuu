@@ -61,6 +61,14 @@ public:
     // Puntatore grezzo comodita (puo essere nullptr).
     Material* getMaterial(const std::string& name) const;
 
+	// ottieni la mappa delle mesh
+    const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
+        return meshes_;
+	}
+    // ottieni la mappa dei materiali
+    const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
+        return materials_;
+	}
 private:
     AssetManager() = default;
 

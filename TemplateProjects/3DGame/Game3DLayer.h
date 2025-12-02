@@ -18,7 +18,7 @@ class Game3DLayer : public Layer {
 			ImGui::Text(("Selected Object tag: " + selectedObj.getComponent<TagComponent>().tag).c_str());
 			Trasform& transform = selectedObj.getComponent<Trasform>();
 			ImGui::Text("Position");
-			ImGui::SliderFloat3("##Position", &transform.position[0],-5,5);
+			ImGui::SliderFloat3("##Position", &transform.position[0],-10,10);
 			ImGui::Text("Rotation");
 			ImGui::SliderFloat3("##Rotation", &transform.rotation[0],0,90);
 			ImGui::Text("Scale");
@@ -29,6 +29,23 @@ class Game3DLayer : public Layer {
 				ImGui::SliderFloat3("##LightColor", glm::value_ptr(lightComp.color),0,1);
 				ImGui::Text("Light Intensity");
 				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,50);
+			}
+			if (selectedObj.hasComponent<RenderMeshComponent>()) {
+				RenderMeshComponent& renderComp = selectedObj.getComponent<RenderMeshComponent>();
+				AssetManager& assetManager = AssetManager::instance();
+				if(ImGui::TreeNode("All Materials"))
+					{
+					const auto& materials = assetManager.getMaterials();
+					for (const auto& [name, matPtr] : materials) {
+						if (matPtr.get() == renderComp.material) {
+							ImGui::LabelText("", "%s (Selected)", name.c_str());
+						}else if (ImGui::Selectable(name.c_str())) {
+							renderComp.material = matPtr.get();
+						}
+					}
+					ImGui::TreePop();
+				}
+
 			}
 			ImGui::End();
 		}

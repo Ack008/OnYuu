@@ -229,7 +229,13 @@
     </None>
     <None Include="MeshVertexShader.glsl" />
     <None Include="bling-phongVert.glsl" />
-    <None Include="phongVer.glsl" />
-    <None Include="phongFrag.glsl" />
+    <None Include="Asset\Shader\phongVer.glsl" />
+    <None Include="Asset\Shader\phongFrag.glsl" />
+    <None Include="Asset\Shader\phongVerInter.glsl" />
+    <None Include="Asset\Shader\phongFragInter.glsl" />
+    <None Include="Asset\Shader\bling-phong-frag.glsl" />
+    <None Include="Asset\Shader\bling-phong-ver.glsl" />
+    <None Include="Asset\Shader\bling-phongFragInter.glsl" />
+    <None Include="Asset\Shader\bling-phongVerInter.glsl" />
   </ItemGroup>
 </Project>

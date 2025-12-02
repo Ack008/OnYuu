@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Engine.h"
-GameObject lightDirectional;
 class Scene3D : public Scene {
 	public:
 	Scene3D();
@@ -20,7 +19,7 @@ private:
 	GameObject toro = createEntity();
 
 	//lights
-	
+	GameObject lightDirectional = createEntity();
 	GameObject lightDirectional2 = createEntity();
 
 	uint32_t width = Application::getInstance()->getWindow()->getWidth();
