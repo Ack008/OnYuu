@@ -147,7 +147,9 @@
     <ClCompile Include="Application\Application.cpp" />
     <ClCompile Include="Application\AssetManager.cpp" />
     <ClCompile Include="2DGame\Component\BallScript.cpp" />
+    <ClCompile Include="Core\CubeMap.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
@@ -197,7 +199,9 @@
     <ClInclude Include="3DGame\Scene3D.h" />
     <ClInclude Include="3DGame\scripts\CameraScript.h" />
     <ClInclude Include="3DGame\scripts\Controller.h" />
+    <ClInclude Include="Core\CubeMap.h" />
     <ClInclude Include="Core\Model\Components\Lights.h" />
+    <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
     <ClInclude Include="Core\Model\Ray.h" />
     <ClInclude Include="Core\Texture.h" />
     <ClInclude Include="Platform\API.h" />
@@ -205,6 +209,7 @@
     <ClInclude Include="Application\AssetManager.h" />
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="2DGame\Component\BallScript.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />
@@ -257,11 +262,15 @@
     <None Include="Asset\Shader\phongFragInter.glsl" />
     <None Include="Asset\Shader\phongVer.glsl" />
     <None Include="Asset\Shader\phongVerInter.glsl" />
+    <None Include="Asset\Shader\SkyBoxShader\SkyBoxFrag.glsl" />
+    <None Include="Asset\Shader\SkyBoxShader\SkyBoxVer.glsl" />
     <None Include="bling-phongVert.glsl" />
     <None Include="colorUniformSupporterShader.glsl" />
     <None Include="fragmentShaderC.glsl" />
     <None Include="MeshVertexShader.glsl" />
     <None Include="packages.config" />
+    <None Include="Platform\OpenGL\SkyBoxFrag.glsl" />
+    <None Include="Platform\OpenGL\SkyBoxVer.glsl" />
     <None Include="sfondoFragShader.glsl" />
     <None Include="vertexShaderC.glsl" />
   </ItemGroup>

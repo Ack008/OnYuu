@@ -1,5 +1,6 @@
 #include "Core/Engine.h"
 #include <iostream>
+#include "Components/SkyBoxComponent.h"
 GameObject Scene::createEntity()
 {
 	entt::entity id = reg->create();
@@ -65,7 +66,13 @@ void Scene::update(float dt)
 	for (auto [entity, script] : scriptsView.each()) {
 		script.update(dt);
 	}
-
+	//rendering skybox
+	auto skyboxView = reg->view<SkyBoxComponent>();
+	for (auto [entity, skybox] : skyboxView.each()) {
+		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+		Render::getInstance()->setSkyBox(&skybox);
+		break;
+	}
 	//rendering background
 	auto backgroundView = reg->view<Background2DRender>();
 	Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());

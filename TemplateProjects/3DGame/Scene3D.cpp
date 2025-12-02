@@ -207,7 +207,12 @@ void Scene3D::initializeMaterials()
 	std::shared_ptr<Shader> shaderBlingPhong = Shader::create("Asset/Shader/bling-phong-ver.glsl", "Asset/Shader/bling-phong-frag.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInter = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInterTexture = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter-Texture.glsl");
-
+	// skybox shader
+	std::shared_ptr<Shader> skyboxShader = Shader::create(
+		"Asset/Shader/SkyBoxShader/SkyBoxVer.glsl",
+		"Asset/Shader/SkyBoxShader/SkyBoxFrag.glsl"
+	);
+	AssetManager::instance().addMaterial("skyboxMaterial", std::make_shared<Material>(skyboxShader));
 
 	AssetManager::instance().addMaterial("defaultMaterial", std::make_shared<Material>(shader));
 

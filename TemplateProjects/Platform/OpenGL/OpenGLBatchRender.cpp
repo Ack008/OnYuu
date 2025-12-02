@@ -3,7 +3,12 @@
 #include <iostream>
 #include "OpenGLBatchRender.h"
 #include "Render/BatchRenderer.h"
+#include "Application/Application.h"
+#include "Application/AssetManager.h"
 #define INITIAL_BUFFER_SIZE_MULTIPLIER 5
+
+
+
 
 /*
 PSEUDOCODICE / PIANO (dettagliato):
@@ -35,6 +40,7 @@ OpenGLBatchRender::OpenGLBatchRender()
 		// Non chiamare funzioni OpenGL qui: il contesto potrebbe non essere pronto.
 	// Inizializziamo il VAO in modo lazy durante draw().
 	vao = 0;
+	
 }
 
 void OpenGLBatchRender::draw()
@@ -46,35 +52,7 @@ void OpenGLBatchRender::draw()
 	if (!batches) return;
 	for (const auto& pair : *batches) {
 		const BatchCouple& key = pair.first;
-		/*
-		// Verifica che esista il VBO associato
-		auto itV = vbosMap.find(key);
-		if (itV == vbosMap.end()) continue;
-
-
-		// Aggiorna dati (map + memcpy) e prendi il vettore dei floats
-		std::vector<float> data = this->getData(key);
-		glBindBuffer(GL_ARRAY_BUFFER, itV->second.vbo);
-
 		
-
-		// Se non ci sono dati, saltare
-		if (data.empty()) {
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			continue;
-		}
-
-		// Stride e offset in byte (3 floats pos + 4 floats color = 7 float)
-		GLsizei stride = static_cast<GLsizei>(7 * sizeof(float));
-		const void* posOffset = reinterpret_cast<const void*>(0);
-		const void* colOffset = reinterpret_cast<const void*>(3 * sizeof(float));
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, posOffset);
-
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, stride, colOffset);
-		*/
 		// Usa lo shader
 		if (key.first) {
 			key.first->bind();
@@ -104,8 +82,51 @@ void OpenGLBatchRender::draw()
 		}
 
 	}
-}
 
+
+	if(skybox) {
+		drawSkybox();
+	}
+}
+void OpenGLBatchRender::drawSkybox()
+{
+	glDepthFunc(GL_LEQUAL);
+
+	Camera &camera = *getCurrentCamera();
+	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 projection = glm::mat4(1.0f);
+	// We make the mat4 into a mat3 and then a mat4 again in order to get rid of the last row and column
+	// The last row and column affect the translation of the skybox (which we don't want to affect)
+	view = glm::mat4(glm::mat3(glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getTarget() - camera.getPosition(), camera.getUpVector())));
+	uint32_t width = Application::getInstance()->getWindow()->getWidth();
+	uint32_t height = Application::getInstance()->getWindow()->getHeight();
+	projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
+	AssetManager& am = AssetManager::instance();
+	Mesh* cubeMesh = am.getMesh("cubeMesh");
+	if (meshGPUmap.find(cubeMesh) == meshGPUmap.end()) {
+		meshGPUmap[cubeMesh] = MeshGPUusage();
+		meshGPUmap[cubeMesh].setMesh(cubeMesh);
+	}
+	meshGPUmap[cubeMesh].uploadToGPU();
+	Material* currentSkyboxMaterial = AssetManager::instance().getMaterial("skyboxMaterial");
+	meshGPUmap[cubeMesh].bind();
+	currentSkyboxMaterial->bind();
+	currentSkyboxMaterial->set("view", view);
+	currentSkyboxMaterial->set("projection", projection);
+	currentSkyboxMaterial->apply();
+	skybox->cubeMap->bind();
+	// Determina il tipo di disegno
+
+	GLsizei vertexCount = static_cast<GLsizei>(cubeMesh->position.size());
+	if (vertexCount > 0) {
+
+		meshGPUmap[cubeMesh].draw(TRIANGLE);
+	}
+
+
+	// Switch back to the normal depth function
+	glDepthFunc(GL_LESS);
+}
 void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 {
 	BatchRender::addMeshRender(mesh, model);
@@ -127,4 +148,9 @@ void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model
 		glBufferData(GL_ARRAY_BUFFER, vbosMap[couple].size, nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}*/
+}
+
+void OpenGLBatchRender::setSkyBox(SkyBoxComponent* skybox)
+{
+	this->skybox = skybox;
 }

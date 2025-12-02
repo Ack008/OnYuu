@@ -135,6 +135,8 @@
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
+    <ClCompile Include="Core\CubeMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
@@ -217,6 +219,9 @@
     <ClInclude Include="Core\Model\Components\Lights.h" />
     <ClInclude Include="Core\Texture.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="Core\CubeMap.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
+    <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
@@ -243,5 +248,9 @@
     <None Include="Asset\Shader\bling-phongFragInter.glsl" />
     <None Include="Asset\Shader\bling-phongVerInter.glsl" />
     <None Include="Asset\Shader\bling-phongFragInter-Texture.glsl" />
+    <None Include="Asset\Shader\SkyBoxShader\SkyBoxVer.glsl" />
+    <None Include="Asset\Shader\SkyBoxShader\SkyBoxFrag.glsl" />
+    <None Include="Platform\OpenGL\SkyBoxFrag.glsl" />
+    <None Include="Platform\OpenGL\SkyBoxVer.glsl" />
   </ItemGroup>
 </Project>

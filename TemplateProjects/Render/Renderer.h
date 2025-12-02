@@ -5,7 +5,8 @@
 #include "Core/RenderingTypeEnum.h"
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Shader.h"
-
+#include "Core/Model/Components/SkyBoxComponent.h"
+#include "Core/Model/Components/Camera.h"
 // Render: interfaccia astratta che rappresenta il sistema di rendering di alto
 // livello. Contiene funzioni virtuali che dovranno essere implementate da una
 // specifica API (es. OpenGL, DirectX, Vulkan).
@@ -33,15 +34,20 @@ public:
 	// il puntatore alla lista `meshRenders`. Implementazioni concrete possono
 	// sovrascriverla per eseguire batching o trasformazioni.
 	virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) { meshRenders.push_back(mesh); };
-
+	// setSkyBox: imposta la cubemap da usare per il skybox
+	virtual void setSkyBox(SkyBoxComponent *skybox) = 0;
     // clear: pulisce le liste di oggetti da disegnare o altre risorse temporanee
 	virtual void clear() = 0;
 
 	// Gestione della matrice della camera (view-projection). Il renderer userà
 	// questa matrice per impostare gli uniform delle shader prima del draw.
 	void setCameraMatrix(const glm::mat4& camMatrix) { cameraMatrix = camMatrix; }
+	void setCamera(Camera *camera) {
+		currentCamera = camera;
+		cameraMatrix = camera->getVPMatrix();
+	}
 	glm::mat4 getCameraMatrix() const { return cameraMatrix; }
-
+	Camera* getCurrentCamera() const { return currentCamera; }
 	// Accesso globale all'istanza concreta del renderer. Usa il factory method
 	// `create()` per costruire l'implementazione corretta in base all'API.
 	static std::shared_ptr<Render> getInstance();
@@ -55,6 +61,7 @@ protected:
 	// quando più mesh condividono la stessa geometria.
 private:
 	glm::mat4 cameraMatrix;
+	Camera* currentCamera = nullptr;
     static std::shared_ptr<Render> s_instance;
 	static std::shared_ptr<Render> create();
 };
