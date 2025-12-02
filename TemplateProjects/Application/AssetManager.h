@@ -5,7 +5,7 @@
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Material.h"
 #include "Core/Texture.h"
-
+#include "Core/CubeMap.h"
 // AssetManager
 // -----------------
 // Scopo:
@@ -65,6 +65,10 @@ public:
     std::shared_ptr<Texture> addTexture(const std::string& name, std::shared_ptr<Texture> tex);
 	std::shared_ptr<Texture> getTexturePtr(const std::string& name) const;
 	Texture* getTexture(const std::string& name) const;
+
+	std::shared_ptr<CubeMap> addCubeMap(const std::string& name, std::shared_ptr<CubeMap> cubeMap);
+	std::shared_ptr<CubeMap> getCubeMapPtr(const std::string& name) const;
+	CubeMap* getCubeMap(const std::string& name) const;
 	// ottieni la mappa delle mesh
     const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
         return meshes_;
@@ -80,4 +84,6 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
     std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
 	std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
+	std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
+
 };

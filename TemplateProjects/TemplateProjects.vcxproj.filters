@@ -253,4 +253,24 @@
     <None Include="Platform\OpenGL\SkyBoxFrag.glsl" />
     <None Include="Platform\OpenGL\SkyBoxVer.glsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Asset\Texture\SkyBox\back.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Asset\Texture\SkyBox\bottom.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Asset\Texture\SkyBox\front.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Asset\Texture\SkyBox\left.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Asset\Texture\SkyBox\right.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Asset\Texture\SkyBox\top.jpg">
+      <Filter>File di risorse</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

@@ -3,7 +3,6 @@
 #include <glad/glad.h>
 #include <iostream>
 OpenGLCubeMap::OpenGLCubeMap(const std::vector<std::string>& faces) {
-	stbi_set_flip_vertically_on_load(1); // Flip the image vertically on load
 	glGenTextures(1, &ID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 	int width, height, nrChannels;

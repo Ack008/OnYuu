@@ -1,5 +1,5 @@
 #include "AssetManager.h"
-
+#include "Core/CubeMap.h"
 AssetManager& AssetManager::instance() {
     static AssetManager mgr;
     return mgr;
@@ -47,4 +47,21 @@ std::shared_ptr<Texture> AssetManager::getTexturePtr(const std::string& name) co
 Texture* AssetManager::getTexture(const std::string& name) const {
     auto ptr = getTexturePtr(name);
     return ptr ? ptr.get() : nullptr;
+}
+
+std::shared_ptr<CubeMap> AssetManager::addCubeMap(const std::string& name, std::shared_ptr<CubeMap> cubeMap)
+{
+    cubeMaps_[name] = std::move(cubeMap);
+    return cubeMaps_[name];
+}
+
+std::shared_ptr<CubeMap> AssetManager::getCubeMapPtr(const std::string& name) const
+{
+    auto it = cubeMaps_.find(name);
+    return it != cubeMaps_.end() ? it->second : nullptr;
+}
+
+CubeMap* AssetManager::getCubeMap(const std::string& name) const
+{
+    return getCubeMapPtr(name).get();
 }

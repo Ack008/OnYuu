@@ -11,6 +11,8 @@ class Scene3D : public Scene {
 		return controller;
 	}
 private:
+	//Skybox
+	GameObject skybox = createEntity();
 	GameObject controller = createEntity();
 	//Oggetti della scena
 	GameObject camera = createEntity();

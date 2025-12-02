@@ -44,6 +44,10 @@ void Scene3D::initializeScene()
 
 	//defining lights
 	settingLight();
+
+	//defining skybox
+	auto& skyboxRender = skybox.addComponent<SkyBoxComponent>();
+	skyboxRender.cubeMap = AssetManager::instance().getCubeMapPtr("skybox");
 }
 
 void Scene3D::settingLight()
@@ -213,7 +217,14 @@ void Scene3D::initializeMaterials()
 		"Asset/Shader/SkyBoxShader/SkyBoxFrag.glsl"
 	);
 	AssetManager::instance().addMaterial("skyboxMaterial", std::make_shared<Material>(skyboxShader));
-
+	std::shared_ptr<CubeMap> textureSkybox = AssetManager::instance().addCubeMap("skybox",CubeMap::createCubeMap({
+		"Asset/Texture/SkyBox/right.jpg",
+		"Asset/Texture/SkyBox/left.jpg",
+		"Asset/Texture/SkyBox/top.jpg",
+		"Asset/Texture/SkyBox/bottom.jpg",
+		"Asset/Texture/SkyBox/front.jpg",
+		"Asset/Texture/SkyBox/back.jpg"
+		}));
 	AssetManager::instance().addMaterial("defaultMaterial", std::make_shared<Material>(shader));
 
 	AssetManager::instance().addMaterial("phongInterMat1", std::make_shared<Material>(shaderPhongInter));

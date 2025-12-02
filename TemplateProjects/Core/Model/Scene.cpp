@@ -67,12 +67,7 @@ void Scene::update(float dt)
 		script.update(dt);
 	}
 	//rendering skybox
-	auto skyboxView = reg->view<SkyBoxComponent>();
-	for (auto [entity, skybox] : skyboxView.each()) {
-		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
-		Render::getInstance()->setSkyBox(&skybox);
-		break;
-	}
+	
 	//rendering background
 	auto backgroundView = reg->view<Background2DRender>();
 	Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
@@ -91,6 +86,7 @@ void Scene::update(float dt)
 	for (auto [entity, camera] : cameraView.each()) {
 		if (camera.getActive()) {
 			Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
+			Render::getInstance()->setCamera(&camera);
 			activeCamera = &camera;
 			cameraFound = true;
 		}
@@ -102,6 +98,7 @@ void Scene::update(float dt)
 		for (auto [entity, camera] : cameraViewPer.each()) {
 			if (camera.getActive()) {
 				Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
+				Render::getInstance()->setCamera(&camera);
 				activeCamera = &camera;
 				cameraFound = true;
 			}
@@ -110,8 +107,17 @@ void Scene::update(float dt)
 	}
 	if (!cameraFound) {
 		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+		Render::getInstance()->setCamera(editorCamera);
 	}
+
 	loadActiveCamera();
+	auto skyboxView = reg->view<SkyBoxComponent>();
+	for (auto [entity, skybox] : skyboxView.each()) {
+		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+		Render::getInstance()->setSkyBox(&skybox);
+		break;
+	}
+
 
 	calculateCollisions(dt);
 	sendToRender();

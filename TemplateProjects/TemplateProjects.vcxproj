@@ -274,6 +274,14 @@
     <None Include="sfondoFragShader.glsl" />
     <None Include="vertexShaderC.glsl" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Asset\Texture\SkyBox\back.jpg" />
+    <Image Include="Asset\Texture\SkyBox\bottom.jpg" />
+    <Image Include="Asset\Texture\SkyBox\front.jpg" />
+    <Image Include="Asset\Texture\SkyBox\left.jpg" />
+    <Image Include="Asset\Texture\SkyBox\right.jpg" />
+    <Image Include="Asset\Texture\SkyBox\top.jpg" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\glm.1.0.1\build\native\glm.targets" Condition="Exists('..\packages\glm.1.0.1\build\native\glm.targets')" />
