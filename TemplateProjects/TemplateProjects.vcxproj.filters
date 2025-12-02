@@ -211,6 +211,7 @@
     <ClInclude Include="3DGame\scripts\CameraScript.h" />
     <ClInclude Include="3DGame\scripts\Controller.h" />
     <ClInclude Include="Core\Model\Ray.h" />
+    <ClInclude Include="Core\Model\Components\Lights.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
@@ -227,5 +228,8 @@
       <Filter>File di risorse</Filter>
     </None>
     <None Include="MeshVertexShader.glsl" />
+    <None Include="bling-phongVert.glsl" />
+    <None Include="phongVer.glsl" />
+    <None Include="phongFrag.glsl" />
   </ItemGroup>
 </Project>

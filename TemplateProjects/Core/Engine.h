@@ -7,8 +7,12 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
 #include <entt/entt.hpp>
 #include "Model/Ray.h"
 // Core application / window / input
@@ -29,6 +33,8 @@
 #include "Core/Model/Components/ScriptingSystem.h"
 #include "Core/Model/Components/BackGround2DRender.h"
 #include "Core/Prefab.h"
+// Components - Lights
+#include "Core/Model/Components/Lights.h"
 
 // Physics / collision
 #include "Core/Model/Components/Collider.h"

@@ -4,13 +4,13 @@
 #include "scripts/Controller.h"
 class CameraScript : public Component {
 private:
-
 	float cameraSpeed = 5.0f; // Velocità di movimento della camera
     glm::vec3 target = glm::vec3(0.0f, 0.0f, -1.0f);
     glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
     Camera* camera = nullptr;
 	std::vector<GameObject> meshObjects;
     Controller& controller;
+	bool firstClick = true;
 	public:
 	CameraScript() = default;
 	CameraScript(Controller& controller) : controller(controller){
@@ -85,11 +85,57 @@ private:
 		}
 	    if(Input::isMouseButtonPressed(2)) { // Right mouse button
 			mousePicking();
-		}           
+		}    
+
+        if (Input::isMouseButtonPressed(1)) {
+            cameraRotating();
+        }
+        else {
+			Input::setMouseState(MouseState::VISIBLE);
+        }
+
         camera->setPosition(obj->getComponent<Trasform>().position);
         camera->setTarget(target);
         camera->setDirection(direction);
 	}
+
+    void cameraRotating()
+    {
+        if (firstClick) {
+            uint32_t width = Application::getInstance()->getWindow()->getWidth();
+            uint32_t height = Application::getInstance()->getWindow()->getHeight();
+			Input::setMouseState(MouseState::HIDDEN);
+            firstClick = false;
+        }
+        glm::vec3 orientation = camera->getTarget() - camera->getPosition();
+        uint32_t width = Application::getInstance()->getWindow()->getWidth();
+        uint32_t height = Application::getInstance()->getWindow()->getHeight();
+        double x, y;
+		Input::getMouseWindowPos(x, y);
+		float sensitivity = 10.f;
+        float rotX = sensitivity * (float)(y - (height / 2)) / height;
+        float rotY = sensitivity * (float)(x - (width / 2)) / width;
+
+        // Calculates upcoming vertical change in the Orientation
+        glm::vec3 newOrientation = glm::rotate(orientation, glm::radians(-rotX), glm::normalize(glm::cross(orientation, camera->getUpVector())));
+
+        // Decides whether or not the next vertical Orientation is legal or not
+        if (abs(glm::angle(newOrientation, camera->getUpVector()) - glm::radians(90.0f)) <= glm::radians(85.0f))
+        {
+            orientation = newOrientation;
+        }
+
+        // Rotates the Orientation left and right
+        orientation = glm::rotate(orientation, glm::radians(-rotY), camera->getUpVector());
+		
+        // Aggiorno la direzione e il target della camera
+        direction = glm::normalize(orientation);
+		target = camera->getPosition() + direction;
+		// Riporta il mouse al centro della finestra
+		Input::setMousePosition(width / 2.0, height / 2.0);
+
+
+    }
     void mousePicking() {
         double mouseX, mouseY;
         Input::getMousePosition(mouseX, mouseY);

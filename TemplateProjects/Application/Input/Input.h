@@ -1,7 +1,10 @@
 #pragma once
 #include <memory>
 #include "KeyCode.h"
-
+enum MouseState {
+	HIDDEN,
+	VISIBLE,
+};
 // Classe astratta `Input`:
 // - Definisce l'interfaccia di input indipendente dalla piattaforma.
 // - Le classi concrete (es. `OpenGLInput`) implementano i metodi privati virtuali
@@ -19,6 +22,9 @@ private:
 	virtual bool _isMouseButtonPressed(int button) = 0;
 	virtual void _getMousePosition(double& xpos, double& ypos) = 0;
 	virtual bool _isKeyPressedOnce(KeyCode key) = 0;
+	virtual void _getMouseWindowPos(double& xpos, double& ypos) = 0;
+	virtual void _setMousePosition(double xpos, double ypos) = 0;
+	virtual void _setMouseState(MouseState state) = 0;
 
 	// Implementazione singleton/factory: puntatore all'istanza attiva e funzione di creazione
 	static std::shared_ptr<Input> instance;
@@ -39,5 +45,16 @@ public:
 	// Ritorna la posizione corrente del mouse
 	static void getMousePosition(double& xpos, double& ypos) {
 		instance->_getMousePosition(xpos, ypos);
+	}
+	// Ritorna la variazione della posizione del mouse dall'ultima chiamata
+	static void getMouseWindowPos(double& xpos, double& ypos) {
+		instance->_getMouseWindowPos(xpos, ypos);
+	}
+	// Imposta la posizione del mouse
+	static void setMousePosition(double xpos, double ypos) {
+		instance->_setMousePosition(xpos, ypos);
+	}
+	static void setMouseState(MouseState state) {
+		instance->_setMouseState(state);
 	}
 };

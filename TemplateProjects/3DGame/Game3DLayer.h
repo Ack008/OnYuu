@@ -18,11 +18,18 @@ class Game3DLayer : public Layer {
 			ImGui::Text(("Selected Object tag: " + selectedObj.getComponent<TagComponent>().tag).c_str());
 			Trasform& transform = selectedObj.getComponent<Trasform>();
 			ImGui::Text("Position");
-			ImGui::InputFloat3("##Position", &transform.position[0]);
+			ImGui::SliderFloat3("##Position", &transform.position[0],-5,5);
 			ImGui::Text("Rotation");
-			ImGui::InputFloat3("##Rotation", &transform.rotation[0]);
+			ImGui::SliderFloat3("##Rotation", &transform.rotation[0],0,90);
 			ImGui::Text("Scale");
-			ImGui::InputFloat3("##Scale", &transform.scale[0]);
+			ImGui::SliderFloat3("##Scale", &transform.scale[0],0,100);
+			if (selectedObj.hasComponent<LightComponent>()) {
+				LightComponent& lightComp = selectedObj.getComponent<LightComponent>();
+				ImGui::Text("Light Color");
+				ImGui::SliderFloat3("##LightColor", glm::value_ptr(lightComp.color),0,1);
+				ImGui::Text("Light Intensity");
+				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,50);
+			}
 			ImGui::End();
 		}
 	}

@@ -78,7 +78,6 @@ void OpenGLBatchRender::draw()
 		// Usa lo shader
 		if (key.first) {
 			key.first->bind();
-			key.first->set("u_viewProjectionMatrix", Render::getInstance()->getCameraMatrix());
 			key.first->apply();
 			// Imposta la matrice della camera
 		}

@@ -42,6 +42,27 @@ private:
 		ypos = 1.0 - (2.0 * ypos) / height;
 
 	}
+	void _getMouseWindowPos(double& xpos, double& ypos) override {
+		GLFWwindow* window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
+		
+		glfwGetCursorPos(window, &xpos, &ypos);
+		
+	}
+	void _setMousePosition(double xpos, double ypos) override {
+		GLFWwindow* window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
+		if (!window) return;
+		glfwSetCursorPos(window, xpos, ypos);
+	}
+	void _setMouseState(MouseState state) override {
+		GLFWwindow* window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
+		if (!window) return;
+		if (state == MouseState::HIDDEN) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		}
+		else if (state == MouseState::VISIBLE) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+	}
 
 	// Rileva un evento di "rilascio" del tasto (transizione da premuto->rilasciato)
 	// Implementazione basata sul confronto con lo stato precedente memorizzato in `keyPreviouslyPressed`.

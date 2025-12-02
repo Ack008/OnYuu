@@ -1,4 +1,5 @@
 #include "Core/Engine.h"
+#include <iostream>
 GameObject Scene::createEntity()
 {
 	entt::entity id = reg->create();
@@ -20,10 +21,57 @@ Trasform getAbsoluteTrasform(TreeComponent parent) {
 	
 	return tras;
 }
+void Scene::loadLights()
+{
+	auto view = reg->view<LightComponent, Trasform>();
+
+	LightUBO uboData;
+	uboData.numLights = 0;
+
+	for (auto [entity, lightComp, transform] : view.each()) {
+		if (uboData.numLights >= 16) break;
+
+		LightData& l = uboData.lights[(int)uboData.numLights];
+
+		l.position = glm::vec4(transform.position, 1.0f);
+		l.color = glm::vec4(lightComp.color.r, lightComp.color.g, lightComp.color.b, 1.0f);
+		l.intensity = lightComp.intensity;
+		l.pad[0] = l.pad[1] = l.pad[2] = 0.0f;
+
+		uboData.numLights++;
+	}
+
+	lightsUBO->bind();
+	lightsUBO->resize(sizeof(LightUBO));
+	lightsUBO->updateData(&uboData, sizeof(LightUBO), 0);
+
+}
+
+void Scene::loadActiveCamera()
+{
+	CameraUBO camData;
+	if (activeCamera) {
+		camData.view = activeCamera->getViewMatrix();
+		camData.projection = activeCamera->getProjectionMatrix();
+		camData.position = glm::vec4(activeCamera->getPosition(), 1.0f);
+	}
+	else {
+		camData.view = editorCamera->getViewMatrix();
+		camData.projection = editorCamera->getProjectionMatrix();
+		camData.position = glm::vec4(editorCamera->getPosition(), 1.0f);
+	}
+	cameraUBO->bind();
+	cameraUBO->resize(sizeof(CameraUBO));
+	cameraUBO->updateData(&camData, sizeof(CameraUBO), 0);
+}
+
 void Scene::update(float dt)
 {
+	//caricare le luci
+	loadLights();
 	//instantiating prefabs
 	instantiatePrefabs();
+	// carica la camera attiva
 	//scripts
 	auto scriptsView = reg->view<ScriptingSystem>();
 	for (auto [entity, script] : scriptsView.each()) {
@@ -48,6 +96,7 @@ void Scene::update(float dt)
 	for (auto [entity, camera] : cameraView.each()) {
 		if (camera.getActive()) {
 			Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
+			activeCamera = &camera;
 			cameraFound = true;
 		}
 		break; // Use the first found camera
@@ -58,6 +107,7 @@ void Scene::update(float dt)
 		for (auto [entity, camera] : cameraViewPer.each()) {
 			if (camera.getActive()) {
 				Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
+				activeCamera = &camera;
 				cameraFound = true;
 			}
 			break; // Use the first found camera
@@ -66,6 +116,7 @@ void Scene::update(float dt)
 	if (!cameraFound) {
 		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
 	}
+	loadActiveCamera();
 
 	calculateCollisions(dt);
 	sendToRender();
@@ -134,8 +185,11 @@ void Scene::destroyEntities()
 
 void Scene::start()
 {
+	lightsUBO = UniformBuffer::create(1);
+	cameraUBO = UniformBuffer::create(2);
 	initializeMaterials();
 	initializeScene();
+
 }
 
 void Scene::calculateCollisions(float dt)
