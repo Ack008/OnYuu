@@ -8,19 +8,7 @@ GameObject Scene::createEntity()
 	reg->emplace<TreeComponent>(id);
 	return { id,this };
 }
-Trasform getAbsoluteTrasform(TreeComponent parent) {
-	Trasform tras;
-	if (!parent.father) {
-		tras.position = { 0 ,0,0 };
-		tras.rotation = { 0,0,0 };
-		tras.scale = { 1,1,1 };
-	}
-	else {
-		tras += getAbsoluteTrasform(parent.father->getComponent<TreeComponent>());
-	}
-	
-	return tras;
-}
+
 void Scene::loadLights()
 {
 	auto view = reg->view<LightComponent, Trasform>();
@@ -140,10 +128,7 @@ void Scene::instantiatePrefabs()
 void Scene::sendToRender(){
 	auto meshView = reg->view<RenderMeshComponent, Trasform, TreeComponent>();
 	for (auto [entity, meshComp, transform, treeComp] : meshView.each()) {
-		Trasform absoluteTransform = transform;
-		if (treeComp.father) {
-			absoluteTransform += getAbsoluteTrasform(treeComp.father->getComponent<TreeComponent>());
-		}
+		Trasform absoluteTransform = GameObject(entity, this).getAbsoluteTransform();
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, absoluteTransform.position);
 		model = glm::rotate(model, absoluteTransform.rotation.x, glm::vec3(1, 0, 0));

@@ -77,16 +77,53 @@ bool BoxCollider::hasCollided(Collider* other) {
 // assi X e Y. Questo è adatto a box axis-aligned dopo aver applicato la
 // trasformazione; se si vogliono box orientati servono test separati.
 bool BoxCollider::collideWith(BoxCollider* other) {
-    Trasform thisTransform = obj->getComponent<Trasform>();
-    glm::vec3 thisMin = thisTransform.getModelMatrix() * glm::vec4(this->getMinPoint(),1);
-    glm::vec3 thisMax = thisTransform.getModelMatrix() * glm::vec4(this->getMaxPoint(),1);
-    Trasform otherTransform = other->obj->getComponent<Trasform>();
-    glm::vec3 otherMin = otherTransform.getModelMatrix() * glm::vec4(other->getMinPoint(),1);
-    glm::vec3 otherMax = otherTransform.getModelMatrix() * glm::vec4(other->getMaxPoint(),1);
-    // Verifica sovrapposizione sugli assi X e Y
-    bool overlapX = thisMin.x <= otherMax.x && thisMax.x >= otherMin.x;
-    bool overlapY = thisMin.y <= otherMax.y && thisMax.y >= otherMin.y;
-	bool overlapZ = thisMin.z <= otherMax.z && thisMax.z >= otherMin.z;
+    // Trasformazione assoluta di questo collider
+    Trasform thisTransform = obj->getAbsoluteTransform();
+    glm::mat4 thisMat = thisTransform.getModelMatrix();
+
+    // Trasformazione assoluta dell'altro collider
+    Trasform otherTransform = other->obj->getAbsoluteTransform();
+    glm::mat4 otherMat = otherTransform.getModelMatrix();
+
+    // Calcola i 8 vertici del box locale di 'this'
+    glm::vec3 thisCorners[8] = {
+        {minPoint.x, minPoint.y, minPoint.z}, {minPoint.x, minPoint.y, maxPoint.z},
+        {minPoint.x, maxPoint.y, minPoint.z}, {minPoint.x, maxPoint.y, maxPoint.z},
+        {maxPoint.x, minPoint.y, minPoint.z}, {maxPoint.x, minPoint.y, maxPoint.z},
+        {maxPoint.x, maxPoint.y, minPoint.z}, {maxPoint.x, maxPoint.y, maxPoint.z}
+    };
+
+    // Calcola i 8 vertici del box locale di 'other'
+    glm::vec3 otherCorners[8] = {
+        {other->minPoint.x, other->minPoint.y, other->minPoint.z}, {other->minPoint.x, other->minPoint.y, other->maxPoint.z},
+        {other->minPoint.x, other->maxPoint.y, other->minPoint.z}, {other->minPoint.x, other->maxPoint.y, other->maxPoint.z},
+        {other->maxPoint.x, other->minPoint.y, other->minPoint.z}, {other->maxPoint.x, other->minPoint.y, other->maxPoint.z},
+        {other->maxPoint.x, other->maxPoint.y, other->minPoint.z}, {other->maxPoint.x, other->maxPoint.y, other->maxPoint.z}
+    };
+
+    // Trova min/max in world space di 'this'
+    glm::vec3 thisWorldMin(+INFINITY);
+    glm::vec3 thisWorldMax(-INFINITY);
+    for (int i = 0; i < 8; i++) {
+        glm::vec3 w = thisMat * glm::vec4(thisCorners[i], 1.0f);
+        thisWorldMin = glm::min(thisWorldMin, w);
+        thisWorldMax = glm::max(thisWorldMax, w);
+    }
+
+    // Trova min/max in world space di 'other'
+    glm::vec3 otherWorldMin(+INFINITY);
+    glm::vec3 otherWorldMax(-INFINITY);
+    for (int i = 0; i < 8; i++) {
+        glm::vec3 w = otherMat * glm::vec4(otherCorners[i], 1.0f);
+        otherWorldMin = glm::min(otherWorldMin, w);
+        otherWorldMax = glm::max(otherWorldMax, w);
+    }
+
+    // Test AABB classico sugli assi X, Y e Z
+    bool overlapX = thisWorldMin.x <= otherWorldMax.x && thisWorldMax.x >= otherWorldMin.x;
+    bool overlapY = thisWorldMin.y <= otherWorldMax.y && thisWorldMax.y >= otherWorldMin.y;
+    bool overlapZ = thisWorldMin.z <= otherWorldMax.z && thisWorldMax.z >= otherWorldMin.z;
+
     return overlapX && overlapY && overlapZ;
 }
 

@@ -40,7 +40,7 @@ void Scene3D::initializeScene()
 	toro.getComponent<TagComponent>().tag = "Toro";
 	toro.addComponent<BoxCollider>();
 
-	
+	cube.setFather(&sphere);
 
 	//defining lights
 	settingLight();

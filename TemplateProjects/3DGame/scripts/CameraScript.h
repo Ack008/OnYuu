@@ -42,7 +42,7 @@ private:
         for (GameObject& go : meshObjects) {
             if (go.hasComponent<BoxCollider>()) {
                 BoxCollider& collider = go.getComponent<BoxCollider>();
-                Trasform& transform = go.getComponent<Trasform>();
+				Trasform transform = go.getAbsoluteTransform();
 				glm::mat4 modelMatrix = transform.getModelMatrix();
 				// Trasformo i punti min e max dell'AABB nello spazio del mondo
 				glm::vec3 worldMin = glm::vec3(modelMatrix * glm::vec4(collider.getMinPoint(), 1.0f));
@@ -144,7 +144,7 @@ private:
 		// Controlla l'intersezione del raggio con gli oggetti della scena
 		bool intersectionFound = false;
         for (GameObject& go : meshObjects) {
-            Trasform& transform = go.getComponent<Trasform>();
+			Trasform transform = go.getAbsoluteTransform();
             glm::vec3 sphereCenter = transform.position;
 			float sphereRadius = glm::min(transform.scale.x, glm::min(transform.scale.y, transform.scale.z)) * 0.5f; // raggio approssimato
             float t;

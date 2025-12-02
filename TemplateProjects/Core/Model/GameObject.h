@@ -8,6 +8,7 @@
 #include <vector>
 #include "Core/Model/Components/ScriptingSystem.h"
 #include "Core/Model/Components/TagComponent.h"
+class Trasform;
 // GameObject.h
 // Wrapper leggero attorno a `entt::entity` che espone API comode per gestire
 // componenti, script e interazioni con la `Scene`.
@@ -69,6 +70,8 @@ public:
         }
         return _sceneptr->reg->get<T>(id);
     }
+    Trasform getAbsoluteTransform();
+
 	//Istanzia un prefab in modo ritardato
 	void delayedIstantiatePrefab(Prefab* prefab) {
         _sceneptr->toInstantiate.push_back(prefab);
@@ -163,6 +166,7 @@ public:
     bool operator ==(const GameObject& other) const {
         return id == other.id && _sceneptr == other._sceneptr;
 	}
+    void setFather(GameObject* father);
     entt::entity getID() const { return id; }
     Scene* getScene() { return _sceneptr; }
     operator bool() const {
@@ -172,4 +176,6 @@ private:
     Scene* _sceneptr; // scena proprietaria (non possiede)
     entt::entity id{ entt::null };
     friend class Scene; // Scene può costruire/manipolare GameObject internamente
+private:
+
 };
