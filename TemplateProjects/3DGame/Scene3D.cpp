@@ -206,6 +206,7 @@ void Scene3D::initializeMaterials()
 	std::shared_ptr<Shader> shaderPhong = Shader::create("Asset/Shader/phongVer.glsl", "Asset/Shader/phongFrag.glsl");	
 	std::shared_ptr<Shader> shaderBlingPhong = Shader::create("Asset/Shader/bling-phong-ver.glsl", "Asset/Shader/bling-phong-frag.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInter = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter.glsl");
+	std::shared_ptr<Shader> shaderBlingPhongInterTexture = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter-Texture.glsl");
 
 
 	AssetManager::instance().addMaterial("defaultMaterial", std::make_shared<Material>(shader));
@@ -240,7 +241,23 @@ void Scene3D::initializeMaterials()
 	mat4->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat4->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 
+	AssetManager::instance().addTexture("interLoveTexture", Texture::createTexture("Asset/Texture/ai.png"));
+	AssetManager::instance().addTexture("catTexture", Texture::createTexture("Asset/Texture/gatto.png"));
 
+	AssetManager::instance().addMaterial("bling-phong-InterLove", std::make_shared<Material>(shaderBlingPhongInterTexture));
+	auto mat5 = AssetManager::instance().getMaterial("bling-phong-InterLove");
+	mat5->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat5->set("material.shininess", 13.f);
+	mat5->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat5->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
+	mat5->set("texture1", AssetManager::instance().getTexture("interLoveTexture"));
+
+	auto mat6 = AssetManager::instance().addMaterial("bling-phong-cat", std::make_shared<Material>(shaderBlingPhongInterTexture));
+	mat6->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat6->set("material.shininess", 13.f);
+	mat6->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat6->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
+	mat6->set("texture1", AssetManager::instance().getTexture("catTexture"));
 	
 }
 void Scene3D::createCube()

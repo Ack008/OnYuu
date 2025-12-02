@@ -70,7 +70,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="glad.c">
+    <ClCompile Include="vendor\glad.c">
       <Filter>File di risorse\OpenGLView</Filter>
     </ClCompile>
     <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp">
@@ -132,6 +132,9 @@
     <ClCompile Include="3DGame\Game3DApplication.cpp" />
     <ClCompile Include="3DGame\Scene3D.cpp" />
     <ClCompile Include="3DGame\scripts\Controller.cpp" />
+    <ClCompile Include="vendor\stb.cpp" />
+    <ClCompile Include="Core\Texture.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
@@ -212,6 +215,8 @@
     <ClInclude Include="3DGame\scripts\Controller.h" />
     <ClInclude Include="Core\Model\Ray.h" />
     <ClInclude Include="Core\Model\Components\Lights.h" />
+    <ClInclude Include="Core\Texture.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
@@ -237,5 +242,6 @@
     <None Include="Asset\Shader\bling-phong-ver.glsl" />
     <None Include="Asset\Shader\bling-phongFragInter.glsl" />
     <None Include="Asset\Shader\bling-phongVerInter.glsl" />
+    <None Include="Asset\Shader\bling-phongFragInter-Texture.glsl" />
   </ItemGroup>
 </Project>

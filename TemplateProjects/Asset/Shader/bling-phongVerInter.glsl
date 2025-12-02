@@ -7,7 +7,7 @@ uniform mat4 u_modelMatrix;
 
 
 out vec4 color;
-
+out vec2 texCoord;
 struct Light {
     vec4 position;
     float intensity;
@@ -37,6 +37,7 @@ float strenght = 1.0;
 void main() {
     vec4 worldPos = u_modelMatrix * vec4(aPos, 1.0);
     vec4 vWorldPos = (u_view *  worldPos);
+    texCoord = aTexCoord;
     gl_Position = u_projection * vWorldPos;
   
 

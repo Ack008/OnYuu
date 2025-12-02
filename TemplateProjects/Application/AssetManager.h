@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Material.h"
+#include "Core/Texture.h"
 
 // AssetManager
 // -----------------
@@ -45,7 +46,7 @@ public:
     // Mesh
     // ----
     // Aggiunge una mesh al manager. Il manager conserva uno shared_ptr alla mesh.
-    void addMesh(const std::string& name, std::shared_ptr<Mesh> mesh);
+    std::shared_ptr<Mesh> addMesh(const std::string& name, std::shared_ptr<Mesh> mesh);
     // Restituisce lo shared_ptr per la mesh (vuoto se non trovato).
     std::shared_ptr<Mesh> getMeshPtr(const std::string& name) const;
     // Comodita: restituisce un puntatore grezzo alla mesh (puo essere nullptr).
@@ -55,12 +56,15 @@ public:
     // Material
     // --------
     // Aggiunge un materiale al manager. Il manager conserva uno shared_ptr al materiale.
-    void addMaterial(const std::string& name, std::shared_ptr<Material> mat);
+    std::shared_ptr<Material> addMaterial(const std::string& name, std::shared_ptr<Material> mat);
     // Restituisce lo shared_ptr per il materiale (vuoto se non trovato).
     std::shared_ptr<Material> getMaterialPtr(const std::string& name) const;
     // Puntatore grezzo comodita (puo essere nullptr).
     Material* getMaterial(const std::string& name) const;
 
+    std::shared_ptr<Texture> addTexture(const std::string& name, std::shared_ptr<Texture> tex);
+	std::shared_ptr<Texture> getTexturePtr(const std::string& name) const;
+	Texture* getTexture(const std::string& name) const;
 	// ottieni la mappa delle mesh
     const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
         return meshes_;
@@ -75,4 +79,5 @@ private:
     // Considerare di cancellare copy/move per far rispettare il comportamento singleton.
     std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
     std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
+	std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
 };

@@ -147,6 +147,8 @@
     <ClCompile Include="Application\Application.cpp" />
     <ClCompile Include="Application\AssetManager.cpp" />
     <ClCompile Include="2DGame\Component\BallScript.cpp" />
+    <ClCompile Include="Core\Texture.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
     <ClCompile Include="Render\Buffer.cpp" />
@@ -157,7 +159,7 @@
     <ClCompile Include="2DGame\GameLayer.cpp" />
     <ClCompile Include="Core\Model\GameObject.cpp" />
     <ClCompile Include="2DGame\GameScene.cpp" />
-    <ClCompile Include="glad.c" />
+    <ClCompile Include="vendor\glad.c" />
     <ClCompile Include="Core\HermitInterpolationMesh.cpp" />
     <ClCompile Include="Application\Layer\ImGuiLayer.cpp" />
     <ClCompile Include="Application\Input\Input.cpp" />
@@ -179,6 +181,7 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Render\VertexArray.cpp" />
     <ClCompile Include="Core\View\View.cpp" />
+    <ClCompile Include="vendor\stb.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h" />
@@ -196,11 +199,13 @@
     <ClInclude Include="3DGame\scripts\Controller.h" />
     <ClInclude Include="Core\Model\Components\Lights.h" />
     <ClInclude Include="Core\Model\Ray.h" />
+    <ClInclude Include="Core\Texture.h" />
     <ClInclude Include="Platform\API.h" />
     <ClInclude Include="Application\Application.h" />
     <ClInclude Include="Application\AssetManager.h" />
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="2DGame\Component\BallScript.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />
     <ClInclude Include="Core\Model\Components\Collider.h" />
@@ -245,6 +250,7 @@
   <ItemGroup>
     <None Include="Asset\Shader\bling-phong-frag.glsl" />
     <None Include="Asset\Shader\bling-phong-ver.glsl" />
+    <None Include="Asset\Shader\bling-phongFragInter-Texture.glsl" />
     <None Include="Asset\Shader\bling-phongFragInter.glsl" />
     <None Include="Asset\Shader\bling-phongVerInter.glsl" />
     <None Include="Asset\Shader\phongFrag.glsl" />

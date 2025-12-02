@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include "Shader.h"
-
+#include "Texture.h"
 // Material: incapsula le proprietà necessarie per il rendering (uniforms,
 // shader utilizzato, ecc.). È un livello di astrazione sopra lo `Shader` e
 // permette di cambiare proprietà senza toccare direttamente il codice dello
@@ -14,7 +14,7 @@ class Material {
 public:
 	using UniformValue = std::variant<
 		int, float, glm::vec2, glm::vec3, glm::vec4,
-		glm::mat3, glm::mat4>;
+		glm::mat3, glm::mat4, Texture*>;
 	
 
 	Material(std::shared_ptr<Shader> shader);

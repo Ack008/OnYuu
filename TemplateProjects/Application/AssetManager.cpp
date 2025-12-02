@@ -5,8 +5,9 @@ AssetManager& AssetManager::instance() {
     return mgr;
 }
 
-void AssetManager::addMesh(const std::string& name, std::shared_ptr<Mesh> mesh) {
+std::shared_ptr<Mesh> AssetManager::addMesh(const std::string& name, std::shared_ptr<Mesh> mesh) {
     meshes_[name] = std::move(mesh);
+	return meshes_[name];
 }
 
 std::shared_ptr<Mesh> AssetManager::getMeshPtr(const std::string& name) const {
@@ -19,8 +20,9 @@ Mesh* AssetManager::getMesh(const std::string& name) const {
     return ptr ? ptr.get() : nullptr;
 }
 
-void AssetManager::addMaterial(const std::string& name, std::shared_ptr<Material> mat) {
+std::shared_ptr<Material> AssetManager::addMaterial(const std::string& name, std::shared_ptr<Material> mat) {
     materials_[name] = std::move(mat);
+	return materials_[name];
 }
 
 std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) const {
@@ -30,5 +32,19 @@ std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) 
 
 Material* AssetManager::getMaterial(const std::string& name) const {
     auto ptr = getMaterialPtr(name);
+    return ptr ? ptr.get() : nullptr;
+}
+
+std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::shared_ptr<Texture> tex) {
+    textures_[name] = std::move(tex);
+	return textures_[name];
+}
+
+std::shared_ptr<Texture> AssetManager::getTexturePtr(const std::string& name) const {
+    auto it = textures_.find(name);
+    return it != textures_.end() ? it->second : nullptr;
+}
+Texture* AssetManager::getTexture(const std::string& name) const {
+    auto ptr = getTexturePtr(name);
     return ptr ? ptr.get() : nullptr;
 }
