@@ -193,6 +193,7 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Render\VertexArray.cpp" />
     <ClCompile Include="Core\View\View.cpp" />
+    <ClCompile Include="vendor\ImGui\ImGuiFileDialog.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -262,6 +263,7 @@
     <ClInclude Include="Core\Model\Components\Transform.h" />
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
+    <ClInclude Include="vendor\ImGui\dirent\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Asset\Shader\bling-phong-frag.glsl" />

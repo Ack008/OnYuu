@@ -138,6 +138,7 @@
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Core\CubeMap.cpp" />
     <ClCompile Include="Application\MeshImporter.cpp" />
+    <ClCompile Include="vendor\ImGui\ImGuiFileDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
@@ -224,6 +225,7 @@
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
     <ClInclude Include="Application\MeshImporter.h" />
+    <ClInclude Include="vendor\ImGui\dirent\dirent.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

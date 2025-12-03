@@ -4,8 +4,16 @@
 #include "scripts/Controller.h"
 #include <queue>
 #include <list>
+#include <iostream>
 
 class Game3DLayer : public Layer {
+private:
+	enum class MeshAddingState {
+		None,
+		AddingMesh,
+		WaitingForMaterialSelection
+	};
+	MeshAddingState meshAddingState = MeshAddingState::None;
 	public:
 	Game3DLayer(Scene3D* scene)
 		:Layer("Game3DLayer"), scene(scene)
@@ -21,17 +29,17 @@ class Game3DLayer : public Layer {
 			ImGui::Text(("Selected Object tag: " + selectedObj.getComponent<TagComponent>().tag).c_str());
 			Trasform& transform = selectedObj.getComponent<Trasform>();
 			ImGui::Text("Position");
-			ImGui::InputFloat3("##Position", &transform.position[0]);
+			ImGui::DragFloat3("##Position", &transform.position[0],0.05);
 			ImGui::Text("Rotation");
-			ImGui::InputFloat3("##Rotation", &transform.rotation[0]);
+			ImGui::DragFloat3("##Rotation", &transform.rotation[0],0.05);
 			ImGui::Text("Scale");
-			ImGui::InputFloat3("##Scale", &transform.scale[0]);
+			ImGui::DragFloat3("##Scale", &transform.scale[0],0.05);
 			if (selectedObj.hasComponent<LightComponent>()) {
 				LightComponent& lightComp = selectedObj.getComponent<LightComponent>();
 				ImGui::Text("Light Color");
 				ImGui::SliderFloat3("##LightColor", glm::value_ptr(lightComp.color),0,1);
 				ImGui::Text("Light Intensity");
-				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,50);
+				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,1);
 			}
 			if (selectedObj.hasComponent<RenderMeshComponent>()) {
 				RenderMeshComponent& renderComp = selectedObj.getComponent<RenderMeshComponent>();
@@ -106,6 +114,45 @@ class Game3DLayer : public Layer {
 		}
 		createScenePanel();
 	}
+	void addMeshPanel()
+	{
+		static std::string filePath = "";
+		if (meshAddingState == MeshAddingState::None && ImGui::Button("Add Mesh") )
+		{
+			meshAddingState = MeshAddingState::AddingMesh;
+			ImGuiFileDialog::Instance()->OpenDialog(
+				"ChooseMeshDlgKey",
+				"Choose Mesh",
+				"Mesh Files (*.obj *.fbx *.glb *.gltf){.obj,.fbx,.glb,.gltf}"
+			);
+		}
+
+		if (ImGuiFileDialog::Instance()->Display("ChooseMeshDlgKey"))
+		{
+			if (ImGuiFileDialog::Instance()->IsOk())
+			{
+				filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+				std::cout << filePath << std::endl;
+				meshAddingState = MeshAddingState::WaitingForMaterialSelection;
+				ImGuiFileDialog::Instance()->Close();
+			}
+		}
+		if (meshAddingState == MeshAddingState::WaitingForMaterialSelection)
+		{
+			ImGui::Begin("Select Material for New Mesh");
+			AssetManager& assetManager = AssetManager::instance();
+			const auto& materials = assetManager.getMaterials();
+			for (const auto& [name, matPtr] : materials) {
+				if (ImGui::Selectable(name.c_str())) {
+					MeshImporter::instance().importMesh(filePath, scene, matPtr->getShader());
+					meshAddingState = MeshAddingState::None;
+					ImGui::End();
+					return;
+				}
+			}
+			ImGui::End();
+		}
+	}
 
 
 
@@ -160,6 +207,8 @@ private:
 			printGameObjectHierarchy(&toVisit, &visitedObject, currentObj, 0);
 			visitedObject.push_back(currentObj);
 		}
+		addMeshPanel();
+
 		ImGui::End();
 	}
 private:

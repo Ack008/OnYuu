@@ -40,6 +40,7 @@ public:
 	}
 	void uploadToGPU() {
 		if (uploaded) {
+			std::cout << "[MeshGPUusage] uploadToGPU: already uploaded for mesh=" << mesh << std::endl;
 			return;
 		}
 		if (mesh == nullptr) {
@@ -60,6 +61,7 @@ public:
 		// Create VAO if missing
 		if (!vao) {
 			vao = std::make_shared<OpenGLVertexArray>();
+			std::cout << "[MeshGPUusage] created VAO for mesh=" << mesh << " vao=" << vao.get() << std::endl;
 		}
 
 		// Create VBO

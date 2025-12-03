@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include <iostream>
 
 Material::Material(std::shared_ptr<Shader> shader)
 	: _shader(shader)
@@ -15,7 +16,10 @@ void Material::bind()
 	{
 		return;
 	}
-	_shader->useShader();
+    // Debug: log shader pointer and shared_ptr use_count to detect lifetime issues
+    std::cout << "[Material] bind this=" << this << " shader=" << _shader.get()
+        << " use_count=" << _shader.use_count() << std::endl;
+    _shader->useShader();
 	
 	for (auto& [name, _] : alreadySet_) {
 		alreadySet_[name] = false; // Reset all uniforms to not set
@@ -27,6 +31,9 @@ void Material::apply()
 	{
 		return;
 	}
+    // Debug: log apply invocation and shader lifetime info
+    std::cout << "[Material] apply this=" << this << " shader=" << _shader.get()
+        << " use_count=" << _shader.use_count() << " uniforms=" << uniforms_.size() << std::endl;
 	int slot = 0;
 	for (const auto& [name, value] : uniforms_) {
 		if (alreadySet_.find(name) != alreadySet_.end() && alreadySet_.at(name)) {

@@ -63,7 +63,8 @@
 
 //ImGui
 #include <ImGui/imgui.h>
-
+#include <ImGui/imgui_internal.h>
+#include <ImGui/ImGuiFileDialog.h>
 //Math
 #include "math.h"
 
