@@ -218,12 +218,12 @@ void Scene3D::initializeMaterials()
 	);
 	AssetManager::instance().addMaterial("skyboxMaterial", std::make_shared<Material>(skyboxShader));
 	std::shared_ptr<CubeMap> textureSkybox = AssetManager::instance().addCubeMap("skybox",CubeMap::createCubeMap({
-		"Asset/Texture/SkyBox/right.jpg",
-		"Asset/Texture/SkyBox/left.jpg",
-		"Asset/Texture/SkyBox/top.jpg",
-		"Asset/Texture/SkyBox/bottom.jpg",
-		"Asset/Texture/SkyBox/front.jpg",
-		"Asset/Texture/SkyBox/back.jpg"
+		"Asset/Texture/SkyBox2/px.png",
+		"Asset/Texture/SkyBox2/nx.png",
+		"Asset/Texture/SkyBox2/py.png",
+		"Asset/Texture/SkyBox2/ny.png",
+		"Asset/Texture/SkyBox2/pz.png",
+		"Asset/Texture/SkyBox2/nz.png"
 		}));
 	AssetManager::instance().addMaterial("defaultMaterial", std::make_shared<Material>(shader));
 
