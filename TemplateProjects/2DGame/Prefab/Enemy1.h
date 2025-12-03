@@ -7,7 +7,7 @@ class Enemy1 : public Prefab {
 			GameObject enemy = scene->createEntity();
 			auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
 			renderSquare.mesh = AssetManager::instance().getMesh("enemyJapanese");
-			renderSquare.material = AssetManager::instance().getMaterial("defaultMaterial");
+            renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 
 
 			enemy.addComponent<BoxCollider>();
@@ -30,7 +30,7 @@ public:
 		GameObject enemy = scene->createEntity();
 		auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
 		renderSquare.mesh = AssetManager::instance().getMesh("LoveJapanese");
-		renderSquare.material = AssetManager::instance().getMaterial("defaultMaterial");
+        renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 		
 		enemy.addComponent<BoxCollider>();
 		enemy.addComponent<RigidBody>(RigidBody::BodyType::STATIC).setUseGravity(true);

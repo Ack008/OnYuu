@@ -15,9 +15,7 @@ OpenGLShader::OpenGLShader(const char* vertexfilename,const char* fragmentfilena
 
 void OpenGLShader::useShader()
 {
-    glUseProgram(shader);
-    // Debug: log program binding
-    std::cout << "[OpenGLShader] useShader program=" << shader << std::endl;
+	glUseProgram(shader);
 }
 
 OpenGLShader::~OpenGLShader()

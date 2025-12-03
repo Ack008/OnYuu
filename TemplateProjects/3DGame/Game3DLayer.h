@@ -48,7 +48,7 @@ private:
 					{
 					const auto& materials = assetManager.getMaterials();
 					for (const auto& [name, matPtr] : materials) {
-						if (matPtr.get() == renderComp.material 
+                        if (matPtr == renderComp.material 
 							&& ImGui::TreeNodeEx((name + " selected").c_str(), 
 								ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
 
@@ -102,8 +102,8 @@ private:
 								}
 							}
 							ImGui::TreePop();
-						}else if (ImGui::Selectable(name.c_str())) {
-							renderComp.material = matPtr.get();
+                        }else if (ImGui::Selectable(name.c_str())) {
+                            renderComp.material = matPtr;
 						}
 					}
 					ImGui::TreePop();

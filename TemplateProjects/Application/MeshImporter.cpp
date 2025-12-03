@@ -80,7 +80,7 @@ GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, 
 			mat->set("material.shininess", 50.0f);
 		}
 		// http://assimp.sourceforge.net/lib_html/structai_material.html
-		currentMesh.getComponent<RenderMeshComponent>().material = mat.get();
+        currentMesh.getComponent<RenderMeshComponent>().material = mat;
 		std::shared_ptr<Mesh> tempMesh = AssetManager::instance().addMesh(name, std::make_shared<Mesh>());
 		currentMesh.getComponent<RenderMeshComponent>().mesh = tempMesh.get();
 

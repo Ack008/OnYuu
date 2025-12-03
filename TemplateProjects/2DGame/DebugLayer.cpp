@@ -91,7 +91,7 @@ void DebugLayer::onDetach()
             auto comp = std::make_unique<RenderMeshComponent>();
             comp->mesh = debugMesh.get();
             comp->renderingType = RenderingTypeEnum::LINE;
-            comp->material = debugMaterial.get();
+            comp->material = debugMaterial;
 
             Render::getInstance()->addMeshRender(comp.get(), model);
             debugMeshes.push_back(std::move(comp));

@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "Core/CubeMap.h"
+#include <iostream>
 AssetManager& AssetManager::instance() {
     static AssetManager mgr;
     return mgr;
@@ -21,18 +22,33 @@ Mesh* AssetManager::getMesh(const std::string& name) const {
 }
 
 std::shared_ptr<Material> AssetManager::addMaterial(const std::string& name, std::shared_ptr<Material> mat) {
+    auto it = materials_.find(name);
+    if (it != materials_.end()) {
+        std::cout << "[AssetManager] addMaterial: replacing material '" << name << "' old_ptr=" << it->second.get()
+            << " old_use_count=" << it->second.use_count() << std::endl;
+    }
     materials_[name] = std::move(mat);
-	return materials_[name];
+    std::cout << "[AssetManager] addMaterial: added material '" << name << "' ptr=" << materials_[name].get()
+        << " use_count=" << materials_[name].use_count() << std::endl;
+    return materials_[name];
 }
 
 std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) const {
     auto it = materials_.find(name);
-    return it != materials_.end() ? it->second : nullptr;
+    if (it != materials_.end()) {
+        std::cout << "[AssetManager] getMaterialPtr: '" << name << "' ptr=" << it->second.get()
+            << " use_count=" << it->second.use_count() << std::endl;
+        return it->second;
+    }
+    std::cout << "[AssetManager] getMaterialPtr: '" << name << "' not found" << std::endl;
+    return nullptr;
 }
 
 Material* AssetManager::getMaterial(const std::string& name) const {
     auto ptr = getMaterialPtr(name);
-    return ptr ? ptr.get() : nullptr;
+    Material* raw = ptr ? ptr.get() : nullptr;
+    std::cout << "[AssetManager] getMaterial: '" << name << "' returning raw ptr=" << raw << std::endl;
+    return raw;
 }
 
 std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::shared_ptr<Texture> tex) {

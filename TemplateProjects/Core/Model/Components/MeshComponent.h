@@ -24,8 +24,8 @@ struct Mesh {
 // Nota: questo è un componente di alto livello, il renderer lo tradurrà in
 // chiamate a `MeshGPUusage` per uploadare i dati in GPU e disegnarli.
 struct RenderMeshComponent {
-	Mesh* mesh = nullptr; // puntatore non-owning alla mesh
-	Material* material = nullptr; // materiale utilizzato per il draw
+    Mesh* mesh = nullptr; // puntatore non-owning alla mesh
+    std::shared_ptr<Material> material; // materiale condiviso per il draw
 	RenderingTypeEnum renderingType = RenderingTypeEnum::TRIANGLE;
 
 	size_t getSize() {

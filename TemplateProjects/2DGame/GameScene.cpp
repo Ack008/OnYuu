@@ -15,8 +15,8 @@ void GameScene::initializeScene()
 	camera.addComponent<Orthographic>(-50, 50, -50, 50, 0, -20);
 	//defining player
 	auto& renderSquare = player.addComponent<RenderMeshComponent>();
-	renderSquare.mesh = AssetManager::instance().getMesh("squareMesh");
-	renderSquare.material = AssetManager::instance().getMaterial("defaultMaterial");
+    renderSquare.mesh = AssetManager::instance().getMesh("squareMesh");
+    renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	player.addComponent<BoxCollider>();
 	player.addComponent<PlayerScripts>();
 	player.getComponent<Trasform>().scale = glm::vec3(5, 2, 1.0f);
@@ -24,16 +24,16 @@ void GameScene::initializeScene()
 
 	//defining ball
 	auto& rd = ball.addComponent<RenderMeshComponent>();
-	rd.mesh = AssetManager::instance().getMesh("ballMesh");
-	rd.material = AssetManager::instance().getMaterial("defaultMaterial");
+    rd.mesh = AssetManager::instance().getMesh("ballMesh");
+    rd.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	ball.addComponent<BoxCollider>();
 	ball.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC, 1.0f, 1.1f).setUseGravity(false);
 	ball.getComponent<Trasform>().scale = glm::vec3(2, 2, 1.0f);
 	ball.getComponent<TagComponent>().tag = "Ball";
 	ball.addComponent<BallScript>();
 	//defining the floor
-	pavimento.addComponent<RenderMeshComponent>().mesh = AssetManager::instance().getMesh("pavimentoMesh");
-	pavimento.getComponent<RenderMeshComponent>().material = AssetManager::instance().getMaterial("defaultMaterial");
+    pavimento.addComponent<RenderMeshComponent>().mesh = AssetManager::instance().getMesh("pavimentoMesh");
+    pavimento.getComponent<RenderMeshComponent>().material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	Trasform& pavimentoTrasform = pavimento.getComponent<Trasform>();
 	pavimentoTrasform.scale = glm::vec3(100, 20, 0.0f);
 	pavimentoTrasform.position = glm::vec3(0, -60, 0);
@@ -46,7 +46,7 @@ void GameScene::initializeScene()
 
 	controller.addComponent<ControllerScript>(player.getComponent<PlayerScripts>());
 	//defining game enviroment objects
-	background.addComponent<Background2DRender>().material = AssetManager::instance().getMaterial("backgroundMaterial");
+    background.addComponent<Background2DRender>().material = AssetManager::instance().getMaterialPtr("backgroundMaterial");
 }
 void GameScene::OnResize(uint32_t width, uint32_t height)
 {
