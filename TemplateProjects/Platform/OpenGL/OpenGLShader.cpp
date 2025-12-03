@@ -121,12 +121,18 @@ void OpenGLShader::setUniformInt(const char* name, int value)
 	if (loc != -1) {
 		glUniform1i(loc, value);
 	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
+	}
 }
 void OpenGLShader::setUniformFloat(const char* name, float value)
 {
 	GLint loc = getUniformLocation(name);
 	if (loc != -1) {
 		glUniform1f(loc, value);
+	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
 	}
 }
 void OpenGLShader::setUniformVec2(const char* name, const float* value)
@@ -135,12 +141,18 @@ void OpenGLShader::setUniformVec2(const char* name, const float* value)
 	if (loc != -1) {
 		glUniform2fv(loc, 1, value);
 	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
+	}
 }
 void OpenGLShader::setUniformVec3(const char* name, const float* value)
 {
 	GLint loc = getUniformLocation(name);
 	if (loc != -1) {
 		glUniform3fv(loc, 1, value);
+	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
 	}
 }
 void OpenGLShader::setUniformVec4(const char* name, const float* value)
@@ -149,6 +161,9 @@ void OpenGLShader::setUniformVec4(const char* name, const float* value)
 	if (loc != -1) {
 		glUniform4fv(loc, 1, value);
 	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
+	}
 }
 void OpenGLShader::setUniformMat3(const char* name, const float* value)
 {
@@ -156,12 +171,18 @@ void OpenGLShader::setUniformMat3(const char* name, const float* value)
 	if (loc != -1) {
 		glUniformMatrix3fv(loc, 1, GL_FALSE, value);
 	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
+	}
 }
 void OpenGLShader::setUniformMat4(const char* name, const float* value, int count)
 {
 	GLint loc = getUniformLocation(name);
 	if (loc != -1) {
 		glUniformMatrix4fv(loc, count, GL_FALSE, value);
+	}
+	else {
+		std::cout << "Uniform " << name << " not found!" << std::endl;
 	}
 }
 

@@ -166,7 +166,7 @@ public:
     bool operator ==(const GameObject& other) const {
         return id == other.id && _sceneptr == other._sceneptr;
 	}
-    void setFather(GameObject* father);
+    void setFather(GameObject father);
     entt::entity getID() const { return id; }
     Scene* getScene() { return _sceneptr; }
     operator bool() const {

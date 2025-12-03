@@ -190,6 +190,17 @@ void Scene::start()
 
 }
 
+std::vector<GameObject> Scene::getGameObjects()
+{
+	std::vector< GameObject > results;
+	for (auto entity : reg->view<entt::entity>())
+	{
+		results.push_back(GameObject(entity, this));
+	}
+
+	return results;
+}
+
 void Scene::calculateCollisions(float dt)
 {
 	physicsEngine.update(dt);

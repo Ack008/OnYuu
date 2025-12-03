@@ -80,10 +80,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,10 +98,13 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -108,13 +114,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,10 +132,13 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -147,6 +156,7 @@
     <ClCompile Include="Application\Application.cpp" />
     <ClCompile Include="Application\AssetManager.cpp" />
     <ClCompile Include="2DGame\Component\BallScript.cpp" />
+    <ClCompile Include="Application\MeshImporter.cpp" />
     <ClCompile Include="Core\CubeMap.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
@@ -199,6 +209,7 @@
     <ClInclude Include="3DGame\Scene3D.h" />
     <ClInclude Include="3DGame\scripts\CameraScript.h" />
     <ClInclude Include="3DGame\scripts\Controller.h" />
+    <ClInclude Include="Application\MeshImporter.h" />
     <ClInclude Include="Core\CubeMap.h" />
     <ClInclude Include="Core\Model\Components\Lights.h" />
     <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />

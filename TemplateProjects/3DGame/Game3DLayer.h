@@ -2,6 +2,9 @@
 #include "Core/Engine.h"
 #include "Scene3D.h"
 #include "scripts/Controller.h"
+#include <queue>
+#include <list>
+
 class Game3DLayer : public Layer {
 	public:
 	Game3DLayer(Scene3D* scene)
@@ -18,11 +21,11 @@ class Game3DLayer : public Layer {
 			ImGui::Text(("Selected Object tag: " + selectedObj.getComponent<TagComponent>().tag).c_str());
 			Trasform& transform = selectedObj.getComponent<Trasform>();
 			ImGui::Text("Position");
-			ImGui::SliderFloat3("##Position", &transform.position[0],-10,10);
+			ImGui::InputFloat3("##Position", &transform.position[0]);
 			ImGui::Text("Rotation");
-			ImGui::SliderFloat3("##Rotation", &transform.rotation[0],0,90);
+			ImGui::InputFloat3("##Rotation", &transform.rotation[0]);
 			ImGui::Text("Scale");
-			ImGui::SliderFloat3("##Scale", &transform.scale[0],0,100);
+			ImGui::InputFloat3("##Scale", &transform.scale[0]);
 			if (selectedObj.hasComponent<LightComponent>()) {
 				LightComponent& lightComp = selectedObj.getComponent<LightComponent>();
 				ImGui::Text("Light Color");
@@ -37,8 +40,60 @@ class Game3DLayer : public Layer {
 					{
 					const auto& materials = assetManager.getMaterials();
 					for (const auto& [name, matPtr] : materials) {
-						if (matPtr.get() == renderComp.material) {
-							ImGui::LabelText("", "%s (Selected)", name.c_str());
+						if (matPtr.get() == renderComp.material 
+							&& ImGui::TreeNodeEx((name + " selected").c_str(), 
+								ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth)) {
+
+							// Otteniamo gli uniform come riferimento modificabile per poterli editare.
+							for (auto& [uniformName, uniformValue] : matPtr->getUniforms()) {
+								// Etichette ImGui uniche usando nome uniform + nome materiale
+								std::string labelBase = "Uniform: " + uniformName;
+								ImGui::Text("%s", labelBase.c_str());
+								std::string widgetLabel = uniformName + "##" + name;
+
+								// Intero
+								if (std::holds_alternative<int>(uniformValue)) {
+									int& value = std::get<int>(uniformValue);
+									ImGui::InputInt(widgetLabel.c_str(), &value);
+									// eventualmente aggiungere limiti o DragInt se preferito
+								}
+								// Float (modificabile)
+								else if (std::holds_alternative<float>(uniformValue)) {
+									float& value = std::get<float>(uniformValue);
+									ImGui::DragFloat(widgetLabel.c_str(), &value, 0.01f);
+								}
+								// vec2 (modificabile)
+								else if (std::holds_alternative<glm::vec2>(uniformValue)) {
+									glm::vec2& value = std::get<glm::vec2>(uniformValue);
+									ImGui::DragFloat2(widgetLabel.c_str(), glm::value_ptr(value), 0.01f);
+								}
+								// vec3 (modificabile)
+								else if (std::holds_alternative<glm::vec3>(uniformValue)) {
+									glm::vec3& value = std::get<glm::vec3>(uniformValue);
+									ImGui::DragFloat3(widgetLabel.c_str(), glm::value_ptr(value), 0.01f);
+								}
+								// vec4 (modificabile)
+								else if (std::holds_alternative<glm::vec4>(uniformValue)) {
+									glm::vec4& value = std::get<glm::vec4>(uniformValue);
+									ImGui::DragFloat4(widgetLabel.c_str(), glm::value_ptr(value), 0.01f);
+								}
+								// mat3 (non editabile, solo visualizzazione)
+								else if (std::holds_alternative<glm::mat3>(uniformValue)) {
+									ImGui::Text("Value (mat3): [matrix]");
+								}
+								// mat4 (non editabile, solo visualizzazione)
+								else if (std::holds_alternative<glm::mat4>(uniformValue)) {
+									ImGui::Text("Value (mat4): [matrix]");
+								}
+								// Texture* (non editabile qui, mostra immagine e puntatore)
+								else if (std::holds_alternative<Texture*>(uniformValue)) {
+									Texture* tex = std::get<Texture*>(uniformValue);
+									ImGui::Text("Value (Texture*): %p", static_cast<void*>(tex));
+									if (tex)
+										ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(tex->getID())), ImVec2(64, 64));
+								}
+							}
+							ImGui::TreePop();
 						}else if (ImGui::Selectable(name.c_str())) {
 							renderComp.material = matPtr.get();
 						}
@@ -49,12 +104,63 @@ class Game3DLayer : public Layer {
 			}
 			ImGui::End();
 		}
+		createScenePanel();
 	}
+
+
+
 	virtual void onAttach() override {
 	}
 	virtual void onDetach() override {
 	}
 	virtual void onEvent(/*Event& event*/) override {
+	}
+private:
+	void printGameObjectHierarchy(std::queue<GameObject> *queue ,std::list<GameObject> *visited, GameObject& obj, int depth = 0) {
+		if (visited->end() != std::find(visited->begin(), visited->end(), obj)) {
+			return;
+		}
+		visited->push_back(obj);
+		std::string indent(depth * 2, ' ');
+		std::string idStr = std::to_string(static_cast<uint32_t>(obj.getID()));
+		const std::string label = indent + obj.getComponent<TagComponent>().tag + " " + idStr;
+		bool nodeOpen = ImGui::TreeNodeEx(label.c_str(),
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth);
+		// Se l'header è stato cliccato (label o altro nell'area header), seleziona l'oggetto.
+		// Questo cattura i click indipendentemente dallo stato aperto/chiuso del nodo.
+		if (ImGui::IsItemClicked(0))
+			scene->getController().getComponent<Controller>().setSelectedObject(obj);
+
+		if (nodeOpen)
+		{
+			auto& treeComp = obj.getComponent<TreeComponent>();
+			for (auto& childPtr : treeComp.obj) {
+					printGameObjectHierarchy(queue, visited, childPtr, depth + 1);
+			}
+			ImGui::TreePop();
+
+		}
+	}
+	void createScenePanel() 
+	{
+		std::list<GameObject> visitedObject;
+		std::queue<GameObject> toVisit;
+		ImGui::Begin("Scene 3D Info");
+		ImGui::Text("3D Scene Active");
+		
+		for (auto& obj : scene->getGameObjects()) {
+			toVisit.push(obj);
+		}
+		while (!toVisit.empty()) {
+			GameObject currentObj = toVisit.front();
+			toVisit.pop();
+			ImGui::Separator();
+			if (currentObj.getComponent<TreeComponent>().father)
+				continue;
+			printGameObjectHierarchy(&toVisit, &visitedObject, currentObj, 0);
+			visitedObject.push_back(currentObj);
+		}
+		ImGui::End();
 	}
 private:
 	Scene3D* scene;

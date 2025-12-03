@@ -11,6 +11,10 @@ void Material::set(const std::string& name, const UniformValue& value)
 }
 void Material::bind()
 {
+	if (!_shader)
+	{
+		return;
+	}
 	_shader->useShader();
 	
 	for (auto& [name, _] : alreadySet_) {
@@ -19,6 +23,10 @@ void Material::bind()
 }
 void Material::apply()
 {
+	if (!_shader)
+	{
+		return;
+	}
 	int slot = 0;
 	for (const auto& [name, value] : uniforms_) {
 		if (alreadySet_.find(name) != alreadySet_.end() && alreadySet_.at(name)) {

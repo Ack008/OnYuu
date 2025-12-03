@@ -40,7 +40,14 @@ void Scene3D::initializeScene()
 	toro.getComponent<TagComponent>().tag = "Toro";
 	toro.addComponent<BoxCollider>();
 
-	cube.setFather(&sphere);
+	cube.setFather(sphere);
+
+	GameObject gatto = MeshImporter::instance().importMesh(
+		"Asset/Mesh/cat.obj",
+		this,
+		AssetManager::instance().getMaterial("bling-phong-Inter")->getShader()
+	);
+
 
 	//defining lights
 	settingLight();

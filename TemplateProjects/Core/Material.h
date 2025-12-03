@@ -15,7 +15,6 @@ public:
 	using UniformValue = std::variant<
 		int, float, glm::vec2, glm::vec3, glm::vec4,
 		glm::mat3, glm::mat4, Texture*>;
-	
 
 	Material(std::shared_ptr<Shader> shader);
 	Material(const Material&) = default;
@@ -33,6 +32,22 @@ public:
 	// effettuato anche il set del programma shader.
 	void bind();
 	std::shared_ptr<Shader> getShader() const { return _shader; }
+
+	/*
+	Pseudocodice (piano dettagliato):
+	- Evitare la copia della mappa degli uniform quando si legge: restituire una reference const.
+	- Se si desidera permettere modifiche alla mappa dall'esterno, fornire anche un overload non-const che restituisca una reference non-const.
+	- Implementare:
+	  - const std::unordered_map<std::string, UniformValue>& getUniforms() const { return uniforms_; }
+	  - std::unordered_map<std::string, UniformValue>& getUniforms() { return uniforms_; }
+	- Questo mantiene efficienza evitando copie non necessarie e mantiene il contratto const correctness.
+	*/
+
+	// Restituisce una reference const per evitare copie
+	const std::unordered_map<std::string, UniformValue>& getUniforms() const { return uniforms_; }
+	// Overload non-const per modificare la mappa se necessario
+	std::unordered_map<std::string, UniformValue>& getUniforms() { return uniforms_; }
+
 private:
 	std::shared_ptr<Shader> _shader;
 	// Mappa dei uniform da applicare allo shader

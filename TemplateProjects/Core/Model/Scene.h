@@ -43,6 +43,8 @@ public:
 
     //Imposta la scena ed i suoi oggetti
     virtual void initializeScene() = 0;
+	// Ottieni tutte le entità 
+    std::vector< GameObject > getGameObjects();
 private:
     // Calcola le collisioni tra i collider presenti e notifica gli oggetti coinvolti.
     void calculateCollisions(float dt);

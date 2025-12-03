@@ -51,6 +51,7 @@
 #include "Render/Renderer.h"
 #include "Render/BatchRenderer.h"
 #include "Application/AssetManager.h"
+#include "Application/MeshImporter.h"
 #include "HermitInterpolationMesh.h"
 
 // Camera

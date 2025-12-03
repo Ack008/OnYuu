@@ -33,7 +33,7 @@ struct Material {
 };
 
 uniform Material material;
-float strenght = 1.0;
+float strenght = .3;
 void main() {
     vec4 worldPos = u_modelMatrix * vec4(aPos, 1.0);
     vec4 vWorldPos = (u_view *  worldPos);
