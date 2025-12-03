@@ -28,26 +28,20 @@ std::shared_ptr<Material> AssetManager::addMaterial(const std::string& name, std
             << " old_use_count=" << it->second.use_count() << std::endl;
     }
     materials_[name] = std::move(mat);
-    std::cout << "[AssetManager] addMaterial: added material '" << name << "' ptr=" << materials_[name].get()
-        << " use_count=" << materials_[name].use_count() << std::endl;
     return materials_[name];
 }
 
 std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) const {
     auto it = materials_.find(name);
     if (it != materials_.end()) {
-        std::cout << "[AssetManager] getMaterialPtr: '" << name << "' ptr=" << it->second.get()
-            << " use_count=" << it->second.use_count() << std::endl;
         return it->second;
     }
-    std::cout << "[AssetManager] getMaterialPtr: '" << name << "' not found" << std::endl;
     return nullptr;
 }
 
 Material* AssetManager::getMaterial(const std::string& name) const {
     auto ptr = getMaterialPtr(name);
     Material* raw = ptr ? ptr.get() : nullptr;
-    std::cout << "[AssetManager] getMaterial: '" << name << "' returning raw ptr=" << raw << std::endl;
     return raw;
 }
 
