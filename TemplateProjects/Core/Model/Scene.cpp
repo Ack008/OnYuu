@@ -73,7 +73,7 @@ void Scene::update(float dt)
 	Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
 	for (auto [entity, background] : backgroundView.each()) {
 		RenderMeshComponent backgroundMeshComp;
-		backgroundMeshComp.mesh = AssetManager::instance().getMesh("squareMesh");
+		backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
 		backgroundMeshComp.material = background.material;
 		Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
 		break;

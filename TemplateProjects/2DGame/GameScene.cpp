@@ -15,7 +15,7 @@ void GameScene::initializeScene()
 	camera.addComponent<Orthographic>(-50, 50, -50, 50, 0, -20);
 	//defining player
 	auto& renderSquare = player.addComponent<RenderMeshComponent>();
-    renderSquare.mesh = AssetManager::instance().getMesh("squareMesh");
+    renderSquare.mesh = AssetManager::instance().getMeshPtr("squareMesh");
     renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	player.addComponent<BoxCollider>();
 	player.addComponent<PlayerScripts>();
@@ -23,8 +23,8 @@ void GameScene::initializeScene()
 	player.getComponent<TagComponent>().tag = "Player";
 
 	//defining ball
-	auto& rd = ball.addComponent<RenderMeshComponent>();
-    rd.mesh = AssetManager::instance().getMesh("ballMesh");
+    auto& rd = ball.addComponent<RenderMeshComponent>();
+    rd.mesh = AssetManager::instance().getMeshPtr("ballMesh");
     rd.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	ball.addComponent<BoxCollider>();
 	ball.addComponent<RigidBody>(RigidBody::BodyType::DYNAMIC, 1.0f, 1.1f).setUseGravity(false);
@@ -32,7 +32,7 @@ void GameScene::initializeScene()
 	ball.getComponent<TagComponent>().tag = "Ball";
 	ball.addComponent<BallScript>();
 	//defining the floor
-    pavimento.addComponent<RenderMeshComponent>().mesh = AssetManager::instance().getMesh("pavimentoMesh");
+    pavimento.addComponent<RenderMeshComponent>().mesh = AssetManager::instance().getMeshPtr("pavimentoMesh");
     pavimento.getComponent<RenderMeshComponent>().material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	Trasform& pavimentoTrasform = pavimento.getComponent<Trasform>();
 	pavimentoTrasform.scale = glm::vec3(100, 20, 0.0f);
@@ -171,7 +171,7 @@ void GameScene::initializeMaterials()
 			{ -0.220703,0.420139,0, }	 ,
 			{ -0.00585938,0.185764,0, }	 ,
 			{ 0.161133,0.199653,0, }	 ,
-			{ 0.0585938,0.0329861,0, }	 ,
+			{ 0.0585938,0.0329861,0,}	 ,
 			{ 0.261719,-0.15625,0, }	 ,
 			{ -0.0322266,-0.118056,0, }
 

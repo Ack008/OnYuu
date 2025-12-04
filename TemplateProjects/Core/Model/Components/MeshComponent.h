@@ -21,15 +21,20 @@ struct Mesh {
 // RenderMeshComponent: semplice wrapper che collega una `Mesh` a un
 // `Material` e definisce il tipo di primitiva da disegnare.
 //
-// Nota: questo è un componente di alto livello, il renderer lo tradurrà in
-// chiamate a `MeshGPUusage` per uploadare i dati in GPU e disegnarli.
+// Migrazione: usiamo `std::shared_ptr<Mesh>` per mantenere ownership e prevenire
+// dangling pointer quando AssetManager rimpiazza una mesh.
 struct RenderMeshComponent {
-    Mesh* mesh = nullptr; // puntatore non-owning alla mesh
+    std::shared_ptr<Mesh> mesh; // shared ownership della mesh
     std::shared_ptr<Material> material; // materiale condiviso per il draw
 	RenderingTypeEnum renderingType = RenderingTypeEnum::TRIANGLE;
 
 	size_t getSize() {
+		if (!mesh) return 0;
 		// Calcola la dimensione approssimativa in byte dei dati del vertice.
-		return mesh->position.size() * sizeof(glm::vec3) +mesh->color.size() * sizeof(glm::vec4);
+		size_t pos = mesh->position.size() * sizeof(glm::vec3);
+		size_t col = mesh->color.size() * sizeof(glm::vec4);
+		size_t tex = mesh->texCoord.size() * sizeof(glm::vec2);
+		size_t nor = mesh->normal.size() * sizeof(glm::vec3);
+		return pos + col + tex + nor;
 	}
 } ;

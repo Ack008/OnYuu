@@ -18,7 +18,7 @@ void Scene3D::initializeScene()
 	camera.getComponent<TagComponent>().tag = "MainCamera";
 	//defining cube
     auto& renderSquare = cube.addComponent<RenderMeshComponent>();
-    renderSquare.mesh = AssetManager::instance().getMesh("cubeMesh");
+    renderSquare.mesh = AssetManager::instance().getMeshPtr("cubeMesh");
     renderSquare.material = AssetManager::instance().getMaterialPtr("phongMat1");
 	cube.addComponent<BoxCollider>();
 	cube.getComponent<TagComponent>().tag = "cube";
@@ -26,7 +26,7 @@ void Scene3D::initializeScene()
 
 	//defining sphere
     auto& renderSphere = sphere.addComponent<RenderMeshComponent>();
-    renderSphere.mesh = AssetManager::instance().getMesh("sphereMesh");
+    renderSphere.mesh = AssetManager::instance().getMeshPtr("sphereMesh");
     renderSphere.material = AssetManager::instance().getMaterialPtr("phongMat1");
 	sphere.getComponent<Trasform>().position = glm::vec3(2.0f, 0.0f, -5.0f);
 	sphere.getComponent<TagComponent>().tag = "Sphere";
@@ -34,7 +34,7 @@ void Scene3D::initializeScene()
 
 	// defining toro
     auto& renderToro = toro.addComponent<RenderMeshComponent>();
-    renderToro.mesh = AssetManager::instance().getMesh("toroMesh");
+    renderToro.mesh = AssetManager::instance().getMeshPtr("toroMesh");
     renderToro.material = AssetManager::instance().getMaterialPtr("phongMat1");
 	toro.getComponent<Trasform>().position = glm::vec3(-2.0f, 0.0f, -5.0f);
 	toro.getComponent<TagComponent>().tag = "Toro";
@@ -61,7 +61,7 @@ void Scene3D::settingLight()
 {
 	lightDirectional.getComponent<Trasform>().position = glm::vec3(0.0f, 1.0f, 0.0f);
     auto &rb = lightDirectional.addComponent<RenderMeshComponent>();
-    rb.mesh = AssetManager::instance().getMesh("sphereMesh");
+    rb.mesh = AssetManager::instance().getMeshPtr("sphereMesh");
     rb.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	lightDirectional.addComponent<LightComponent>();
 	lightDirectional.getComponent<LightComponent>().color = glm::vec4(1,1,1,1);
@@ -69,7 +69,7 @@ void Scene3D::settingLight()
 
 	lightDirectional2.getComponent<Trasform>().position = glm::vec3(3.0f, 1.0f, 0.0f);
     auto& rb2 = lightDirectional2.addComponent<RenderMeshComponent>();
-    rb2.mesh = AssetManager::instance().getMesh("sphereMesh");
+    rb2.mesh = AssetManager::instance().getMeshPtr("sphereMesh");
     rb2.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 	lightDirectional2.addComponent<LightComponent>();
 	lightDirectional2.getComponent<LightComponent>().color = glm::vec4(1, 1, 1, 1);

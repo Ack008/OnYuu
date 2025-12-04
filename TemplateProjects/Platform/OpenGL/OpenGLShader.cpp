@@ -11,6 +11,36 @@ OpenGLShader::OpenGLShader(const char* vertexfilename,const char* fragmentfilena
 		glUniformBlockBinding(shader, blockIndex, 0);
 	}
 	//shader = createProgram("vertexShaderC.glsl", "fragmentShaderC.glsl");
+	int maxLength;
+	glGetProgramiv(shader, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxLength);
+
+	int uniformCount;
+	glGetProgramiv(shader, GL_ACTIVE_UNIFORMS, &uniformCount);
+
+	for (int i = 0; i < uniformCount; i++) {
+		char* name = new char[maxLength + 1];
+		int size;
+		GLenum type;
+		glGetActiveUniform(shader, i, maxLength, NULL, &size, &type, name);
+		GLint location = glGetUniformLocation(shader, name);
+		if (location == -1) {
+			continue;
+		}
+		uniformLocationCache[name] = location;
+		std::cout << "Uniform " << name << " at location " << location << " size: "<< size <<std::endl;
+		switch (type) {
+		case GL_FLOAT: std::cout << " Type: FLOAT " << std::endl; break;
+		case GL_FLOAT_VEC2: std::cout << " Type: VEC2 " << std::endl; break;
+		case GL_FLOAT_VEC3: std::cout << " Type: VEC3 " << std::endl; break;
+		case GL_FLOAT_VEC4: std::cout << " Type: VEC4 " << std::endl; break;
+		case GL_INT: std::cout << " Type: INT " << std::endl; break;
+		case GL_BOOL: std::cout << " Type: BOOL " << std::endl; break;
+		case GL_FLOAT_MAT3: std::cout << " Type: MAT3 " << std::endl; break;
+		case GL_FLOAT_MAT4: std::cout << " Type: MAT4 " << std::endl; break;
+			default: std::cout << " Type: OTHER " << std::endl; break;
+		}
+		delete[] name;
+	}
 }
 
 void OpenGLShader::useShader()

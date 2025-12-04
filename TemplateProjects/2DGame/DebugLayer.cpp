@@ -41,8 +41,7 @@ void DebugLayer::onDetach()
 
         // Metodo sicuro: controlla ogni entity, poi dynamic_cast sulla reference del Collider
         for (auto [entity, transform, script] : view.each()) {
-            // prova a ottenere un BoxCollider se il collider è derivato
-			if (script.hasScript<BoxCollider>() == false) {
+            if (script.hasScript<BoxCollider>() == false) {
                 continue; // salta se non ha BoxCollider
             }
 			auto& box = script.getScript<BoxCollider>();
@@ -58,19 +57,16 @@ void DebugLayer::onDetach()
 
             auto debugMesh = std::make_shared<Mesh>(Mesh{
                {
-                    // back face
-                     {minPoint.x, minPoint.y, 0}, // v0
-                    {maxPoint.x, minPoint.y, 0}, // v1
-                    {maxPoint.x, maxPoint.y, 0}, // v2
-                    {minPoint.x, maxPoint.y, 0}, // v3
-
+                     {minPoint.x, minPoint.y, 0},
+                     {maxPoint.x, minPoint.y, 0},
+                     {maxPoint.x, maxPoint.y, 0},
+                     {minPoint.x, maxPoint.y, 0},
                 },
                 {
-                    {1.0f, 0.0f, 0.0f,1.0f}, // v0
-                    {1.0f, 0.0f, 0.0f,1.0f}, // v1
-                    {1.0f, 0.0f, 0.0f,1.0f}, // v2
-                    {1.0f, 0.0f, 0.0f,1.0f}, // v3
-                    
+                    {1.0f, 0.0f, 0.0f,1.0f},
+                    {1.0f, 0.0f, 0.0f,1.0f},
+                    {1.0f, 0.0f, 0.0f,1.0f},
+                    {1.0f, 0.0f, 0.0f,1.0f},
                  },
                 {},
 				{ },
@@ -78,7 +74,6 @@ void DebugLayer::onDetach()
                     1, 2,
                     2, 3,
                     3, 0,
-
                 }
                 });
 
@@ -87,9 +82,9 @@ void DebugLayer::onDetach()
                 continue;
             }
 
-
             auto comp = std::make_unique<RenderMeshComponent>();
-            comp->mesh = debugMesh.get();
+            // assegniamo la shared_ptr direttamente
+            comp->mesh = debugMesh;
             comp->renderingType = RenderingTypeEnum::LINE;
             comp->material = debugMaterial;
 

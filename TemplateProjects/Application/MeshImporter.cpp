@@ -3,7 +3,10 @@
 #include <assimp/scene.h>           // Output data structure
 #include <assimp/postprocess.h>     // Post processing flags
 #include "Application/AssetManager.h"
+#include <filesystem> // C++17
 using namespace std;
+namespace fs = std::filesystem;
+
 MeshImporter& MeshImporter::instance() {
 	static MeshImporter mgr;
 	return mgr;
@@ -23,6 +26,14 @@ GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, 
 	obj.getComponent<TagComponent>().tag = "meshImported";
 	const aiMesh* mesh;
 
+	// base name (stem) del file per generare nomi univoci
+	std::string fileStem = "import";
+	try {
+		fileStem = fs::path(filePath).stem().string();
+	} catch (...) {
+		fileStem = filePath;
+	}
+
 	// Fill vertices positions
 	int num_meshes = scene->mNumMeshes;  //Numero di oggetti che compongono il modello
 	for (int i = 0; i < num_meshes; i++)
@@ -40,7 +51,11 @@ GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, 
 
 		aiColor3D color;
 		float value;
-		std::string name = std::string(mesh->mName.C_Str()) + std::to_string(nm);
+		// costruisco un nome più sicuro e unico: stem del file + nome mesh (se presente) + indice
+		std::string meshBaseName = mesh->mName.C_Str() ? std::string(mesh->mName.C_Str()) : std::string();
+		if (meshBaseName.empty()) meshBaseName = "submesh";
+		std::string name = fileStem + "_" + meshBaseName + "_" + std::to_string(nm);
+
 		mymesh[nm].getComponent<TagComponent>().tag = name;
 		std::shared_ptr<Material> mat = AssetManager::instance().addMaterial(name, std::make_shared<Material>(shader));
 		// Read mtl file vertex data
@@ -76,19 +91,20 @@ GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, 
 		}
 		else
 		{
-			//printf("Errore in shininess \n");
 			mat->set("material.shininess", 50.0f);
 		}
-		// http://assimp.sourceforge.net/lib_html/structai_material.html
+		// assegno il materiale alla componente
         currentMesh.getComponent<RenderMeshComponent>().material = mat;
+
+		// Creo e registro la mesh nel AssetManager usando il nome unico
 		std::shared_ptr<Mesh> tempMesh = AssetManager::instance().addMesh(name, std::make_shared<Mesh>());
-		currentMesh.getComponent<RenderMeshComponent>().mesh = tempMesh.get();
+		// Assegno la shared_ptr direttamente alla componente (migrazione completa)
+		currentMesh.getComponent<RenderMeshComponent>().mesh = tempMesh;
 
 		for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 
 			aiVector3D pos = mesh->mVertices[i];
 			aiVector3D uv;
-			//aiColor4D color = mesh->mColors[0][i];
 			aiVector3D n;
 			if (mesh->HasTextureCoords(0))
 			{

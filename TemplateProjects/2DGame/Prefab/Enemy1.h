@@ -6,7 +6,7 @@ class Enemy1 : public Prefab {
 		virtual GameObject istantiateObject(Scene* scene) override {
 			GameObject enemy = scene->createEntity();
 			auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
-			renderSquare.mesh = AssetManager::instance().getMesh("enemyJapanese");
+			renderSquare.mesh = AssetManager::instance().getMeshPtr("enemyJapanese");
             renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 
 
@@ -29,7 +29,7 @@ public:
 	virtual GameObject istantiateObject(Scene* scene) override {
 		GameObject enemy = scene->createEntity();
 		auto& renderSquare = enemy.addComponent<RenderMeshComponent>();
-		renderSquare.mesh = AssetManager::instance().getMesh("LoveJapanese");
+		renderSquare.mesh = AssetManager::instance().getMeshPtr("LoveJapanese");
         renderSquare.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
 		
 		enemy.addComponent<BoxCollider>();
