@@ -153,4 +153,5 @@ void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model
 void OpenGLBatchRender::setSkyBox(SkyBoxComponent* skybox)
 {
 	this->skybox = skybox;
+	skybox->cubeMap->bind();
 }

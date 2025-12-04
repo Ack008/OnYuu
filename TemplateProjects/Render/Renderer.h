@@ -51,6 +51,10 @@ public:
 	// Accesso globale all'istanza concreta del renderer. Usa il factory method
 	// `create()` per costruire l'implementazione corretta in base all'API.
 	static std::shared_ptr<Render> getInstance();
+public:
+	void static init() {
+		s_instance = create();
+	}
 protected:
 
 	// Lista di mesh da renderizzare (puntatori non-owning). Il renderer concreto

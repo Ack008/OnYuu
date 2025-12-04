@@ -80,13 +80,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib;vulkan-1.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -98,13 +98,13 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib;vulkan-1.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)\Dependencies\lib;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,13 +114,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib;vulkan-1.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,13 +132,13 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)$(SolutionDir)\Dependencies\lib;$(SolutionDir)\Dependencies\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)opengl32.lib;glfw3.lib;%(AdditionalDependencies)$(CoreLibraryDependencies);%(AdditionalDependencies)opengl32.lib;glfw3.lib;assimp.lib;vulkan-1.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -195,6 +195,7 @@
     <ClCompile Include="Core\View\View.cpp" />
     <ClCompile Include="vendor\ImGui\ImGuiFileDialog.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
+    <ClCompile Include="vendor\VkBootstrap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h" />
@@ -275,6 +276,8 @@
     <None Include="Asset\Shader\phongFragInter.glsl" />
     <None Include="Asset\Shader\phongVer.glsl" />
     <None Include="Asset\Shader\phongVerInter.glsl" />
+    <None Include="Asset\Shader\ReflectiveShader\reflective-frag.glsl" />
+    <None Include="Asset\Shader\ReflectiveShader\Reflective-ver.glsl" />
     <None Include="Asset\Shader\SkyBoxShader\SkyBoxFrag.glsl" />
     <None Include="Asset\Shader\SkyBoxShader\SkyBoxVer.glsl" />
     <None Include="bling-phongVert.glsl" />

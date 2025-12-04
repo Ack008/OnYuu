@@ -43,11 +43,11 @@ void Scene3D::initializeScene()
 	cube.setFather(sphere);
 
     GameObject gatto = MeshImporter::instance().importMesh(
-        "Asset/Mesh/cat.obj",
+        "Asset/Mesh/auto.obj",
         this,
         AssetManager::instance().getMaterialPtr("bling-phong-Inter")->getShader()
     );
-
+	gatto.getComponent<Trasform>().position = glm::vec3(-9.0f, 0.0f, -3.0f);
 
 	//defining lights
 	settingLight();
@@ -218,6 +218,7 @@ void Scene3D::initializeMaterials()
 	std::shared_ptr<Shader> shaderBlingPhong = Shader::create("Asset/Shader/bling-phong-ver.glsl", "Asset/Shader/bling-phong-frag.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInter = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInterTexture = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter-Texture.glsl");
+	std::shared_ptr<Shader> shaderReflective = Shader::create("Asset/Shader/ReflectiveShader/reflective-ver.glsl", "Asset/Shader/ReflectiveShader/reflective-frag.glsl");
 	// skybox shader
 	std::shared_ptr<Shader> skyboxShader = Shader::create(
 		"Asset/Shader/SkyBoxShader/SkyBoxVer.glsl",
@@ -281,7 +282,12 @@ void Scene3D::initializeMaterials()
 	mat6->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat6->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 	mat6->set("texture1", AssetManager::instance().getTexture("catTexture"));
-	
+
+	mat6 = AssetManager::instance().addMaterial("reflectiveMaterial", std::make_shared<Material>(shaderReflective));
+	mat6->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
+	mat6->set("material.shininess", 13.f);
+	mat6->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
+	mat6->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
 }
 void Scene3D::createCube()
 {

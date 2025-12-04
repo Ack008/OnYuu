@@ -1,9 +1,12 @@
 #include "Application.h"
+#include "Render/Renderer.h"
 Application* Application::instance = nullptr;
 Application::Application()
 {
 	Application::instance = this;
 	window = Window::create(1280, 720);
+	Render::init();
+
 	imGuiLayer = new ImGuiLayer();
 	imGuiLayer->onAttach();
 	globalDataUBO = UniformBuffer::create();

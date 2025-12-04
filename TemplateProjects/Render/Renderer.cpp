@@ -1,8 +1,7 @@
 #include "Renderer.h"
 #include "Platform/OpenGL/OpenGLBatchRender.h"
 #include "Platform/API.h"
-std::shared_ptr<Render> Render::s_instance = Render::create();
-
+std::shared_ptr<Render> Render::s_instance = nullptr;
 std::shared_ptr<Render> Render::create()
 {
 	// Here you can add logic to choose which Render subclass to instantiate

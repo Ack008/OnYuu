@@ -1,13 +1,10 @@
 #version 450 core
-layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec4 aColor;
-layout(location = 2) in vec2 aTexCoord;
-layout(location = 3) in vec3 aNormal;
-uniform mat4 u_modelMatrix;
 
-
+in vec3 vNormal;
+in vec3 vWorldPos;
+in vec3 reflectedVector;
 out vec4 color;
-out vec2 texCoord;
+
 struct Light {
     vec4 position;
     float intensity;
@@ -33,22 +30,20 @@ struct Material {
 };
 
 uniform Material material;
-float strenght = .1;
+float strenght = 1.0;
+uniform samplerCube skybox;
 void main() {
-    vec4 worldPos = u_modelMatrix * vec4(aPos, 1.0);
-    vec4 vWorldPos = (u_view *  worldPos);
-    texCoord = aTexCoord;
-    gl_Position = u_projection * vWorldPos;
-  
+    vec3 N = normalize(vNormal);
+    vec3 viewPos = u_position.xyz;
+    vec3 V = normalize(viewPos - vWorldPos);
 
     vec3 result = vec3(0);
     for(int i = 0; i < count; i++)
     {
-        
         Light light = lights[i];
-        vec4 eyePosition = vWorldPos;
+        vec4 eyePosition = vec4(vWorldPos,1.0);
         vec4 eyeLightPos = u_view * light.position;
-        vec3 N = normalize(mat3(transpose(inverse(u_view * u_modelMatrix))) * aNormal);
+        vec3 N = normalize(vNormal);
         vec3 V = normalize(u_position.xyz - eyePosition.xyz);
         vec3 L = normalize(eyeLightPos.xyz - eyePosition.xyz);
         vec3 R = reflect(-L, N);
@@ -64,8 +59,12 @@ void main() {
 
         vec3 specular = light.intensity * vec3(light.color) * coseno_angolo_alfa * material.specular;
         result += ambient + diffuse + specular;
+
     }
     // Solo la prima luce, come nel tuo esempio
 
     color = vec4(clamp(result, 0.0, 1.0), 1.0);
+    vec3 reflectedColor = texture(skybox, reflectedVector).rgb;
+    color = mix(color, vec4(reflectedColor, 1.0), 0.5);
+
 }

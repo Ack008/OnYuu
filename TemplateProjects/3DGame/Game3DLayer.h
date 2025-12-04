@@ -168,24 +168,23 @@ private:
 			return;
 		}
 		visited->push_back(obj);
-		std::string indent(depth * 2, ' ');
-		std::string idStr = std::to_string(static_cast<uint32_t>(obj.getID()));
-		const std::string label = indent + obj.getComponent<TagComponent>().tag + " " + idStr;
-		bool nodeOpen = ImGui::TreeNodeEx(label.c_str(),
-			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth);
-		// Se l'header è stato cliccato (label o altro nell'area header), seleziona l'oggetto.
-		// Questo cattura i click indipendentemente dallo stato aperto/chiuso del nodo.
+
+		// Usa ID unico per ImGui e formato separato per il testo (evita spazi iniziali)
+		uint32_t id = static_cast<uint32_t>(obj.getID());
+		const std::string& tag = obj.getComponent<TagComponent>().tag;
+		bool nodeOpen = ImGui::TreeNodeEx((void*)(intptr_t)id,
+			ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth,
+			"%s %u", tag.c_str(), id);
+
 		if (ImGui::IsItemClicked(0))
 			scene->getController().getComponent<Controller>().setSelectedObject(obj);
 
-		if (nodeOpen)
-		{
+		if (nodeOpen) {
 			auto& treeComp = obj.getComponent<TreeComponent>();
 			for (auto& childPtr : treeComp.obj) {
-					printGameObjectHierarchy(queue, visited, childPtr, depth + 1);
+				printGameObjectHierarchy(queue, visited, childPtr, depth + 1);
 			}
 			ImGui::TreePop();
-
 		}
 	}
 	void createScenePanel() 

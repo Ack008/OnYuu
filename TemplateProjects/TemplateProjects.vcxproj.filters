@@ -139,6 +139,7 @@
     <ClCompile Include="Core\CubeMap.cpp" />
     <ClCompile Include="Application\MeshImporter.cpp" />
     <ClCompile Include="vendor\ImGui\ImGuiFileDialog.cpp" />
+    <ClCompile Include="vendor\VkBootstrap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h">
@@ -256,6 +257,8 @@
     <None Include="Asset\Shader\SkyBoxShader\SkyBoxFrag.glsl" />
     <None Include="Platform\OpenGL\SkyBoxFrag.glsl" />
     <None Include="Platform\OpenGL\SkyBoxVer.glsl" />
+    <None Include="Asset\Shader\ReflectiveShader\Reflective-ver.glsl" />
+    <None Include="Asset\Shader\ReflectiveShader\reflective-frag.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Asset\Texture\SkyBox\back.jpg">
