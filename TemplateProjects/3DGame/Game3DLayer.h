@@ -39,7 +39,7 @@ private:
 				ImGui::Text("Light Color");
 				ImGui::SliderFloat3("##LightColor", glm::value_ptr(lightComp.color),0,1);
 				ImGui::Text("Light Intensity");
-				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,1);
+				ImGui::SliderFloat("##LightIntensity", &lightComp.intensity,0,50);
 			}
 			if (selectedObj.hasComponent<RenderMeshComponent>()) {
 				RenderMeshComponent& renderComp = selectedObj.getComponent<RenderMeshComponent>();
@@ -200,9 +200,9 @@ private:
 		while (!toVisit.empty()) {
 			GameObject currentObj = toVisit.front();
 			toVisit.pop();
-			ImGui::Separator();
 			if (currentObj.getComponent<TreeComponent>().father)
 				continue;
+			ImGui::Separator();
 			printGameObjectHierarchy(&toVisit, &visitedObject, currentObj, 0);
 			visitedObject.push_back(currentObj);
 		}

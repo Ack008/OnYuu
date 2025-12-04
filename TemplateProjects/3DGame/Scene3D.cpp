@@ -1,5 +1,6 @@
 #include "Scene3D.h"
 #include "scripts/CameraScript.h"
+#include "scripts/RotatingScripts.h"
 #include "scripts/Controller.h"
 Scene3D::Scene3D()
 	:Scene()
@@ -39,15 +40,42 @@ void Scene3D::initializeScene()
 	toro.getComponent<Trasform>().position = glm::vec3(-2.0f, 0.0f, -5.0f);
 	toro.getComponent<TagComponent>().tag = "Toro";
 	toro.addComponent<BoxCollider>();
+	toro.addComponent<RotatingScripts>(glm::vec3(4.0f, .0f, 7.0f));
+
+	// defining pyramid
+	auto& renderPyramid = pyramid.addComponent<RenderMeshComponent>();
+	renderPyramid.mesh = AssetManager::instance().getMeshPtr("pyramidMesh");
+	renderPyramid.material = AssetManager::instance().getMaterialPtr("phongMat1");
+	pyramid.getComponent<Trasform>().position = glm::vec3(4.0f, 0.0f, -5.0f);
+	pyramid.getComponent<TagComponent>().tag = "Pyramid";
+	pyramid.addComponent<BoxCollider>();
+
+	//defining piano
+	auto& renderPiano = piano.addComponent<RenderMeshComponent>();
+	renderPiano.mesh = AssetManager::instance().getMeshPtr("pianoMesh");
+	renderPiano.material = AssetManager::instance().getMaterialPtr("reflectiveMaterial");
+	piano.getComponent<Trasform>().position = glm::vec3(0.0f, -1.5f, -5.0f);
+	piano.getComponent<Trasform>().scale = glm::vec3(30, 1.0f, 41);
+	piano.getComponent<TagComponent>().tag = "Piano";
+	piano.addComponent<BoxCollider>();
+
+
 
 	cube.setFather(sphere);
 
-    GameObject gatto = MeshImporter::instance().importMesh(
+    GameObject autoObj = MeshImporter::instance().importMesh(
         "Asset/Mesh/auto.obj",
         this,
         AssetManager::instance().getMaterialPtr("bling-phong-Inter")->getShader()
     );
-	gatto.getComponent<Trasform>().position = glm::vec3(-9.0f, 0.0f, -3.0f);
+	autoObj.getComponent<Trasform>().position = glm::vec3(-9.0f, -.2f, -3.0f);
+
+	GameObject car = MeshImporter::instance().importMesh(
+		"Asset/Mesh/car.obj",
+		this,
+		AssetManager::instance().getMaterialPtr("bling-phong-Inter")->getShader()
+	);
+	car.getComponent<Trasform>().position = glm::vec3(.6f, -1.05f, 7.6f);	
 
 	//defining lights
 	settingLight();
@@ -89,28 +117,27 @@ void Scene3D::createPyramid()
 	AssetManager::instance().addMesh("pyramidMesh", std::make_shared<Mesh>(Mesh()));
 	Mesh* mesh = AssetManager::instance().getMesh("pyramidMesh");
 
-	// base vertices (quad on Y=0)
-	mesh->position.push_back(glm::vec3(-1.0f, 0.0f, 1.0f)); // 0
-	mesh->color.push_back(glm::vec4(1.0f, 0.0f, 0.0f, 0.5f));
-	mesh->texCoord.push_back(glm::vec2(0.0f, 0.0f));
+	mesh->position.push_back(glm::vec3(-1.0, 0.0, 1.0));
+	mesh->color.push_back(glm::vec4(1.0, 0.0, 0.0, 0.5));
+	mesh->texCoord.push_back(glm::vec2(0.0f, 0.0f)); // base 0 - bottom-left
 
-	mesh->position.push_back(glm::vec3(1.0f, 0.0f, 1.0f)); // 1
-	mesh->color.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 0.5f));
-	mesh->texCoord.push_back(glm::vec2(1.0f, 0.0f));
+	mesh->position.push_back(glm::vec3(1.0, 0.0, 1.0));
+	mesh->color.push_back(glm::vec4(0.0, 1.0, 0.0, 0.5));
+	mesh->texCoord.push_back(glm::vec2(1.0f, 0.0f)); // base 1 - bottom-right
 
-	mesh->position.push_back(glm::vec3(1.0f, 0.0f, -1.0f)); // 2
-	mesh->color.push_back(glm::vec4(0.0f, 0.0f, 1.0f, 0.5f));
-	mesh->texCoord.push_back(glm::vec2(1.0f, 1.0f));
+	mesh->position.push_back(glm::vec3(1.0, 0.0, -1.0));
+	mesh->color.push_back(glm::vec4(0.0, 0.0, 1.0, 0.5));
+	mesh->texCoord.push_back(glm::vec2(1.0f, 1.0f)); // base 2 - top-right
 
-	mesh->position.push_back(glm::vec3(-1.0f, 0.0f, -1.0f)); // 3
-	mesh->color.push_back(glm::vec4(1.0f, 1.0f, 0.0f, 0.5f));
-	mesh->texCoord.push_back(glm::vec2(0.0f, 1.0f));
+	mesh->position.push_back(glm::vec3(-1.0, 0.0, -1.0));
+	mesh->color.push_back(glm::vec4(1.0, 1.0, 0.0, 0.5));
+	mesh->texCoord.push_back(glm::vec2(0.0f, 1.0f)); // base 3 - top-left
 
-	// apex
-	mesh->position.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // 4
-	mesh->color.push_back(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	// apex UV placed at center of texture to minimise stretching
-	mesh->texCoord.push_back(glm::vec2(0.5f, 0.5f));
+	// Apice piramide
+	mesh->position.push_back(glm::vec3(0.0, 1.0, 0.0));
+	mesh->color.push_back(glm::vec4(1.0, 1.0, 1.0, 1.0));
+	// posizioniamo l'UV dell'apice al centro della texture per ridurre lo stretching sulle facce
+	mesh->texCoord.push_back(glm::vec2(0.5f, 0.5f)); // apice 4
 
 	// base (two triangles)
 	mesh->indices.push_back(0); mesh->indices.push_back(1); mesh->indices.push_back(2);
@@ -123,17 +150,16 @@ void Scene3D::createPyramid()
 	mesh->indices.push_back(3); mesh->indices.push_back(2); mesh->indices.push_back(4);
 	mesh->indices.push_back(1); mesh->indices.push_back(2); mesh->indices.push_back(4);
 
-	// optional decorative vertex (kept as original implementation)
-	mesh->position.push_back(glm::vec3(0.0f, 0.3f, 0.0f)); // 5
-	mesh->color.push_back(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-	// give it a reasonable UV as well
+	mesh->position.push_back(glm::vec3(0.0, 0.3, 0.0));
+	mesh->color.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+	// UV per il vertice "decorativo"
 	mesh->texCoord.push_back(glm::vec2(0.5f, 0.25f));
 
 	// normals placeholder (will be computed later if needed)
 	for (int i = 0; i < mesh->position.size(); i++)
-	{
-		mesh->normal.push_back(glm::vec3(0.0f));
-	}
+		mesh->normal.push_back(glm::vec3(0.0));
+	
+
 
 
 	int nv = mesh->position.size();
@@ -211,6 +237,7 @@ void Scene3D::initializeMaterials()
 	createCube();
 	createSphere(glm::vec4(0.0, 1.0, 0.0, 1.0),100,100);
 	createPyramid();
+	createPiano(glm::vec4(0.5, 0.5, 0.5, 1.0));
 	createToro({0,1,1,1});
 	std::shared_ptr<Shader> shader = Shader::create("MeshVertexShader.glsl", "fragmentShaderC.glsl");
 	std::shared_ptr<Shader> shaderPhongInter = Shader::create("Asset/Shader/phongVerInter.glsl", "Asset/Shader/phongFragInter.glsl");
@@ -405,4 +432,38 @@ void Scene3D::createSphere(glm::vec4 color, int stacks , int slices )
 			mesh->indices.push_back(first + 1);
 		}
 	}
+}
+
+
+void Scene3D::createPiano(glm::vec4 color)
+{
+	auto mesh = AssetManager::instance().addMesh("pianoMesh", std::make_shared<Mesh>(Mesh()));
+
+	mesh->position.push_back(glm::vec3(-0.5, 0.0, 0.5));
+	mesh->color.push_back(color);
+	mesh->position.push_back(glm::vec3(0.5, 0.0, 0.5));
+	mesh->color.push_back(color);
+	mesh->position.push_back(glm::vec3(0.5, 0.0, -0.5));
+	mesh->color.push_back(color);
+	mesh->position.push_back(glm::vec3(-0.5, 0.0, -0.5));
+	mesh->color.push_back(color);
+
+	mesh->indices.push_back(0); mesh->indices.push_back(1); mesh->indices.push_back(2);
+	mesh->indices.push_back(0); mesh->indices.push_back(2); mesh->indices.push_back(3);
+
+	mesh->texCoord.push_back(glm::vec2(0.0, 1.0));
+	mesh->texCoord.push_back(glm::vec2(1.0, 1.0));
+	mesh->texCoord.push_back(glm::vec2(1.0, 0.0));
+	mesh->texCoord.push_back(glm::vec2(0.0, 0.0));
+
+	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
+	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
+	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
+	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
+
+	mesh->position.push_back(glm::vec3(0.0, 0.0, 0.0));  //Memorizzo come ultimo vertice l'ancora per poterla visualizzare
+	mesh->color.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+
+	int nv = mesh->position.size();
+	mesh->indices.push_back(nv - 1);
 }

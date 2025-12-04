@@ -227,6 +227,7 @@
     <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
     <ClInclude Include="Application\MeshImporter.h" />
     <ClInclude Include="vendor\ImGui\dirent\dirent.h" />
+    <ClInclude Include="3DGame\scripts\RotatingScripts.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
