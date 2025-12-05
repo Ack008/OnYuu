@@ -15,24 +15,27 @@ void BatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 
     if (mesh == nullptr || !mesh->material)
         return;
-    BatchCouple couple = std::make_pair(mesh->material, mesh->renderingType);
-    auto& batch = (*(&batches))[couple];
-    batch.push_back(RenderData{ mesh,model });
     if (sceneStarted && !renderScenes.empty()) {
+        BatchCouple couple = std::make_pair(mesh->material, mesh->renderingType);
         renderScenes.back().meshRenders.push_back(RenderData{ mesh,model });
+		renderScenes.back().batches[couple].push_back(RenderData{ mesh,model });
+    }
+    else
+    {
+        throw std::runtime_error("No active scene. Call BeginScene() before adding mesh renders.");
 	}
 }
 
-void BatchRender::clear()
-{
-	batches.clear();
-}
+
 
 void BatchRender::setSkyBox(SkyBoxComponent* skybox)
 {
     if (sceneStarted && !renderScenes.empty()) {
         renderScenes.back().skybox = skybox;
-	}
+    }
+    else {
+		throw std::runtime_error("No active scene. Call BeginScene() before setting skybox.");
+    }
 }
 
 void BatchRender::BeginScene(Camera *camera)
@@ -49,12 +52,20 @@ void BatchRender::BeginScene(Camera *camera)
 
 void BatchRender::EndScene()
 {
+    if (!sceneStarted)
+	{
+		throw std::runtime_error("No active scene to end. Call BeginScene() before ending a scene.");
+	}
     sceneStarted = false;
 }
 
 
 void BatchRender::submit()
 {
+	if (sceneStarted)
+        {
+        throw std::runtime_error("Cannot submit while a scene is active. Call EndScene() before submitting.");
+	}
 	std::cout << "BatchRender::submit() - Numero di scene da renderizzare: " << renderScenes.size() << std::endl;
 
 	// stampa di debug
@@ -72,12 +83,6 @@ void BatchRender::submit()
 		
 	}
 }
-
-std::unordered_map<BatchCouple, std::vector<BatchRender::RenderData>, BatchCoupleHash>* BatchRender::getBatches()
-{
-	return &batches;
-}
-
 
 
 

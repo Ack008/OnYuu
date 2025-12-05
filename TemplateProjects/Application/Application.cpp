@@ -17,14 +17,13 @@ void Application::Run()
 {
 	while (!window->shouldClose()) {
 		window->beginFrame();
-		Render::getInstance()->BeginFrame();
 		sendGlobalShaderData();
 		
 		//Updating layers
 		for (Layer* layer : layers) {
 			layer->onUpdate(static_cast<float>(window->getFrameTime()));
 		}
-		
+		Render::getInstance()->BeginFrame();
 		//imgui drawing
 		imGuiLayer->begin();
 		for (Layer* layer : layers) {
