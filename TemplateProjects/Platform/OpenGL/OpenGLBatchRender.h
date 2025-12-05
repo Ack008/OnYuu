@@ -13,6 +13,7 @@ public:
 	virtual void draw() override;
 	virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
 	virtual void setSkyBox(SkyBoxComponent *skybox) override;
+	virtual void submit() override;
 	OpenGLBatchRender();
 	~OpenGLBatchRender();
 private:

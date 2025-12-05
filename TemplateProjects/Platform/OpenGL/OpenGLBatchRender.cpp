@@ -17,7 +17,10 @@ OpenGLBatchRender::OpenGLBatchRender()
 	// Inizializziamo il VAO in modo lazy durante draw().
 	vao = 0;
 }
-
+void OpenGLBatchRender::submit()
+{
+	BatchRender::submit();
+}
 void OpenGLBatchRender::draw()
 {
 	auto batches = getBatches();
@@ -102,10 +105,10 @@ void OpenGLBatchRender::drawSkybox()
 void OpenGLBatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 {
 	BatchRender::addMeshRender(mesh, model);
-	auto couple = std::make_pair(mesh->material, mesh->renderingType);
 }
 void OpenGLBatchRender::setSkyBox(SkyBoxComponent* skybox)
 {
+	BatchRender::setSkyBox(skybox);
 	this->skybox = skybox;
 	if (skybox && skybox->cubeMap) skybox->cubeMap->bind();
 }

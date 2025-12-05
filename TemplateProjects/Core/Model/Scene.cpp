@@ -71,6 +71,7 @@ void Scene::update(float dt)
 	//rendering background
 	auto backgroundView = reg->view<Background2DRender>();
 	Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+	Render::getInstance()->BeginScene(editorCamera);
 	for (auto [entity, background] : backgroundView.each()) {
 		RenderMeshComponent backgroundMeshComp;
 		backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
@@ -78,8 +79,7 @@ void Scene::update(float dt)
 		Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
 		break;
 	}
-	Render::getInstance()->draw();
-	Render::getInstance()->clear();
+	Render::getInstance()->EndScene();
 	//rendering scene cameras
 	bool cameraFound = false;
 	auto cameraView = reg->view<Orthographic>();
@@ -108,9 +108,11 @@ void Scene::update(float dt)
 	if (!cameraFound) {
 		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
 		Render::getInstance()->setCamera(editorCamera);
+		activeCamera = editorCamera;
 	}
 
 	loadActiveCamera();
+	Render::getInstance()->BeginScene(activeCamera);
 	auto skyboxView = reg->view<SkyBoxComponent>();
 	for (auto [entity, skybox] : skyboxView.each()) {
 		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
@@ -121,8 +123,7 @@ void Scene::update(float dt)
 
 	calculateCollisions(dt);
 	sendToRender();
-	Render::getInstance()->draw();
-	Render::getInstance()->clear();
+	Render::getInstance()->EndScene();
 	if (!toDestroy.empty()) {
 		destroyEntities();
 		toDestroy.clear();

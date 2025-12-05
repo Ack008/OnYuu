@@ -17,6 +17,7 @@ void Application::Run()
 {
 	while (!window->shouldClose()) {
 		window->beginFrame();
+		Render::getInstance()->BeginFrame();
 		sendGlobalShaderData();
 		
 		//Updating layers
@@ -30,6 +31,7 @@ void Application::Run()
 			layer->onImGuiRender();
 		}
 		imGuiLayer->end();
+		Render::getInstance()->submit();
 		window->draw();
 	}
 }
