@@ -1,5 +1,6 @@
 #pragma once
 #include "Application/Layer.h"
+#include <vulkan/vulkan.h>
 class ImGuiLayer : public Layer {
 public:
 		ImGuiLayer() : Layer("ImGuiLayer") {}
@@ -11,4 +12,8 @@ public:
 		virtual void onDetach() override;
 		void begin();
 		void end();
+private:
+	void vulkanInit(VkDevice device);
+	void initFont();
+	VkDescriptorPool imguiDescriptorPool;
 };

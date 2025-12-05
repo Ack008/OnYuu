@@ -142,13 +142,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\imgui.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\imgui_demo.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\imgui_draw.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\imgui_tables.cpp" />
-    <ClCompile Include="..\Dependencies\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="2DGame\2DGameApplication.cpp" />
     <ClCompile Include="3DGame\Game3DApplication.cpp" />
     <ClCompile Include="3DGame\Scene3D.cpp" />
@@ -161,6 +154,8 @@
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
     <ClCompile Include="Render\Buffer.cpp" />
@@ -193,20 +188,20 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Render\VertexArray.cpp" />
     <ClCompile Include="Core\View\View.cpp" />
+    <ClCompile Include="vendor\ImGui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="vendor\ImGui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="vendor\ImGui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="vendor\ImGui\imgui.cpp" />
     <ClCompile Include="vendor\ImGui\ImGuiFileDialog.cpp" />
+    <ClCompile Include="vendor\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="vendor\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="vendor\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="vendor\VkBootstrap.cpp" />
+    <ClCompile Include="VulkanApp\VulkanApp.cpp" />
+    <ClCompile Include="VulkanApp\VulkanAppLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_glfw.h" />
-    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\Dependencies\ImGui\backends\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imconfig.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imgui.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imgui_internal.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imstb_rectpack.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imstb_textedit.h" />
-    <ClInclude Include="..\Dependencies\ImGui\imstb_truetype.h" />
     <ClInclude Include="3DGame\Game3DLayer.h" />
     <ClInclude Include="3DGame\Scene3D.h" />
     <ClInclude Include="3DGame\scripts\CameraScript.h" />
@@ -225,6 +220,8 @@
     <ClInclude Include="2DGame\Component\BallScript.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanWindow.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />
     <ClInclude Include="Core\Model\Components\Collider.h" />
@@ -266,6 +263,7 @@
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
     <ClInclude Include="vendor\ImGui\dirent\dirent.h" />
+    <ClInclude Include="VulkanApp\VulkanAppLayer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Asset\Shader\bling-phong-frag.glsl" />
@@ -281,6 +279,8 @@
     <None Include="Asset\Shader\ReflectiveShader\Reflective-ver.glsl" />
     <None Include="Asset\Shader\SkyBoxShader\SkyBoxFrag.glsl" />
     <None Include="Asset\Shader\SkyBoxShader\SkyBoxVer.glsl" />
+    <None Include="Asset\VkShader\shad-frag.glsl" />
+    <None Include="Asset\VkShader\shad-ver.glsl" />
     <None Include="bling-phongVert.glsl" />
     <None Include="colorUniformSupporterShader.glsl" />
     <None Include="fragmentShaderC.glsl" />

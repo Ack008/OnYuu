@@ -43,6 +43,10 @@ std::shared_ptr<UniformBuffer> UniformBuffer::create(uint32_t bindingPoint)
 		// Restituisce l'implementazione OpenGL di UniformBuffer
 		return std::make_shared<OpenGLUniformBuffer>(bindingPoint);
 		break;
+	case API::Vulkan:
+		// Restituisce l'implementazione Vulkan di UniformBuffer
+		// return std::make_shared<VulkanUniformBuffer>(bindingPoint);
+		break;
 	default:
 		break;
 	}

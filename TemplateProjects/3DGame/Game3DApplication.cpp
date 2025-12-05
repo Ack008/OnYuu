@@ -13,6 +13,3 @@ private:
 };
 
 
-Application* Application::createApplication() {
-	return new Game3DApplication();
-}

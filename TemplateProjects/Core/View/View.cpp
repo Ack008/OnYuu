@@ -2,6 +2,7 @@
 #include <memory>
 #include "Platform/API.h"
 #include "Platform/OpenGL/OpenGLView.h"
+#include "Platform/Vulkan/VulkanWindow.h"
 Window::Window(uint32_t width, uint32_t height)
 	:_witdh(width), _height(height)
 {
@@ -32,6 +33,10 @@ std:: shared_ptr<Window> Window::create(uint32_t width, uint32_t height)
 		case API::OpenGL:
 		// Return OpenGLWindow instance
 		return std::make_shared<OpenGLWindow>(width, height);
+			break;
+		case API::Vulkan:
+			// Return VulkanWindow instance
+			return std::make_shared<VulkanWindow>(width, height);
 			break;
 		default:
 			break;

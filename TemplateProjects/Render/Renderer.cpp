@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "Platform/OpenGL/OpenGLBatchRender.h"
 #include "Platform/API.h"
+#include "Platform/Vulkan/VulkanRender.h"
 std::shared_ptr<Render> Render::s_instance = nullptr;
 std::shared_ptr<Render> Render::create()
 {
@@ -12,6 +13,10 @@ std::shared_ptr<Render> Render::create()
 		case API::OpenGL:
 			// Return OpenGLBatchRender instance
 			return std::make_shared<OpenGLBatchRender>();
+			break;
+		case API::Vulkan:
+			// Return VulkanRender instance (not implemented in this snippet)
+			return std::make_shared<VulkanRender>();
 			break;
 	}
 }
