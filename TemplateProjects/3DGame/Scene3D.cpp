@@ -461,8 +461,7 @@ void Scene3D::createPiano(glm::vec4 color)
 	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
 	mesh->normal.push_back(glm::vec3(0.0, 1.0, 0.0));
 
-	mesh->position.push_back(glm::vec3(0.0, 0.0, 0.0));  //Memorizzo come ultimo vertice l'ancora per poterla visualizzare
-	mesh->color.push_back(glm::vec4(1.0, 0.0, 0.0, 1.0));
+	
 
 	int nv = mesh->position.size();
 	mesh->indices.push_back(nv - 1);
