@@ -10,13 +10,15 @@ class OpenGLBatchRender
 	: public BatchRender
 {
 public:
-	virtual void draw() override;
 	virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
 	virtual void setSkyBox(SkyBoxComponent *skybox) override;
+	virtual void submit() override;
+	virtual void BeginFrame() override;
 	OpenGLBatchRender();
 	~OpenGLBatchRender();
 private:
-	void drawSkybox();
+	void drawSkybox(RenderScene& scene);
+	void drawScene(RenderScene &scene);
 private:
 	struct VertexBuffer {
 		GLuint vbo;
@@ -24,7 +26,6 @@ private:
 		size_t size = 0;
 	};
 	GLuint vao;
-	std::unordered_map<BatchCouple, VertexBuffer,BatchCoupleHash> vbosMap;
 	std::unordered_map<Mesh*, MeshGPUusage> meshGPUmap;
 	SkyBoxComponent *skybox = nullptr;
 	inline static float skyboxVertices[] =

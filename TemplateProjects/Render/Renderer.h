@@ -28,7 +28,6 @@ public:
 	// draw: funzione pura; l'implementazione concreta dovrebbe iterare sulle
 	// mesh in `meshRenders`, assicurarsi che i dati siano uploadati sulla GPU
 	// e invocare i comandi di draw appropriati (es. glDrawElements).
-    virtual void draw() = 0;
 
 	// Aggiunge una mesh alla lista di rendering. La funzione di default aggiunge
 	// il puntatore alla lista `meshRenders`. Implementazioni concrete possono
@@ -37,7 +36,8 @@ public:
 	// setSkyBox: imposta la cubemap da usare per il skybox
 	virtual void setSkyBox(SkyBoxComponent *skybox) = 0;
     // clear: pulisce le liste di oggetti da disegnare o altre risorse temporanee
-	virtual void clear() = 0;
+	// BeginFrame: operazioni da eseguire all'inizio di ogni frame di rendering
+	virtual void BeginFrame() = 0;
 
 	// Gestione della matrice della camera (view-projection). Il renderer userà
 	// questa matrice per impostare gli uniform delle shader prima del draw.
@@ -51,6 +51,9 @@ public:
 	// Accesso globale all'istanza concreta del renderer. Usa il factory method
 	// `create()` per costruire l'implementazione corretta in base all'API.
 	static std::shared_ptr<Render> getInstance();
+	virtual void BeginScene(Camera *camera) {}
+	virtual void EndScene() {}
+	virtual void submit() {}
 public:
 	void static init() {
 		s_instance = create();

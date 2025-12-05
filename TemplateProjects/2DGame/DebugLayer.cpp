@@ -93,7 +93,5 @@ void DebugLayer::onDetach()
             debugMeshData.push_back(debugMesh);
     }
 
-    Render::getInstance()->draw();
-    Render::getInstance()->clear();
 
 }

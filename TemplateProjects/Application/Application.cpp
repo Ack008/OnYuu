@@ -27,7 +27,7 @@ void Application::Run()
 		for (Layer* layer : layers) {
 			layer->onUpdate(static_cast<float>(window->getFrameTime()));
 		}
-		
+		Render::getInstance()->BeginFrame();
 		//imgui drawing
 		
 		imGuiLayer->begin();
@@ -35,6 +35,7 @@ void Application::Run()
 			layer->onImGuiRender();
 		}
 		imGuiLayer->end();
+		Render::getInstance()->submit();
 		window->draw();
 	}
 }
