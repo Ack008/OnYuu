@@ -56,7 +56,6 @@ void ImGuiLayer::onAttach() {
 
 
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			initFont();
 
 
 			ImGui_ImplVulkan_Init(&init_info);
@@ -77,11 +76,25 @@ void ImGuiLayer::onDetach()
 	switch (apiInUse) {
 		case API::OpenGL:
 			ImGui_ImplOpenGL3_Shutdown();   // Pulisce integrazione OpenGL
-			ImGui_ImplGlfw_Shutdown();       // Pulisce integrazione GLFW
+			ImGui_ImplGlfw_Shutdown();   
+			// Pulisce integrazione GLFW
 			break;
 		case API::Vulkan:
+		{
+			VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
+			// IMPORTANTE: aspetta che la GPU abbia finito prima di distruggere
+			vkDeviceWaitIdle(vulkanRender->getInit().device);
+
+			// Distruggi il descriptor pool
 			ImGui_ImplVulkan_Shutdown();    // Pulisce integrazione Vulkan
 			ImGui_ImplGlfw_Shutdown();       // Pulisce integrazione GLFW
+			if (imguiDescriptorPool != VK_NULL_HANDLE) {
+				vkDestroyDescriptorPool(vulkanRender->getInit().device,
+					imguiDescriptorPool,
+					nullptr);
+				imguiDescriptorPool = VK_NULL_HANDLE;
+			}
+		}
 			break;
 		default:
 			break;
@@ -103,6 +116,7 @@ void ImGuiLayer::begin() {
 	}
 	ImGui::NewFrame();                // Inizia un nuovo frame ImGui
 }
+
 void ImGuiLayer::end() {
 	ImGui::Render();                  // Finalizza il frame ImGui
 	switch (apiInUse) {
@@ -110,8 +124,13 @@ void ImGuiLayer::end() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); // Esegue il rendering dei dati ImGui con OpenGL
 		break;
 	case API::Vulkan:
-		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),); // Esegue il rendering dei dati ImGui con Vulkan
+	{
+		VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
+		uint32_t i = vulkanRender->getRenderData().image_index;
+		VkCommandBuffer command_buffer = vulkanRender->getRenderData().command_buffers[i];
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),command_buffer); // Esegue il rendering dei dati ImGui con Vulkan
 
+	}
 		break;
 	default:
 		break;
@@ -147,18 +166,3 @@ void ImGuiLayer::vulkanInit(VkDevice device)
 	vkCreateDescriptorPool(device, &pool_info, nullptr, &imguiDescriptorPool);
 }
 
-void ImGuiLayer::initFont()
-{
-	VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
-	VkCommandBuffer command_buffer;
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = vulkanRender->getRenderData().command_pool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = 1;
-
-	if (vulkanRender->getInit().disp.allocateCommandBuffers(&allocInfo, &command_buffer) != VK_SUCCESS) {
-		std::cerr << "failed to allocate command buffers for font upload\n";
-		std::exit(-1);
-	}
-}

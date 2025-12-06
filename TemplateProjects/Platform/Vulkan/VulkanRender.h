@@ -7,9 +7,10 @@ class VulkanRender : public BatchRender
 	public:
 	VulkanRender();
 	~VulkanRender();
-	void draw() override;
+	virtual void BeginFrame() override;
+	virtual void submit() override;
+	virtual void Shutdown() override;
 	void setSkyBox(SkyBoxComponent* skybox) override;
-	void clear() override;
 	void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
 private:
     struct Init {
@@ -40,6 +41,7 @@ private:
         std::vector<VkFence> in_flight_fences;
         std::vector<VkFence> image_in_flight;
         size_t current_frame = 0;
+        uint32_t image_index;
     };
 	Init init;
     RenderData data;
@@ -59,5 +61,5 @@ private:
     int create_command_buffers(Init& init, RenderData& data);
     int create_sync_objects(Init& init, RenderData& data);
     int recreate_swapchain(Init& init, RenderData& data);
-	int record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
+	int begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
 };

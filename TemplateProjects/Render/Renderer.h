@@ -54,6 +54,7 @@ public:
 	virtual void BeginScene(Camera *camera) {}
 	virtual void EndScene() {}
 	virtual void submit() {}
+	virtual void Shutdown() = 0;
 public:
 	void static init() {
 		s_instance = create();

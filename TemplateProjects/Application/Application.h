@@ -11,6 +11,7 @@ public:
 	// Costruttore / Distruttore
 	Application();
 	~Application();
+	void Shutdown();
 
 	// Avvia il loop principale dell'applicazione
 	void Run();

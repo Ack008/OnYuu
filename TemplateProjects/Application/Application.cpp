@@ -38,6 +38,7 @@ void Application::Run()
 		Render::getInstance()->submit();
 		window->draw();
 	}
+	Shutdown();
 }
 
 void Application::sendGlobalShaderData()
@@ -55,8 +56,7 @@ void Application::onResize(uint32_t width, uint32_t height)
 	window->resize(width, height);
 	
 }
-
-Application::~Application()
+void Application::Shutdown()
 {
 	// Rimuovo e distruggo i layer allocati dinamicamente per evitare leak/use-after-free
 	for (Layer* layer : layers) {
@@ -68,14 +68,17 @@ Application::~Application()
 	layers.clear();
 
 	// Distruggo l'imGui layer se presente
+	imGuiLayer->onDetach();
 	delete imGuiLayer;
+	Render::getInstance()->Shutdown();
+}
+Application::~Application()
+{
+	
 }
 
 void Application::pushLayer(Layer* layer)
 {
-	// diagnostica: stampa stato vettore e this
-
-
 
 	if (!layer) {
 		std::cerr << "[pushLayer] NULL layer, skipping\n";

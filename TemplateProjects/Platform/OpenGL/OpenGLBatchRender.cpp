@@ -122,3 +122,14 @@ void OpenGLBatchRender::setSkyBox(SkyBoxComponent* skybox)
 	this->skybox = skybox;
 	if (skybox && skybox->cubeMap) skybox->cubeMap->bind();
 }
+
+void OpenGLBatchRender::Shutdown()
+{
+	for (auto& pair : meshGPUmap) {
+		pair.second.cleanup();
+	}
+	if (vao != 0) {
+		glDeleteVertexArrays(1, &vao);
+		vao = 0;
+	}
+}

@@ -136,6 +136,12 @@ public:
 			vao->bind();
 		}
 	}
+	void cleanup() {
+		vbo.reset();
+		ibo.reset();
+		vao.reset();
+		uploaded = false;
+	}
 	VertexBuffer* getVBO() const { return vbo.get(); }
 	void draw(RenderingTypeEnum renderingMode) {
 		if (!uploaded) {
