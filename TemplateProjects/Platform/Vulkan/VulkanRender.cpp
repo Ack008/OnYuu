@@ -7,7 +7,6 @@
         std::cout << "Failed" << "\n"; \
         std::exit( -1); \
     }
-glm::vec3 clearColorvec = glm::vec3(0.1f, 0.1f, 0.1f);
 VulkanRender::VulkanRender()
 {
 	window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
@@ -341,7 +340,7 @@ int VulkanRender::begin_record_command_buffer(Init& init, RenderData& data, uint
     render_pass_info.framebuffer = data.framebuffers[image_index];
     render_pass_info.renderArea.offset = { 0, 0 };
     render_pass_info.renderArea.extent = init.swapchain.extent;
-    VkClearValue clearColor{ { { clearColorvec.r, clearColorvec.g, clearColorvec.b, 1.0f } } };
+    VkClearValue clearColor{ { { 0.2,0.2,0.1, 1.0f } } };
     render_pass_info.clearValueCount = 1;
     render_pass_info.pClearValues = &clearColor;
 
@@ -394,6 +393,7 @@ void VulkanRender::BeginFrame()
 
 void VulkanRender::submit()
 {
+	BatchRender::submit();
     init.disp.cmdEndRenderPass(data.command_buffers[data.image_index]);
 
     if (init.disp.endCommandBuffer(data.command_buffers[data.image_index]) != VK_SUCCESS) {

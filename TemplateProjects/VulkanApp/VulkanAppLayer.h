@@ -1,5 +1,6 @@
 #pragma once
 #include "Application/Layer.h"
+#include "Core/Engine.h"
 class VulkanAppLayer :
 	public Layer
 {
@@ -10,4 +11,7 @@ class VulkanAppLayer :
 	virtual void onImGuiRender() override;
 	virtual void onAttach() override;
 	virtual void onDetach() override;
+	std::shared_ptr<Mesh> triangle;
+	RenderMeshComponent renderMesh;
+	std::shared_ptr<Camera> camera;
 };
