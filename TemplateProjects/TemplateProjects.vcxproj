@@ -154,6 +154,8 @@
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanWindow.cpp" />
@@ -210,6 +212,7 @@
     <ClCompile Include="vendor\spir-v-cross\spirv_reflect.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="vendor\VkBootstrap.cpp" />
+    <ClCompile Include="vendor\vma\VmaUsage.cpp" />
     <ClCompile Include="VulkanApp\VulkanApp.cpp" />
     <ClCompile Include="VulkanApp\VulkanAppLayer.cpp" />
   </ItemGroup>
@@ -232,6 +235,8 @@
     <ClInclude Include="2DGame\Component\BallScript.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />
     <ClInclude Include="Platform\Vulkan\VulkanWindow.h" />
@@ -293,6 +298,7 @@
     <ClInclude Include="vendor\spir-v-cross\spirv_msl.hpp" />
     <ClInclude Include="vendor\spir-v-cross\spirv_parser.hpp" />
     <ClInclude Include="vendor\spir-v-cross\spirv_reflect.hpp" />
+    <ClInclude Include="vendor\vma\VmaUsage.h" />
     <ClInclude Include="VulkanApp\VulkanAppLayer.h" />
   </ItemGroup>
   <ItemGroup>

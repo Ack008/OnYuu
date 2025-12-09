@@ -108,11 +108,11 @@ void OpenGLIndexBuffer::resize(size_t newSize)
 	usedSize = 0;
 }
 
-OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t bindingPoint)
+OpenGLUniformBuffer::OpenGLUniformBuffer(uint32_t bindingPoint, size_t size)
 {
 	glGenBuffers(1, &ubo);
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferData(GL_UNIFORM_BUFFER, sizeof(float) * 8, nullptr, GL_DYNAMIC_DRAW); // spazio iniziale
+	glBufferData(GL_UNIFORM_BUFFER, size, nullptr, GL_DYNAMIC_DRAW); // spazio iniziale
 	glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, ubo); // binding point 0
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

@@ -116,13 +116,37 @@ VulkanShader::VulkanShader(const char* vertexfilename, const char* fragmentfilen
 		}
 	}
 	printMappingInfo();
+	int frames_in_flight = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().framebuffers.size();
+	materialBufferObject.resize(frames_in_flight);
+	for (size_t i = 0; i < frames_in_flight; i++)
+	{
+		materialBufferObject[i] = UniformBuffer::create(1, uniformBuffer.size());
+	}
+	flushCostants();
 }
-
+void VulkanShader::shutdown()
+{
+	if (initialized)
+	{
+		for (auto& buffer : materialBufferObject)
+		{
+			buffer->shutdown();
+		}
+		std::cout << "Destroying VulkanShader\n";
+		// Distruzione dei moduli shader
+		if (vertexShaderModule != VK_NULL_HANDLE) {
+			vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, vertexShaderModule, nullptr);
+		}
+		if (fragmentShaderModule != VK_NULL_HANDLE) {
+			vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, fragmentShaderModule, nullptr);
+		}
+	}
+	initialized = false;
+}
 VulkanShader::~VulkanShader()
 {
-	// Distruzione dei moduli shader
-	vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, vertexShaderModule, nullptr);
-	vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, fragmentShaderModule, nullptr);
+	
+	
 }
 
 void VulkanShader::useShader()
@@ -229,6 +253,8 @@ void VulkanShader::setUniformMat4(const char* name, const float* value, int coun
 
 void VulkanShader::flushCostants()
 {
+	int index = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().image_index;
+	materialBufferObject[index]->setData(uniformBuffer.data(), uniformBuffer.size(), BufferUsage::DYNAMIC);
 }
 
 bool VulkanShader::isBatchingSupported() const

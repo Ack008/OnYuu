@@ -180,8 +180,9 @@ public:
     virtual void setData(const void* data, size_t size, BufferUsage usage) = 0;
     virtual void updateData(const void* data, size_t size, size_t offset) = 0;
     virtual void resize(size_t newSize) = 0;
+    virtual void shutdown() {};
 
-    static std::shared_ptr<UniformBuffer> create(uint32_t bindingPoint = 0);
+    static std::shared_ptr<UniformBuffer> create(uint32_t bindingPoint = 0, size_t size = 1024);
 
     size_t bufferSize = 0;
     size_t usedSize = 0;

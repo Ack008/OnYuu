@@ -37,7 +37,7 @@ class OpenGLUniformBuffer :
 	public UniformBuffer
 {
 	public:
-	OpenGLUniformBuffer(uint32_t bindingPoint);
+	OpenGLUniformBuffer(uint32_t bindingPoint, size_t size);
 	~OpenGLUniformBuffer();
 	void bind() override;
 	void unbind() override;

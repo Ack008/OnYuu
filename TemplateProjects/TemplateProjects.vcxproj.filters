@@ -142,6 +142,9 @@
     <ClCompile Include="vendor\spir-v-cross\spirv_parser.cpp" />
     <ClCompile Include="vendor\spir-v-cross\spirv_reflect.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="vendor\vma\VmaUsage.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -224,6 +227,9 @@
     <ClInclude Include="vendor\spir-v-cross\spirv_parser.hpp" />
     <ClInclude Include="vendor\spir-v-cross\spirv_reflect.hpp" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />
+    <ClInclude Include="vendor\vma\VmaUsage.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

@@ -12,7 +12,11 @@ class VulkanAppLayer :
 	virtual void onAttach() override;
 	virtual void onDetach() override;
 	std::shared_ptr<Mesh> triangle;
+	std::shared_ptr<Mesh> triangle2;
+
 	RenderMeshComponent renderMesh;
+	RenderMeshComponent renderMesh2;
+
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Shader> shader;
 };

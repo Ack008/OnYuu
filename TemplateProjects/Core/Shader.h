@@ -26,6 +26,7 @@ public:
 	// in un'unica chiamata/array di uniform). Utile per ottimizzazioni nel
 	// renderer.
 	virtual bool isBatchingSupported() const = 0;
+	virtual void shutdown() {};
 
 	// Factory per creare uno shader dalla sorgente (file vert/frag).
 	static std::shared_ptr<Shader> create(const char* vertexfilename, const char* fragmentfilename);

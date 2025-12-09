@@ -1,6 +1,7 @@
 #include "Buffer.h"
 #include "Platform/API.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
+#include "Platform/Vulkan/VulkanBuffer.h"
 #include <memory>
 
 // File: Buffer.cpp
@@ -35,17 +36,17 @@ std::shared_ptr<IndexBuffer> IndexBuffer::create()
 	return nullptr;
 }
 
-std::shared_ptr<UniformBuffer> UniformBuffer::create(uint32_t bindingPoint)
+std::shared_ptr<UniformBuffer> UniformBuffer::create(uint32_t bindingPoint, size_t size)
 {
 	switch (apiInUse)
 	{
 	case API::OpenGL:
 		// Restituisce l'implementazione OpenGL di UniformBuffer
-		return std::make_shared<OpenGLUniformBuffer>(bindingPoint);
+		return std::make_shared<OpenGLUniformBuffer>(bindingPoint,size);
 		break;
 	case API::Vulkan:
 		// Restituisce l'implementazione Vulkan di UniformBuffer
-		// return std::make_shared<VulkanUniformBuffer>(bindingPoint);
+		return std::make_shared<VulkanUniformBuffer>(bindingPoint,size);
 		break;
 	default:
 		break;

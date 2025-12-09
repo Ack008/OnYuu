@@ -14,6 +14,5 @@ public:
 		void end();
 private:
 	void vulkanInit(VkDevice device);
-	void initFont();
 	VkDescriptorPool imguiDescriptorPool;
 };

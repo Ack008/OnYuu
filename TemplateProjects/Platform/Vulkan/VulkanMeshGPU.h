@@ -1,0 +1,47 @@
+#pragma once
+#include "Core/Model/Components/MeshComponent.h"
+#include "Render/Buffer.h"
+#include <vulkan/vulkan.h>
+#include "vma/vk_mem_alloc.h"
+#include <unordered_map>
+#include <vector>
+// VulkanMeshGPU: implementazione concreta di MeshGPU per Vulkan. Gestisce il
+// caricamento della mesh sulla GPU utilizzando buffer Vulkan.
+class VulkanMeshGPU
+{
+	public:
+	VulkanMeshGPU(Mesh mesh);
+	virtual void shutdown();
+	void uploadToGPU();
+	void draw(VkCommandBuffer commandBuffer);
+	VkBuffer getVertexBuffer() const { return vertexBuffer; }
+	VkBuffer getIndexBuffer() const { return indexBuffer; }
+	uint32_t getIndexCount() const { return indexCount; }
+	void destroyStagingBuffers();
+	void destroyVertexBuffer();
+	void destroyIndexBuffer();
+	void destroy()
+	{
+		destroyStagingBuffers();
+		destroyVertexBuffer();
+		destroyIndexBuffer();
+	}
+private:
+	Mesh mesh;
+	VkBuffer vertexBuffer = VK_NULL_HANDLE;
+	VkBuffer indexBuffer = VK_NULL_HANDLE;
+	uint32_t indexCount = 0;
+	VmaAllocation vertexBufferAllocation = VK_NULL_HANDLE;
+	VmaAllocation indexBufferAllocation = VK_NULL_HANDLE;
+	//staging buffers
+	VkBuffer stagingVertexBuffer = VK_NULL_HANDLE;
+	VkBuffer stagingIndexBuffer = VK_NULL_HANDLE;
+	VmaAllocation stagingVertexBufferAllocation = VK_NULL_HANDLE;
+	VmaAllocation stagingIndexBufferAllocation = VK_NULL_HANDLE;
+	VmaAllocationInfo stagingVertexAllocInfo = {};
+	VmaAllocationInfo stagingIndexAllocInfo = {};
+	bool uploaded = false;
+	void createVertexBuffer();
+	void createIndexBuffer();
+	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+};
