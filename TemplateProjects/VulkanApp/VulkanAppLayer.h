@@ -14,4 +14,5 @@ class VulkanAppLayer :
 	std::shared_ptr<Mesh> triangle;
 	RenderMeshComponent renderMesh;
 	std::shared_ptr<Camera> camera;
+	std::shared_ptr<Shader> shader;
 };

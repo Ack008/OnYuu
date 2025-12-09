@@ -1,5 +1,6 @@
 #include "Shader.h"
 #include "Platform/OpenGL/OpenGLShader.h"
+#include "Platform/Vulkan/VulkanShader.h"
 #include <memory>
 #include "Platform/API.h"
 std::shared_ptr<Shader> Shader::create(const char* vertexfilename, const char* fragmentfilename)
@@ -7,6 +8,10 @@ std::shared_ptr<Shader> Shader::create(const char* vertexfilename, const char* f
 	switch (apiInUse) {
 	case API::OpenGL:
 		return std::make_shared<OpenGLShader>(vertexfilename, fragmentfilename);
+		break;
+	case API::Vulkan:
+		// Implementazione VulkanShader da aggiungere
+		return std::make_shared<VulkanShader>(vertexfilename, fragmentfilename);
 		break;
 	default:
 		return nullptr;

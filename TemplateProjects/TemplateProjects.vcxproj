@@ -155,6 +155,7 @@
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
@@ -196,6 +197,17 @@
     <ClCompile Include="vendor\ImGui\imgui_draw.cpp" />
     <ClCompile Include="vendor\ImGui\imgui_tables.cpp" />
     <ClCompile Include="vendor\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cfg.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cpp.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cross.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cross_c.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cross_parsed_ir.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_cross_util.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_glsl.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_hlsl.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_msl.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_parser.cpp" />
+    <ClCompile Include="vendor\spir-v-cross\spirv_reflect.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="vendor\VkBootstrap.cpp" />
     <ClCompile Include="VulkanApp\VulkanApp.cpp" />
@@ -221,6 +233,7 @@
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanShader.h" />
     <ClInclude Include="Platform\Vulkan\VulkanWindow.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />
@@ -263,6 +276,23 @@
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
     <ClInclude Include="vendor\ImGui\dirent\dirent.h" />
+    <ClInclude Include="vendor\spir-v-cross\GLSL.std.450.h" />
+    <ClInclude Include="vendor\spir-v-cross\spirv.h" />
+    <ClInclude Include="vendor\spir-v-cross\spirv.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cfg.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_common.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cpp.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross_c.h" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross_containers.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross_error_handling.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross_parsed_ir.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_cross_util.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_glsl.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_hlsl.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_msl.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_parser.hpp" />
+    <ClInclude Include="vendor\spir-v-cross\spirv_reflect.hpp" />
     <ClInclude Include="VulkanApp\VulkanAppLayer.h" />
   </ItemGroup>
   <ItemGroup>

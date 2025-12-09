@@ -38,7 +38,7 @@ void VulkanAppLayer::onAttach()
 	};
 	renderMesh.mesh = triangle;
 	camera = std::make_shared<Orthographic>(-1,1, -1,1, 0.1f, 100.0f);
-
+	shader = Shader::create("Asset/vulkan-shader/vert.o", "Asset/vulkan-shader/frag.o");
 	
 }
 
