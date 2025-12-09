@@ -5,14 +5,21 @@
 #include "Platform/Vulkan/VulkanShader.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include <memory>
+#include <unordered_map>
+
 #define CHECK_RESULT(x) \
     if (x != 0) { \
         std::cout << "Failed" << "\n"; \
         std::exit( -1); \
     }
+
+// Map pipeline -> pipelineLayout per garantire compatibilità al bind dei descriptor sets
+static std::unordered_map<VkPipeline, VkPipelineLayout> g_pipeline_layout_map;
+
 VulkanRender::VulkanRender()
+    :BatchRender()
 {
-	window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
+    window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
     CHECK_RESULT(device_initialization(init));
     CHECK_RESULT(create_swapchain(init));
     CHECK_RESULT(get_queues(init, data));
@@ -20,24 +27,31 @@ VulkanRender::VulkanRender()
     CHECK_RESULT(create_framebuffers(init, data));
     CHECK_RESULT(create_command_pool(init, data));
     CHECK_RESULT(create_command_buffers(init, data));
-	CHECK_RESULT(create_sync_objects(init, data));
-	CHECK_RESULT(create_allocator(init.device.physical_device, init.device));
-	CHECK_RESULT(create_descriptor_pool(init, data));
-	CHECK_RESULT(create_descriptor_sets(init, data));
+    CHECK_RESULT(create_sync_objects(init, data));
+    CHECK_RESULT(create_allocator(init.device.physical_device, init.device));
+    CHECK_RESULT(create_descriptor_pool(init, data));
+    CHECK_RESULT(create_descriptor_sets(init, data));
+    // Inizializza gli UBO per luci e camera
+    for (int i = 0; i < data.framebuffers.size(); i++)
+    {
+        lightUbo.push_back(std::make_shared<VulkanUniformBuffer>(2, sizeof(lightBufferData), allocator));
+        cameraUbo.push_back(std::make_shared<VulkanUniformBuffer>(0, sizeof(cameraBufferData), allocator));
+
+    }
 }
 
 
 
 void VulkanRender::setSkyBox(SkyBoxComponent* skybox)
 {
-	BatchRender::setSkyBox(skybox);
+    BatchRender::setSkyBox(skybox);
 }
 
 
 
 void VulkanRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 {
-	BatchRender::addMeshRender(mesh, model);
+    BatchRender::addMeshRender(mesh, model);
 }
 
 VkCommandBuffer VulkanRender::beginSingleTimeCommands()
@@ -48,12 +62,12 @@ VkCommandBuffer VulkanRender::beginSingleTimeCommands()
     alloc_info.commandPool = data.command_pool;
     alloc_info.commandBufferCount = 1;
     VkCommandBuffer command_buffer;
-    init.disp.allocateCommandBuffers(&alloc_info,&command_buffer);
+    init.disp.allocateCommandBuffers(&alloc_info, &command_buffer);
     VkCommandBufferBeginInfo begin_info = {};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     init.disp.beginCommandBuffer(command_buffer, &begin_info);
-	return command_buffer;
+    return command_buffer;
 }
 
 void VulkanRender::endSingleTimeCommands(VkCommandBuffer commandBuffer)
@@ -65,7 +79,7 @@ void VulkanRender::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     submit_info.pCommandBuffers = &commandBuffer;
     init.disp.queueSubmit(data.graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     init.disp.queueWaitIdle(data.graphics_queue);
-	init.disp.freeCommandBuffers(data.command_pool, 1, &commandBuffer);
+    init.disp.freeCommandBuffers(data.command_pool, 1, &commandBuffer);
 }
 
 VkSurfaceKHR VulkanRender::create_surface_glfw(VkInstance instance, VkAllocationCallbacks* allocator)
@@ -238,7 +252,7 @@ int VulkanRender::create_command_pool(Init& init, RenderData& data)
 {
     VkCommandPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     pool_info.queueFamilyIndex = init.device.get_queue_index(vkb::QueueType::graphics).value();
 
     if (init.disp.createCommandPool(&pool_info, nullptr, &data.command_pool) != VK_SUCCESS) {
@@ -361,16 +375,16 @@ int VulkanRender::recreate_swapchain(Init& init, RenderData& data)
 
 int VulkanRender::create_allocator(VkPhysicalDevice physical_device, VkDevice device)
 {
-	VmaAllocatorCreateInfo allocator_info = {};
-	allocator_info.physicalDevice = physical_device;
-	allocator_info.device = device;
-	allocator_info.instance = init.instance;
+    VmaAllocatorCreateInfo allocator_info = {};
+    allocator_info.physicalDevice = physical_device;
+    allocator_info.device = device;
+    allocator_info.instance = init.instance;
     allocator_info.flags = 0;
-    if(vmaCreateAllocator(&allocator_info, &allocator) != VK_SUCCESS)
+    if (vmaCreateAllocator(&allocator_info, &allocator) != VK_SUCCESS)
     {
         std::cout << "failed to create VMA allocator\n";
         return -1;
-	}
+    }
     return 0;
 }
 
@@ -400,33 +414,33 @@ int VulkanRender::create_descriptor_pool(Init& init, RenderData& data)
 
     if (vkCreateDescriptorPool(init.device, &pool_info, nullptr, &data.descriptors_pool) != VK_SUCCESS)
     {
-		std::cout << "failed to create descriptor pool\n";
-		return -1; // failed to create descriptor pool
+        std::cout << "failed to create descriptor pool\n";
+        return -1; // failed to create descriptor pool
     }
     return 0;
 }
 
 int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
 {
-	int frame_count = static_cast<int>(data.swapchain_image_views.size());
-	data.global_descriptor.resize(frame_count);
-	data.material_descriptor.resize(frame_count);
-	data.model_descriptor.resize(frame_count);
-	for (int i = 0; i < data.swapchain_image_views.size(); i++)
+    int frame_count = static_cast<int>(data.swapchain_image_views.size());
+    data.global_descriptor.resize(frame_count);
+    data.material_descriptor.resize(frame_count);
+    data.model_descriptor.resize(frame_count);
+    for (int i = 0; i < data.swapchain_image_views.size(); i++)
     {
-		if (create_global_descriptor_set(init, data, i) != 0)
-		{
-			return -1;
-		}
+        if (create_global_descriptor_set(init, data, i) != 0)
+        {
+            return -1;
+        }
         // Create material descriptor sets
         if (create_material_descriptor_set(init, data, i) != 0)
         {
             return -1;
-		}
+        }
         if (create_model_descriptor_set(init, data, i) != 0)
         {
-			return -1;
-		}
+            return -1;
+        }
         // Create model descriptor sets
     }
     return 0;
@@ -434,9 +448,10 @@ int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
 
 int VulkanRender::begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index)
 {
+    init.disp.resetCommandBuffer(data.command_buffers[image_index], 0);
     VkCommandBufferBeginInfo begin_info = {};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+    begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     if (init.disp.beginCommandBuffer(data.command_buffers[image_index], &begin_info) != VK_SUCCESS) {
         return -1; // failed to begin recording command buffer
     }
@@ -470,12 +485,12 @@ int VulkanRender::begin_record_command_buffer(Init& init, RenderData& data, uint
 
     //init.disp.cmdDraw(data.command_buffers[i], 3, 1, 0, 0);
 
-   
+    return 0;
 }
 
 int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index)
 {
-	// Create descriptor set layout
+    // Create descriptor set layout
     // Create global descriptor sets
     VkDescriptorSetLayoutBinding timeBinding = {};
     timeBinding.binding = 0;
@@ -484,20 +499,20 @@ int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uin
     timeBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     timeBinding.pImmutableSamplers = nullptr;
 
-	VkDescriptorSetLayoutBinding viewProjBinding = {};
-	viewProjBinding.binding = 1;
-	viewProjBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	viewProjBinding.descriptorCount = 1;
-	viewProjBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	viewProjBinding.pImmutableSamplers = nullptr;
-	VkDescriptorSetLayoutBinding lightBinding = {};
-	lightBinding.binding = 2;
-	lightBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	lightBinding.descriptorCount = 1;
-	lightBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-	lightBinding.pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding viewProjBinding = {};
+    viewProjBinding.binding = 1;
+    viewProjBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    viewProjBinding.descriptorCount = 1;
+    viewProjBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    viewProjBinding.pImmutableSamplers = nullptr;
+    VkDescriptorSetLayoutBinding lightBinding = {};
+    lightBinding.binding = 2;
+    lightBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    lightBinding.descriptorCount = 1;
+    lightBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    lightBinding.pImmutableSamplers = nullptr;
 
-	VkDescriptorSetLayoutBinding bindings[] = { timeBinding, viewProjBinding, lightBinding };
+    VkDescriptorSetLayoutBinding bindings[] = { timeBinding, viewProjBinding, lightBinding };
     VkDescriptorSetLayoutCreateInfo layout_info = {};
     layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     layout_info.bindingCount = 3;
@@ -507,17 +522,17 @@ int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uin
         std::cout << "failed to create global descriptor set layout\n";
         return -1; // failed to create descriptor set layout
     }
-    
-	VkDescriptorSetAllocateInfo alloc_info = {};
-	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	alloc_info.descriptorPool = data.descriptors_pool;
-	alloc_info.descriptorSetCount = 1;
-	alloc_info.pSetLayouts = &data.global_descriptor[image_index].descriptorSetLayout;
-	if (init.disp.allocateDescriptorSets(&alloc_info, &data.global_descriptor[image_index].descriptorSet) != VK_SUCCESS)
-	{
-		std::cout << "failed to allocate global descriptor set\n";
-		return -1; // failed to allocate descriptor set
-	}
+
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.descriptorPool = data.descriptors_pool;
+    alloc_info.descriptorSetCount = 1;
+    alloc_info.pSetLayouts = &data.global_descriptor[image_index].descriptorSetLayout;
+    if (init.disp.allocateDescriptorSets(&alloc_info, &data.global_descriptor[image_index].descriptorSet) != VK_SUCCESS)
+    {
+        std::cout << "failed to allocate global descriptor set\n";
+        return -1; // failed to allocate descriptor set
+    }
     return 0;
 }
 
@@ -538,16 +553,16 @@ int VulkanRender::create_material_descriptor_set(Init& init, RenderData& data, u
         std::cout << "failed to create global descriptor set layout\n";
         return -1; // failed to create descriptor set layout
     }
-	VkDescriptorSetAllocateInfo alloc_info = {};
-	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	alloc_info.descriptorPool = data.descriptors_pool;
-	alloc_info.descriptorSetCount = 1;
-	alloc_info.pSetLayouts = &data.material_descriptor[image_index].descriptorSetLayout;
-	if (init.disp.allocateDescriptorSets(&alloc_info, &data.material_descriptor[image_index].descriptorSet) != VK_SUCCESS)
-	{
-		std::cout << "failed to allocate global descriptor set\n";
-		return -1; // failed to allocate descriptor set
-	}
+    VkDescriptorSetAllocateInfo alloc_info = {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.descriptorPool = data.descriptors_pool;
+    alloc_info.descriptorSetCount = 1;
+    alloc_info.pSetLayouts = &data.material_descriptor[image_index].descriptorSetLayout;
+    if (init.disp.allocateDescriptorSets(&alloc_info, &data.material_descriptor[image_index].descriptorSet) != VK_SUCCESS)
+    {
+        std::cout << "failed to allocate global descriptor set\n";
+        return -1; // failed to allocate descriptor set
+    }
     return 0;
 }
 
@@ -593,23 +608,23 @@ static VkPrimitiveTopology get_vk_primitive_topology(RenderingTypeEnum type) {
         return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
     default:
         return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	}
+    }
 
 }
 VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType)
 {
-	VkPipeline pipeline;
+    VkPipeline pipeline;
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = ((VulkanShader*)shader.get())->getVertexShaderModule();
-	vertShaderStageInfo.pName = "main";
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = ((VulkanShader*)shader.get())->getFragmentShaderModule();
-	fragShaderStageInfo.pName = "main";
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+    vertShaderStageInfo.module = ((VulkanShader*)shader.get())->getVertexShaderModule();
+    vertShaderStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderStageInfo.module = ((VulkanShader*)shader.get())->getFragmentShaderModule();
+    fragShaderStageInfo.pName = "main";
+    VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
     std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
@@ -619,8 +634,8 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
     dynamicState.pDynamicStates = dynamicStates.data();
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	std::vector<VkVertexInputBindingDescription> bindingDescriptions;
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
+    std::vector<VkVertexInputBindingDescription> bindingDescriptions;
     std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
     bindingDescriptions.push_back({
         0,
@@ -635,64 +650,64 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
         0,
         VK_FORMAT_R32G32B32_SFLOAT,
         0
-		});
+        });
     attributeDescriptions.push_back({
         1,
         0,
         VK_FORMAT_R32G32B32A32_SFLOAT,
-		sizeof(glm::vec3)
-		});
+        sizeof(glm::vec3)
+        });
     attributeDescriptions.push_back({
         2,
         0,
-		VK_FORMAT_R32G32_SFLOAT,
-		sizeof(glm::vec3) + sizeof(glm::vec4)
-		});
+        VK_FORMAT_R32G32_SFLOAT,
+        sizeof(glm::vec3) + sizeof(glm::vec4)
+        });
     attributeDescriptions.push_back({
         3,
         0,
-		VK_FORMAT_R32G32B32_SFLOAT,
-		sizeof(glm::vec3) + sizeof(glm::vec4) + sizeof(glm::vec2)
-		});
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
-	vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = get_vk_primitive_topology(renderingType);
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)init.swapchain.extent.width;
-	viewport.height = (float)init.swapchain.extent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = init.swapchain.extent;
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
-	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
-	VkPipelineRasterizationStateCreateInfo rasterizer = {};
-	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = VK_FALSE;
-	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = VK_FALSE;
-	VkPipelineMultisampleStateCreateInfo multisampling = {};
-	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+        VK_FORMAT_R32G32B32_SFLOAT,
+        sizeof(glm::vec3) + sizeof(glm::vec4) + sizeof(glm::vec2)
+        });
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    inputAssembly.topology = get_vk_primitive_topology(renderingType);
+    inputAssembly.primitiveRestartEnable = VK_FALSE;
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)init.swapchain.extent.width;
+    viewport.height = (float)init.swapchain.extent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    VkRect2D scissor = {};
+    scissor.offset = { 0, 0 };
+    scissor.extent = init.swapchain.extent;
+    VkPipelineViewportStateCreateInfo viewportState = {};
+    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewportState.viewportCount = 1;
+    viewportState.pViewports = &viewport;
+    viewportState.scissorCount = 1;
+    viewportState.pScissors = &scissor;
+    VkPipelineRasterizationStateCreateInfo rasterizer = {};
+    rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer.depthClampEnable = VK_FALSE;
+    rasterizer.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer.lineWidth = 1.0f;
+    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizer.depthBiasEnable = VK_FALSE;
+    VkPipelineMultisampleStateCreateInfo multisampling = {};
+    multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling.sampleShadingEnable = VK_FALSE;
+    multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
@@ -701,57 +716,62 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
     colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
     colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
-	VkPipelineColorBlendStateCreateInfo colorBlending = {};
-	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlending.logicOpEnable = VK_FALSE;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
-	VkPipelineLayout pipelineLayout;
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-	descriptorSetLayouts.push_back(data.global_descriptor[0].descriptorSetLayout);
-	descriptorSetLayouts.push_back(data.material_descriptor[0].descriptorSetLayout);
-	descriptorSetLayouts.push_back(data.model_descriptor[0].descriptorSetLayout);
-	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
-	pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+    VkPipelineColorBlendStateCreateInfo colorBlending = {};
+    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colorBlending.logicOpEnable = VK_FALSE;
+    colorBlending.attachmentCount = 1;
+    colorBlending.pAttachments = &colorBlendAttachment;
+    VkPipelineLayout pipelineLayout;
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
+    descriptorSetLayouts.push_back(data.global_descriptor[0].descriptorSetLayout);
+    descriptorSetLayouts.push_back(data.material_descriptor[0].descriptorSetLayout);
+    descriptorSetLayouts.push_back(data.model_descriptor[0].descriptorSetLayout);
+    pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+    pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
     if (init.disp.createPipelineLayout(&pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         std::cout << "failed to create pipeline layout\n";
-		throw std::runtime_error("failed to create pipeline layout!");
+        throw std::runtime_error("failed to create pipeline layout!");
     }
-	pipeline_layouts.push_back(pipelineLayout);
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStages;
-	pipelineInfo.pVertexInputState = &vertexInputInfo;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterizer;
-	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pColorBlendState = &colorBlending;
-	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = data.render_pass;
-	pipelineInfo.subpass = 0;
-	if (init.disp.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
-		std::cout << "failed to create graphics pipeline\n";
-		throw std::runtime_error("failed to create graphics pipeline!");
-	}
+    pipeline_layouts.push_back(pipelineLayout);
+    VkGraphicsPipelineCreateInfo pipelineInfo = {};
+    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount = 2;
+    pipelineInfo.pStages = shaderStages;
+    pipelineInfo.pVertexInputState = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState = &inputAssembly;
+    pipelineInfo.pViewportState = &viewportState;
+    pipelineInfo.pRasterizationState = &rasterizer;
+    pipelineInfo.pMultisampleState = &multisampling;
+    pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.renderPass = data.render_pass;
+    pipelineInfo.subpass = 0;
+    pipelineInfo.pDynamicState = &dynamicState; // <-- aggiungi questa riga
+        if (init.disp.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+        std::cout << "failed to create graphics pipeline\n";
+        throw std::runtime_error("failed to create graphics pipeline!");
+    }
+
+    // memorizza la relazione pipeline -> layout per il corretto bindDescriptorSets
+    g_pipeline_layout_map[pipeline] = pipelineLayout;
+
     return pipeline;
 }
 
 void VulkanRender::shut_shaders()
 {
-	std::vector<std::shared_ptr<Shader>> toFree;
-    for (auto &pair : pipelines)
+    std::vector<std::shared_ptr<Shader>> toFree;
+    for (auto& pair : pipelines)
     {
         init.disp.destroyPipeline(pair.second, nullptr);
-		// controllo che la shader non sia già presente nella lista
+        // controllo che la shader non sia già presente nella lista
         if (std::find(toFree.begin(), toFree.end(), pair.first.first) == toFree.end())
         {
             toFree.push_back(pair.first.first);
-		}
-	}
+        }
+    }
     for (auto& shader : toFree)
     {
         shader->shutdown();
@@ -760,13 +780,14 @@ void VulkanRender::shut_shaders()
     {
         init.disp.destroyPipelineLayout(layout, nullptr);
     }
+    g_pipeline_layout_map.clear();
 }
 
 void VulkanRender::update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, VulkanShader* material)
 {
     VkDescriptorBufferInfo bufferInfo{};
-	VkBuffer materialBuffer = ((VulkanUniformBuffer*)material->getMaterialBufferObject()[image_index].get())->getVulkanBuffer();
-	bufferInfo.buffer = materialBuffer;
+    VkBuffer materialBuffer = ((VulkanUniformBuffer*)material->getMaterialBufferObject()[image_index].get())->getVulkanBuffer();
+    bufferInfo.buffer = materialBuffer;
     bufferInfo.offset = 0;
     bufferInfo.range = VK_WHOLE_SIZE;
     VkWriteDescriptorSet descriptorWrite{};
@@ -776,8 +797,96 @@ void VulkanRender::update_material_descriptor_set(Init& init, RenderData& data, 
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     descriptorWrite.descriptorCount = 1;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-	init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+}
+
+void VulkanRender::update_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index, glm::mat4 model, VulkanMeshGPU& meshGPU)
+{
+    VkBuffer buffer = meshGPU.updateModelBuffer(image_index, model);
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = buffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = VK_WHOLE_SIZE;
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = data.model_descriptor[image_index].descriptorSet;
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+}
+
+void VulkanRender::update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+{
+    lightBufferData.count = static_cast<int>(scene.sceneLight.size());
+    for (size_t i = 0; i < scene.sceneLight.size() && i < 125; i++)
+    {
+        lightBufferData.lights[i].lightPositions = scene.sceneLight[i].position;
+        lightBufferData.lights[i].lightColors = scene.sceneLight[i].light.color;
+        lightBufferData.lights[i].intensity = scene.sceneLight[i].light.intensity;
+    }
+    lightUbo[image_index]->setData(&lightBufferData, sizeof(lightBufferData), BufferUsage::DYNAMIC);
+    VkDescriptorBufferInfo bufferInfo{};
+    VkBuffer lightBuffer = lightUbo[image_index]->getVulkanBuffer();
+    bufferInfo.buffer = lightBuffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = VK_WHOLE_SIZE;
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = data.global_descriptor[image_index].descriptorSet;
+    descriptorWrite.dstBinding = 2;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+}
+
+void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+{
+    // Prendi le matrici generate da GLM (probabilmente in stile GL)
+    glm::mat4 projGL = scene.activeCamera->getProjectionMatrix();
+    glm::mat4 viewGL = scene.activeCamera->getViewMatrix();
+
+    // Correzione GL -> Vulkan (flip Y + mappa depth [-1,1] -> [0,1])
+    glm::mat4 glToVk = glm::mat4(1.0f);
+    glToVk[1][1] = -1.0f;   // flip Y
+    glToVk[2][2] = 0.5f;    // scale z
+    glToVk[3][2] = 0.5f;    // translate z
+
+    // Applica la conversione e assegna i campi nell'ordine atteso dallo shader (proj, view, position)
+    cameraBufferData.projection = glToVk * projGL;
+    cameraBufferData.view = viewGL;
+    cameraBufferData.cameraPosition = glm::vec4(scene.activeCamera->getPosition(), 1.0f);
+
+
+    cameraUbo[image_index]->setData(&cameraBufferData, sizeof(cameraBufferData), BufferUsage::DYNAMIC);
+    VkDescriptorBufferInfo bufferInfo{};
+    VkBuffer cameraBuffer = cameraUbo[image_index]->getVulkanBuffer();
+    bufferInfo.buffer = cameraBuffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = VK_WHOLE_SIZE;
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = data.global_descriptor[image_index].descriptorSet;
+    descriptorWrite.dstBinding = 1;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+
+
+}
+
+void VulkanRender::update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+{
+    update_light_descriptor_set(init, data, image_index, scene);
+    update_camera_descriptor_set(init, data, image_index, scene);
+
 }
 
 void VulkanRender::shut_mesh_buffers()
@@ -785,7 +894,7 @@ void VulkanRender::shut_mesh_buffers()
     for (auto& pair : meshGPUMap)
     {
         pair.second.destroy();
-	}
+    }
 }
 
 void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& scene)
@@ -797,7 +906,7 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& sce
         auto renderingType = pair.first.second;
         auto batchRenders = pair.second;
         auto pipelineKey = std::make_pair(material->getShader(), renderingType);
-		VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
+        VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
         VkPipeline pipeline;
         if (pipelines.find(pipelineKey) == pipelines.end())
         {
@@ -809,33 +918,38 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& sce
             pipeline = pipelines[pipelineKey];
         }
 
+        // Bind exactly il pipeline usato (obbligatorio)
         init.disp.cmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		update_material_descriptor_set(init, data, data.image_index, vulkanShader);
-        
+
         for (const auto& renderData : batchRenders)
         {
             auto mesh = renderData.renderMesh;
             auto meshKey = mesh->mesh.get();
             auto [it, inserted] = meshGPUMap.try_emplace(meshKey, *(mesh->mesh.get()));
             VulkanMeshGPU& meshGPU = it->second;
-			meshGPU.uploadToGPU();
-            // Bind descriptor sets
+            meshGPU.uploadToGPU();
+            // Bind descriptor sets usando il pipelineLayout corrispondente al pipeline bindato
+            VkPipelineLayout bindLayout = VK_NULL_HANDLE;
+            auto itLayout = g_pipeline_layout_map.find(pipeline);
+            if (itLayout != g_pipeline_layout_map.end()) bindLayout = itLayout->second;
+            else if (!pipeline_layouts.empty()) bindLayout = pipeline_layouts[0]; // fallback (non ideale)
+
             std::vector<VkDescriptorSet> descriptorSets;
             descriptorSets.push_back(data.global_descriptor[data.image_index].descriptorSet);
             descriptorSets.push_back(data.material_descriptor[data.image_index].descriptorSet);
             descriptorSets.push_back(data.model_descriptor[data.image_index].descriptorSet);
-            init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts[0],
+            init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
                 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
-			meshGPU.draw(command_buffer);
-		}
+            meshGPU.draw(command_buffer);
+        }
     }
 }
 
 
 VulkanRender::~VulkanRender()
 {
-	
+
 }
 
 void VulkanRender::BeginFrame()
@@ -853,21 +967,53 @@ void VulkanRender::BeginFrame()
         std::cout << "failed to acquire swapchain image. Error " << result << "\n";
         CHECK_RESULT(-1)
     }
-	data.image_index = image_index;
+    if (data.image_in_flight[image_index] != VK_NULL_HANDLE) {
+        init.disp.waitForFences(1, &data.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
+        // optional: clear, the image will be assigned the current frame's fence at submit time
+        data.image_in_flight[image_index] = VK_NULL_HANDLE;
+    }
+    data.image_index = image_index;
+    for (auto& scene : renderScenes)
+    {
+        // Aggiorna globali (luce, camera)
+        update_global_descriptor_set(init, data, data.image_index, scene);
+
+        // Per ogni batch aggiorna material e model descriptor prima della registrazione
+        for (const auto& pair : scene.batches)
+        {
+            auto material = pair.first.first;
+            VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
+            // Aggiorna descriptor del materiale (una sola chiamata per il materiale su questo image_index)
+            update_material_descriptor_set(init, data, data.image_index, vulkanShader);
+
+            // Per ogni istanza aggiorna il modello (model UBO) prima di registrare
+            for (const auto& renderData : pair.second)
+            {
+                auto mesh = renderData.renderMesh;
+                auto meshKey = mesh->mesh.get();
+                auto [it, inserted] = meshGPUMap.try_emplace(meshKey, *(mesh->mesh.get()));
+                VulkanMeshGPU& meshGPU = it->second;
+                meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
+                renderData.renderMesh->material->set("model", renderData.model);
+                renderData.renderMesh->material->apply();
+                update_model_descriptor_set(init, data, data.image_index, renderData.model, meshGPU);
+            }
+        }
+    }
     begin_record_command_buffer(init, data, data.image_index);
 }
 
 void VulkanRender::submit()
 {
-	for (auto& scene : renderScenes)
+    for (auto& scene : renderScenes)
     {
-		render_scene(data.command_buffers[data.image_index],scene);
+        render_scene(data.command_buffers[data.image_index], scene);
     }
     init.disp.cmdEndRenderPass(data.command_buffers[data.image_index]);
 
     if (init.disp.endCommandBuffer(data.command_buffers[data.image_index]) != VK_SUCCESS) {
         std::cout << "failed to record command buffer\n";
-         std::exit(-1); // failed to record command buffer!
+        std::exit(-1); // failed to record command buffer!
     }
     if (data.image_in_flight[data.image_index] != VK_NULL_HANDLE) {
         init.disp.waitForFences(1, &data.image_in_flight[data.image_index], VK_TRUE, UINT64_MAX);
@@ -918,26 +1064,36 @@ void VulkanRender::submit()
     }
 
     data.current_frame = (data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+	renderScenes.clear();
 }
 
 void VulkanRender::Shutdown()
 {
     init.disp.deviceWaitIdle();
+
+    for (auto& ubo : cameraUbo)
+    {
+        ubo->shutdown();
+    }
+    for (auto& ubo : lightUbo)
+    {
+        ubo->shutdown();
+    }
     shut_mesh_buffers();
-	shut_shaders();
-	vkDestroyDescriptorPool(init.device, data.descriptors_pool, nullptr);
+    shut_shaders();
+    vkDestroyDescriptorPool(init.device, data.descriptors_pool, nullptr);
     for (auto& globalDesc : data.global_descriptor)
     {
-        init.disp.destroyDescriptorSetLayout(globalDesc .descriptorSetLayout, nullptr);
-	}
+        init.disp.destroyDescriptorSetLayout(globalDesc.descriptorSetLayout, nullptr);
+    }
     for (auto& materialDesc : data.material_descriptor)
     {
         init.disp.destroyDescriptorSetLayout(materialDesc.descriptorSetLayout, nullptr);
-	}
+    }
     for (auto& modelDesc : data.model_descriptor)
     {
-		init.disp.destroyDescriptorSetLayout(modelDesc.descriptorSetLayout, nullptr);
-	}
+        init.disp.destroyDescriptorSetLayout(modelDesc.descriptorSetLayout, nullptr);
+    }
     vmaDestroyAllocator(allocator);
     for (size_t i = 0; i < init.swapchain.image_count; i++) {
         init.disp.destroySemaphore(data.finished_semaphore[i], nullptr);

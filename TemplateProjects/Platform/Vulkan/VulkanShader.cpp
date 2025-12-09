@@ -67,6 +67,8 @@ VulkanShader::VulkanShader(const char* vertexfilename, const char* fragmentfilen
 	{
 		uint32_t set = glsl.get_decoration(ub.id, spv::DecorationDescriptorSet);
 		uint32_t binding = glsl.get_decoration(ub.id, spv::DecorationBinding);
+		std::cout << "SPIR-V UBO: name=\"" << ub.name << "\" set=" << set << " binding=" << binding
+			<< " type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n";
 
 		if ( set == 1)
 		{

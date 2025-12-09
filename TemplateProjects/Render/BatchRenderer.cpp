@@ -26,6 +26,16 @@ void BatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
 	}
 }
 
+void BatchRender::addLight(LightComponent light, glm::vec3 Position)
+{
+	if (sceneStarted && !renderScenes.empty()) {
+        renderScenes.back().sceneLight.push_back({ light ,Position});
+    }
+    else {
+        throw std::runtime_error("No active scene. Call BeginScene() before adding lights.");
+    }
+}
+
 
 
 void BatchRender::setSkyBox(SkyBoxComponent* skybox)

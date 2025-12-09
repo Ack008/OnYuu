@@ -31,13 +31,19 @@ public:
     BatchRender();
     ~BatchRender();
     virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
+    virtual void addLight(LightComponent light, glm::vec3 position) override;
     virtual void setSkyBox(SkyBoxComponent* skybox) override;
 	virtual void BeginScene(Camera *camera) override;
     virtual void EndScene() override;
     virtual void submit() override;
 protected:
+    struct LightInfo {
+        LightComponent light;
+        glm::vec3 position;
+	};
     struct RenderScene {
         Camera* activeCamera = nullptr;
+		std::vector<LightInfo> sceneLight;
         std::vector<RenderData> meshRenders;
         SkyBoxComponent* skybox = nullptr;
         Background2DRender* background2D = nullptr;

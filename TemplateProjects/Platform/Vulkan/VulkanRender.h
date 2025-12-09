@@ -6,6 +6,7 @@
 #include "Render/Renderer.h"
 #include <GLFW/glfw3.h>
 #include "VulkanMeshGPU.h"
+#include "Platform/Vulkan/VulkanBuffer.h"
 #include <functional> // aggiunto per std::hash
 class VulkanRender : public BatchRender
 {
@@ -57,6 +58,7 @@ private:
         size_t current_frame = 0;
         uint32_t image_index = 0;
     };
+
     typedef std::pair<std::shared_ptr<Shader>, RenderingTypeEnum > pipelineKey;
 
     // Hash ed equality personalizzate per `pipelineKey` (pair<shared_ptr<Shader>, RenderingTypeEnum>)
@@ -112,9 +114,29 @@ private:
 	VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
     void shut_shaders();
 	void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, VulkanShader* material);
-	void update_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index, glm::mat4 model);
-	void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+	void update_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index, glm::mat4 model, VulkanMeshGPU& meshGpu);
+	void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
+	void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
+    void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
 	void shut_mesh_buffers();
 private:
+	// Light UBO structures
+    struct LightCPUStruct {
+        alignas(16) glm::vec3 lightPositions;
+        alignas(16) glm::vec3 lightColors;
+        alignas(16) float intensity;
+    } lightData;
+    struct LightBufferStruct {
+        alignas(16) int count;
+        alignas(16) LightCPUStruct lights[125];
+    } lightBufferData;
+	// camera UBO structures
+    struct CameraBufferStruct {
+        alignas(16) glm::mat4 projection;
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::vec4 cameraPosition; // changed from vec3 -> vec4 to match GLSL vec4
+    } cameraBufferData;
+    std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
+	std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
 	void render_scene(VkCommandBuffer command_buffer, RenderScene& scene);
 };

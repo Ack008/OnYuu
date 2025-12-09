@@ -6,6 +6,7 @@
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Shader.h"
 #include "Core/Model/Components/SkyBoxComponent.h"
+#include "Core/Model/Components/Lights.h "
 #include "Core/Model/Components/Camera.h"
 // Render: interfaccia astratta che rappresenta il sistema di rendering di alto
 // livello. Contiene funzioni virtuali che dovranno essere implementate da una
@@ -35,6 +36,8 @@ public:
 	virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) { meshRenders.push_back(mesh); };
 	// setSkyBox: imposta la cubemap da usare per il skybox
 	virtual void setSkyBox(SkyBoxComponent *skybox) = 0;
+	// aggiunge delel luci alla scena
+	virtual void addLight(LightComponent light, glm::vec3 position) {}
     // clear: pulisce le liste di oggetti da disegnare o altre risorse temporanee
 	// BeginFrame: operazioni da eseguire all'inizio di ogni frame di rendering
 	virtual void BeginFrame() = 0;

@@ -1,9 +1,18 @@
 #include "VulkanMeshGPU.h"
 #include "Platform/Vulkan/VulkanRender.h"
-
+#include <iostream>
 VulkanMeshGPU::VulkanMeshGPU(Mesh mesh)
 {
+	int max_images = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().framebuffers.size();
 	this->mesh = mesh;
+
+	// Creare istanze distinte di VulkanUniformBuffer per ogni image/framebuffer.
+	modelBuffers.clear();
+	modelBuffers.reserve(max_images);
+	for (int i = 0; i < max_images; ++i)
+	{
+		modelBuffers.emplace_back(std::make_shared<VulkanUniformBuffer>(1, sizeof(glm::mat4)));
+	}
 }
 
 void VulkanMeshGPU::shutdown()
@@ -11,10 +20,38 @@ void VulkanMeshGPU::shutdown()
 	if (uploaded)
 	{
 		VmaAllocator allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
-		vmaDestroyBuffer(allocator, vertexBuffer, vertexBufferAllocation);
-		vmaDestroyBuffer(allocator, indexBuffer, indexBufferAllocation);
-		vmaDestroyBuffer(allocator, stagingVertexBuffer, stagingVertexBufferAllocation);
-		vmaDestroyBuffer(allocator, stagingIndexBuffer, stagingIndexBufferAllocation);
+		for (auto& modelBuffer : modelBuffers)
+		{
+			if (modelBuffer) // controlla il puntatore prima di usarlo
+			{
+				modelBuffer->shutdown();
+				modelBuffer.reset(); // evita doppia distruzione se per qualche motivo il vettore conteneva riferimenti duplicati
+			}
+		}
+		modelBuffers.clear();
+
+		if (vertexBuffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, vertexBuffer, vertexBufferAllocation);
+			vertexBuffer = VK_NULL_HANDLE;
+		}
+		if (indexBuffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, indexBuffer, indexBufferAllocation);
+			indexBuffer = VK_NULL_HANDLE;
+		}
+		if (stagingVertexBuffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, stagingVertexBuffer, stagingVertexBufferAllocation);
+			stagingVertexBuffer = VK_NULL_HANDLE;
+		}
+		if (stagingIndexBuffer != VK_NULL_HANDLE)
+		{
+			vmaDestroyBuffer(allocator, stagingIndexBuffer, stagingIndexBufferAllocation);
+			stagingIndexBuffer = VK_NULL_HANDLE;
+		}
+
+		uploaded = false;
 	}
 }
 
@@ -37,6 +74,12 @@ void VulkanMeshGPU::draw(VkCommandBuffer commandBuffer)
 	else 
 		vkCmdDraw(commandBuffer, static_cast<uint32_t>(mesh.position.size()), 1, 0, 0);
 
+}
+
+VkBuffer VulkanMeshGPU::updateModelBuffer(int image_index,glm::mat4 modelMatrix)
+{
+	modelBuffers[image_index]->setData(&modelMatrix, sizeof(glm::mat4), BufferUsage::DYNAMIC);
+	return modelBuffers[image_index]->getVulkanBuffer();
 }
 
 void VulkanMeshGPU::destroyStagingBuffers()
@@ -96,6 +139,7 @@ void VulkanMeshGPU::createVertexBuffer()
 	VmaAllocator allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
 	vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocInfo,
 		&stagingVertexBuffer, &stagingVertexBufferAllocation, &stagingVertexAllocInfo);
+	std::cout << "Created staging vertex buffer " << stagingVertexBuffer << " of size " << bufferSize << " bytes\n";
 	// Copy vertex data to staging buffer
 	size_t offset = 0;
 	std::vector<float> vertexData;
@@ -130,6 +174,7 @@ void VulkanMeshGPU::createVertexBuffer()
 
 	// Copy data from staging buffer to device local buffer
 	copyBuffer(stagingVertexBuffer, vertexBuffer, bufferSize);
+	std::cout << "Created vertex buffer " << vertexBuffer << " of size " << bufferSize << " bytes\n";
 }
 
 void VulkanMeshGPU::createIndexBuffer()
@@ -148,6 +193,7 @@ void VulkanMeshGPU::createIndexBuffer()
 	VmaAllocator allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
 	vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocInfo,
 		&stagingIndexBuffer, &stagingIndexBufferAllocation, &stagingIndexAllocInfo);
+	std::cout << "Created staging index buffer " << stagingIndexBuffer << " of size " << bufferSize << " bytes\n";
 	// Copy index data to staging buffer
 	memcpy(stagingIndexAllocInfo.pMappedData,
 		mesh.indices.data(), bufferSize);
@@ -161,6 +207,7 @@ void VulkanMeshGPU::createIndexBuffer()
 	VmaAllocationInfo indexAllocInfoInfo{};
 	vmaCreateBuffer(allocator, &indexBufferInfo, &indexAllocInfo,
 		&indexBuffer, &indexBufferAllocation, &indexAllocInfoInfo);
+	std::cout << "Created index buffer " << indexBuffer << " of size " << bufferSize << " bytes\n";
 	// Copy data from staging buffer to device local buffer
 	copyBuffer(stagingIndexBuffer, indexBuffer, bufferSize);
 }

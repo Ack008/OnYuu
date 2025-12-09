@@ -5,6 +5,7 @@
 #include "vma/vk_mem_alloc.h"
 #include <unordered_map>
 #include <vector>
+#include "Platform/Vulkan/VulkanBuffer.h"
 // VulkanMeshGPU: implementazione concreta di MeshGPU per Vulkan. Gestisce il
 // caricamento della mesh sulla GPU utilizzando buffer Vulkan.
 class VulkanMeshGPU
@@ -17,14 +18,13 @@ class VulkanMeshGPU
 	VkBuffer getVertexBuffer() const { return vertexBuffer; }
 	VkBuffer getIndexBuffer() const { return indexBuffer; }
 	uint32_t getIndexCount() const { return indexCount; }
+	VkBuffer updateModelBuffer(int image_index, glm::mat4 modelMatrix);
 	void destroyStagingBuffers();
 	void destroyVertexBuffer();
 	void destroyIndexBuffer();
 	void destroy()
 	{
-		destroyStagingBuffers();
-		destroyVertexBuffer();
-		destroyIndexBuffer();
+		shutdown();
 	}
 private:
 	Mesh mesh;
@@ -40,6 +40,7 @@ private:
 	VmaAllocation stagingIndexBufferAllocation = VK_NULL_HANDLE;
 	VmaAllocationInfo stagingVertexAllocInfo = {};
 	VmaAllocationInfo stagingIndexAllocInfo = {};
+	std::vector<std::shared_ptr<VulkanUniformBuffer>> modelBuffers;
 	bool uploaded = false;
 	void createVertexBuffer();
 	void createIndexBuffer();

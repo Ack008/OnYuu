@@ -1,6 +1,7 @@
 #include "VulkanBuffer.h"
-
-VulkanUniformBuffer::VulkanUniformBuffer(uint32_t bindingPoint, size_t size)
+#include "Platform/Vulkan/VulkanRender.h"
+#include <iostream>
+VulkanUniformBuffer::VulkanUniformBuffer(uint32_t bindingPoint, size_t size ,VmaAllocator allocator_)
 {
 	this->bindingPoint = bindingPoint;
 	// Inizializza il buffer Vulkan qui (crea VkBuffer, VmaAllocation, ecc.)
@@ -16,10 +17,14 @@ VulkanUniformBuffer::VulkanUniformBuffer(uint32_t bindingPoint, size_t size)
 	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
 		VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	// Questo fa sì che il buffer sia già mappato e scrivibile da CPU
-	allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
+	if(allocator_)
+		allocator = allocator_;
+	else
+		allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
 	vmaCreateBuffer(allocator, &bufferInfo, &allocInfo,
 		&vulkanBuffer, &vulkanBufferAllocation, &uniformAllocInfo);
 	this->bufferSize = size;
+	std::cout << "Created VulkanUniformBuffer " << vulkanBuffer << " of size " << size << " bytes\n";
 }
 
 VulkanUniformBuffer::~VulkanUniformBuffer()
