@@ -11,14 +11,15 @@
 #include <functional> // aggiunto per std::hash
 class VulkanRender : public BatchRender
 {
-    	public:
-	VulkanRender();
-	~VulkanRender();
-	virtual void BeginFrame() override;
-	virtual void submit() override;
-	virtual void Shutdown() override;
-	void setSkyBox(SkyBoxComponent* skybox) override;
-	void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
+public:
+    VulkanRender();
+    ~VulkanRender();
+    virtual void BeginFrame() override;
+    void updateAllDescriptorDSet();
+    virtual void submit() override;
+    virtual void Shutdown() override;
+    void setSkyBox(SkyBoxComponent* skybox) override;
+    void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
 private:
     struct Init {
         vkb::Instance instance;
@@ -31,7 +32,7 @@ private:
     struct DescriptorSetInfo {
         VkDescriptorSetLayout descriptorSetLayout;
         VkDescriptorSet descriptorSet;
-	};
+    };
     struct RenderData {
         VkQueue graphics_queue;
         VkQueue present_queue;
@@ -46,12 +47,13 @@ private:
         VkCommandPool command_pool;
         std::vector<VkCommandBuffer> command_buffers;
 
-		VkDescriptorPool descriptors_pool; 
+        VkDescriptorPool descriptors_pool;
 
-		std::vector<DescriptorSetInfo> global_descriptor;
-		std::unordered_map<std::shared_ptr<Material>, DescriptorSetInfo> material_map_descriptor;
-		std::vector<DescriptorSetInfo> material_descriptor;
-        
+        std::vector<DescriptorSetInfo> global_descriptor;
+
+        std::unordered_map<std::shared_ptr<Material>, std::vector<DescriptorSetInfo>> material_map_descriptor;
+        std::vector<DescriptorSetInfo> material_descriptor;
+
         std::vector<VkSemaphore> available_semaphores;
         std::vector<VkSemaphore> finished_semaphore;
         std::vector<VkFence> in_flight_fences;
@@ -63,7 +65,7 @@ private:
     typedef std::pair<std::shared_ptr<Shader>, RenderingTypeEnum > pipelineKey;
 
     // Hash ed equality personalizzate per `pipelineKey` (pair<shared_ptr<Shader>, RenderingTypeEnum>)
-    // Necessarie perché la std::hash per std::pair non è fornita / non è utilizzabile qui.
+    // Necessarie perchè la std::hash per std::pair non è fornita / non è utilizzabile qui.
     struct PipelineKeyHash {
         std::size_t operator()(const pipelineKey& k) const noexcept {
             Shader* raw = k.first ? k.first.get() : nullptr;
@@ -78,23 +80,29 @@ private:
         }
     };
 
-   
-	Init init;
+
+    Init init;
     RenderData data;
-	static const int MAX_FRAMES_IN_FLIGHT = 2;
-	GLFWwindow* window = nullptr;
-	VmaAllocator allocator = nullptr;
-	std::vector<VkPipelineLayout> pipeline_layouts;
+    static const int MAX_FRAMES_IN_FLIGHT = 2;
+    GLFWwindow* window = nullptr;
+    VmaAllocator allocator = nullptr;
+    std::vector<VkPipelineLayout> pipeline_layouts;
+
+    // Single (unique) layouts reused across frames to avoid double-creation / double-destroy issues
+    VkDescriptorSetLayout globalDescriptorSetLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
+
 public:
-	Init& getInit() { return init; }
-	RenderData& getRenderData() { return data; }
-	VmaAllocator getAllocator() { return allocator; }
-	VkCommandBuffer beginSingleTimeCommands();
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+    Init& getInit() { return init; }
+    RenderData& getRenderData() { return data; }
+    VmaAllocator getAllocator() { return allocator; }
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
 private:
-	// ora usa hash ed equal personalizzati
-	std::unordered_map<pipelineKey, VkPipeline, PipelineKeyHash, PipelineKeyEqual> pipelines;
-	std::unordered_map<Mesh*, VulkanMeshGPU> meshGPUMap;
+    // ora usa hash ed equal personalizzati
+    std::unordered_map<pipelineKey, VkPipeline, PipelineKeyHash, PipelineKeyEqual> pipelines;
+    std::unordered_map<Mesh*, VulkanMeshGPU> meshGPUMap;
+    std::unordered_map<std::shared_ptr<Material>, std::vector<std::shared_ptr<VulkanUniformBuffer>>> materialUboMap;
     VkSurfaceKHR create_surface_glfw(VkInstance instance, VkAllocationCallbacks* allocator = nullptr);
     int device_initialization(Init& init);
     int create_swapchain(Init& init);
@@ -105,22 +113,25 @@ private:
     int create_command_buffers(Init& init, RenderData& data);
     int create_sync_objects(Init& init, RenderData& data);
     int recreate_swapchain(Init& init, RenderData& data);
-	int create_allocator(VkPhysicalDevice physical_device, VkDevice device);
-	int create_descriptor_pool(Init& init, RenderData& data);
-	int create_descriptor_sets(Init& init, RenderData& data);
-	int begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
-	int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-	int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-	int create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-	VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
+    int create_allocator(VkPhysicalDevice physical_device, VkDevice device);
+    int create_descriptor_pool(Init& init, RenderData& data);
+    int create_descriptor_sets(Init& init, RenderData& data);
+    int begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
+    int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+    int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+    int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
+    int create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+    VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
     void shut_shaders();
-	void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, VulkanShader* material);
-	void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
-	void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
+    void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
+    void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
+    void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
     void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
-	void shut_mesh_buffers();
+    void create_material_ubo(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void shut_mesh_buffers();
 private:
-	// Light UBO structures
+    // Light UBO structures
     struct LightCPUStruct {
         alignas(16) glm::vec3 lightPositions;
         alignas(16) glm::vec3 lightColors;
@@ -130,14 +141,14 @@ private:
         alignas(16) int count;
         alignas(16) LightCPUStruct lights[125];
     } lightBufferData;
-	// camera UBO structures
+    // camera UBO structures
     struct CameraBufferStruct {
         alignas(16) glm::mat4 projection;
         alignas(16) glm::mat4 view;
         alignas(16) glm::vec4 cameraPosition; // changed from vec3 -> vec4 to match GLSL vec4
     } cameraBufferData;
- 
+
     std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
-	std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
-	void render_scene(VkCommandBuffer command_buffer, RenderScene& scene);
+    std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
+    void render_scene(VkCommandBuffer command_buffer, RenderScene& scene);
 };

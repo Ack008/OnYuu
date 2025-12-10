@@ -88,14 +88,18 @@ void VulkanAppLayer::onAttach()
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	shader = Shader::create("Asset/vulkan-shader/vert.o", "Asset/vulkan-shader/frag.o");
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(shader));
+
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
 	mat->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	mat->set("shininess", 32.0f);
-	mat->set("ambient",glm::vec3(1,1,1));
+	mat->set("ambient",glm::vec3(1,0,1));
+
+	mat2->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	mat2->set("ambient", glm::vec3(1, 0, 0));
 
 	renderMesh.material = mat;
 	renderMesh2.mesh = triangle2;
-	renderMesh2.material = mat;
+	renderMesh2.material = mat2;
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 2.0f));
 
 }

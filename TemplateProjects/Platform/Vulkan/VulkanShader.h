@@ -39,4 +39,5 @@ public:
 	VkShaderModule getVertexShaderModule() const { return vertexShaderModule; }
 	VkShaderModule getFragmentShaderModule() const { return fragmentShaderModule; }
 	std::vector < std::shared_ptr<UniformBuffer>> getMaterialBufferObject() const { return materialBufferObject; }
+	std::vector<uint8_t>& getUniformBuffer() { return uniformBuffer; }
 };

@@ -65,6 +65,6 @@ void Material::apply()
 
 			}, value);
 		alreadySet_[name] = true;
-		_shader->flushCostants();
 	}
+	_shader->flushCostants();
 }
