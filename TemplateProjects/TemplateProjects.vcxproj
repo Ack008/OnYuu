@@ -158,6 +158,7 @@
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
@@ -239,6 +240,7 @@
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanTexture.h" />
     <ClInclude Include="Platform\Vulkan\VulkanWindow.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />

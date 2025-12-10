@@ -12,7 +12,6 @@
         std::cout << "Failed" << "\n"; \
         std::exit( -1); \
     }
-
 // Map pipeline -> pipelineLayout per garantire compatibilità al bind dei descriptor sets
 static std::unordered_map<VkPipeline, VkPipelineLayout> g_pipeline_layout_map;
 
@@ -425,7 +424,6 @@ int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
     int frame_count = static_cast<int>(data.swapchain_image_views.size());
     data.global_descriptor.resize(frame_count);
     data.material_descriptor.resize(frame_count);
-    data.model_descriptor.resize(frame_count);
     for (int i = 0; i < data.swapchain_image_views.size(); i++)
     {
         if (create_global_descriptor_set(init, data, i) != 0)
@@ -437,10 +435,7 @@ int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
         {
             return -1;
         }
-        if (create_model_descriptor_set(init, data, i) != 0)
-        {
-            return -1;
-        }
+        
         // Create model descriptor sets
     }
     return 0;
@@ -566,36 +561,7 @@ int VulkanRender::create_material_descriptor_set(Init& init, RenderData& data, u
     return 0;
 }
 
-int VulkanRender::create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index)
-{
-    VkDescriptorSetLayoutBinding modelBinding = {};
-    modelBinding.binding = 0;
-    modelBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    modelBinding.descriptorCount = 1;
-    modelBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-    modelBinding.pImmutableSamplers = nullptr;
-    VkDescriptorSetLayoutCreateInfo layout_info = {};
-    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout_info.bindingCount = 1;
-    layout_info.pBindings = &modelBinding;
-    if (init.disp.createDescriptorSetLayout(&layout_info, nullptr, &data.model_descriptor[image_index].descriptorSetLayout) != VK_SUCCESS)
-    {
-        std::cout << "failed to create global descriptor set layout\n";
-        return -1; // failed to create descriptor set layout
-    }
-    VkDescriptorSetAllocateInfo alloc_info = {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.descriptorPool = data.descriptors_pool;
-    alloc_info.descriptorSetCount = 1;
-    alloc_info.pSetLayouts = &data.model_descriptor[image_index].descriptorSetLayout;
-    if (init.disp.allocateDescriptorSets(&alloc_info, &data.model_descriptor[image_index].descriptorSet) != VK_SUCCESS)
-    {
-        std::cout << "failed to allocate global descriptor set\n";
-        return -1; // failed to allocate descriptor set
-    }
-    return 0;
-    return 0;
-}
+
 static VkPrimitiveTopology get_vk_primitive_topology(RenderingTypeEnum type) {
     switch (type) {
     case RenderingTypeEnum::TRIANGLE:
@@ -727,9 +693,14 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
     descriptorSetLayouts.push_back(data.global_descriptor[0].descriptorSetLayout);
     descriptorSetLayouts.push_back(data.material_descriptor[0].descriptorSetLayout);
-    descriptorSetLayouts.push_back(data.model_descriptor[0].descriptorSetLayout);
     pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
     pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+    VkPushConstantRange push_constant;
+    push_constant.offset = 0;
+    push_constant.size = sizeof(glm::mat4);
+    push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &push_constant;
     if (init.disp.createPipelineLayout(&pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         std::cout << "failed to create pipeline layout\n";
         throw std::runtime_error("failed to create pipeline layout!");
@@ -749,9 +720,10 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
     pipelineInfo.renderPass = data.render_pass;
     pipelineInfo.subpass = 0;
     pipelineInfo.pDynamicState = &dynamicState; // <-- aggiungi questa riga
-        if (init.disp.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
-        std::cout << "failed to create graphics pipeline\n";
-        throw std::runtime_error("failed to create graphics pipeline!");
+   
+    if (init.disp.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+    std::cout << "failed to create graphics pipeline\n";
+    throw std::runtime_error("failed to create graphics pipeline!");
     }
 
     // memorizza la relazione pipeline -> layout per il corretto bindDescriptorSets
@@ -801,23 +773,7 @@ void VulkanRender::update_material_descriptor_set(Init& init, RenderData& data, 
     init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
 }
 
-void VulkanRender::update_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index, glm::mat4 model, VulkanMeshGPU& meshGPU)
-{
-    VkBuffer buffer = meshGPU.updateModelBuffer(image_index, model);
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = buffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = VK_WHOLE_SIZE;
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = data.model_descriptor[image_index].descriptorSet;
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-}
+
 
 void VulkanRender::update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
 {
@@ -854,11 +810,11 @@ void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, ui
     // Correzione GL -> Vulkan (flip Y + mappa depth [-1,1] -> [0,1])
     glm::mat4 glToVk = glm::mat4(1.0f);
     glToVk[1][1] = -1.0f;   // flip Y
-    glToVk[2][2] = 0.5f;    // scale z
+    glToVk[2][2] = 0.5f;    // scale zq
     glToVk[3][2] = 0.5f;    // translate z
 
     // Applica la conversione e assegna i campi nell'ordine atteso dallo shader (proj, view, position)
-    cameraBufferData.projection = glToVk * projGL;
+    cameraBufferData.projection =   projGL;
     cameraBufferData.view = viewGL;
     cameraBufferData.cameraPosition = glm::vec4(scene.activeCamera->getPosition(), 1.0f);
 
@@ -938,9 +894,16 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& sce
             std::vector<VkDescriptorSet> descriptorSets;
             descriptorSets.push_back(data.global_descriptor[data.image_index].descriptorSet);
             descriptorSets.push_back(data.material_descriptor[data.image_index].descriptorSet);
-            descriptorSets.push_back(data.model_descriptor[data.image_index].descriptorSet);
             init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
                 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+            vkCmdPushConstants(
+                command_buffer,
+                bindLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                0,
+                sizeof(glm::mat4),
+                &renderData.model
+			);
             meshGPU.draw(command_buffer);
         }
     }
@@ -987,6 +950,7 @@ void VulkanRender::BeginFrame()
             update_material_descriptor_set(init, data, data.image_index, vulkanShader);
 
             // Per ogni istanza aggiorna il modello (model UBO) prima di registrare
+			material->apply();
             for (const auto& renderData : pair.second)
             {
                 auto mesh = renderData.renderMesh;
@@ -994,21 +958,18 @@ void VulkanRender::BeginFrame()
                 auto [it, inserted] = meshGPUMap.try_emplace(meshKey, *(mesh->mesh.get()));
                 VulkanMeshGPU& meshGPU = it->second;
                 meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
-                renderData.renderMesh->material->set("model", renderData.model);
-                renderData.renderMesh->material->apply();
-                update_model_descriptor_set(init, data, data.image_index, renderData.model, meshGPU);
             }
         }
     }
     begin_record_command_buffer(init, data, data.image_index);
-}
-
-void VulkanRender::submit()
-{
     for (auto& scene : renderScenes)
     {
         render_scene(data.command_buffers[data.image_index], scene);
     }
+}
+
+void VulkanRender::submit()
+{
     init.disp.cmdEndRenderPass(data.command_buffers[data.image_index]);
 
     if (init.disp.endCommandBuffer(data.command_buffers[data.image_index]) != VK_SUCCESS) {
@@ -1090,10 +1051,7 @@ void VulkanRender::Shutdown()
     {
         init.disp.destroyDescriptorSetLayout(materialDesc.descriptorSetLayout, nullptr);
     }
-    for (auto& modelDesc : data.model_descriptor)
-    {
-        init.disp.destroyDescriptorSetLayout(modelDesc.descriptorSetLayout, nullptr);
-    }
+    
     vmaDestroyAllocator(allocator);
     for (size_t i = 0; i < init.swapchain.image_count; i++) {
         init.disp.destroySemaphore(data.finished_semaphore[i], nullptr);

@@ -7,6 +7,7 @@
 #include <GLFW/glfw3.h>
 #include "VulkanMeshGPU.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
+#include "Core/Material.h"
 #include <functional> // aggiunto per std::hash
 class VulkanRender : public BatchRender
 {
@@ -48,8 +49,8 @@ private:
 		VkDescriptorPool descriptors_pool; 
 
 		std::vector<DescriptorSetInfo> global_descriptor;
+		std::unordered_map<std::shared_ptr<Material>, DescriptorSetInfo> material_map_descriptor;
 		std::vector<DescriptorSetInfo> material_descriptor;
-		std::vector<DescriptorSetInfo> model_descriptor;
         
         std::vector<VkSemaphore> available_semaphores;
         std::vector<VkSemaphore> finished_semaphore;
@@ -114,7 +115,6 @@ private:
 	VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
     void shut_shaders();
 	void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, VulkanShader* material);
-	void update_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index, glm::mat4 model, VulkanMeshGPU& meshGpu);
 	void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
 	void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
     void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
@@ -136,6 +136,7 @@ private:
         alignas(16) glm::mat4 view;
         alignas(16) glm::vec4 cameraPosition; // changed from vec3 -> vec4 to match GLSL vec4
     } cameraBufferData;
+ 
     std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
 	std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
 	void render_scene(VkCommandBuffer command_buffer, RenderScene& scene);

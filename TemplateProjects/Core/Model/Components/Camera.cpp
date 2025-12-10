@@ -45,8 +45,8 @@ void Orthographic::OnResize(uint32_t width, uint32_t height)
 void  Orthographic::updateViewMatrix()
 {
 	view = glm::mat4(1.0f);
+	view = glm::translate(view, position);
 	view = glm::rotate(view, glm::radians(rotation.x), glm::vec3(1, 0, 0));
 	view = glm::rotate(view, glm::radians(rotation.y), glm::vec3(0, 1, 0));
 	view = glm::rotate(view, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-	view = glm::translate(view, -position);
 }

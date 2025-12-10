@@ -145,6 +145,7 @@
     <ClCompile Include="vendor\vma\VmaUsage.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -230,6 +231,7 @@
     <ClInclude Include="vendor\vma\VmaUsage.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanTexture.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

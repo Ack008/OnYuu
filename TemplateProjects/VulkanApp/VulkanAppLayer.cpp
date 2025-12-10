@@ -1,11 +1,14 @@
 #include "VulkanAppLayer.h"
 #include "Render/Renderer.h"
 #include <ImGui/imgui.h>
+glm::vec3 traslate = glm::vec3(0,0.f,0.f);
 void VulkanAppLayer::onUpdate(float deltaTime)
 {
 	Render::getInstance()->BeginScene(camera.get());
+	glm::mat4 model1(1.0f);
+	model1 = glm::translate(model1, traslate);
 	Render::getInstance()->addMeshRender(&renderMesh, glm::mat4(1.0f));
-	Render::getInstance()->addMeshRender(&renderMesh2, glm::mat4(1.0f));
+	Render::getInstance()->addMeshRender(&renderMesh2, model1);
 	Render::getInstance()->EndScene();
 }
 
@@ -15,7 +18,9 @@ void VulkanAppLayer::onEvent()
 
 void VulkanAppLayer::onImGuiRender()
 {
-	
+	ImGui::Begin("Vulkan App Layer");
+	ImGui::DragFloat3("translate mesh", &traslate.x, 0.2, -10.0f, 10.0f);
+	ImGui::End();
 }
 
 void VulkanAppLayer::onAttach()
@@ -52,10 +57,10 @@ void VulkanAppLayer::onAttach()
 
 	triangle2 = std::make_shared<Mesh>();
 	triangle2->position = {
-		{ -1.f, -1.f, 1.0f },
-		{ -1.f, 1.f, 1.0f },
-		{  1.f, 1.f, 1.0f  },
-		{ 1.f, -1.0f, 1.0f },
+		{ -1.f, -1.f, 2.0f },
+		{ -1.f, 1.f, 2.0f },
+		{  1.f, 1.f, 2.0f  },
+		{ 1.f, -1.0f, 2.0f },
 	};
 	triangle2->indices = { 0, 1, 3 ,
 		1,2,3 };
@@ -79,14 +84,14 @@ void VulkanAppLayer::onAttach()
 		{  0.0f, 0.0f, 1.0f  }
 	};
 	renderMesh.mesh = triangle;
-	camera = std::make_shared<Orthographic>(-1,1, -1,1, -0.1f, -100.0f);
+	camera = std::make_shared<Orthographic>(-5,5, -5,5, -100.f, .3f);
+	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	shader = Shader::create("Asset/vulkan-shader/vert.o", "Asset/vulkan-shader/frag.o");
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader));
+	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
 	mat->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	mat->set("shininess", 32.0f);
 	mat->set("ambient",glm::vec3(1,1,1));
-	mat->apply();
-	// Forza aggiornamento buffer del materiale per il first frame
 
 	renderMesh.material = mat;
 	renderMesh2.mesh = triangle2;
