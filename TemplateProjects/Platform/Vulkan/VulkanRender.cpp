@@ -531,20 +531,28 @@ int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uin
             return -1; // failed to create descriptor set layout
         }
     }
+    return 0;
 
+   
+}
+
+int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene)
+{
     // Allocate descriptor set for this frame using globalDescriptorSetLayout
     VkDescriptorSetAllocateInfo alloc_info = {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    alloc_info.descriptorPool = data.descriptors_pool;
-    alloc_info.descriptorSetCount = 1;
-    alloc_info.pSetLayouts = &globalDescriptorSetLayout;
-    if (init.disp.allocateDescriptorSets(&alloc_info, &data.global_descriptor[image_index].descriptorSet) != VK_SUCCESS)
+	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	alloc_info.descriptorPool = data.descriptors_pool;
+	alloc_info.descriptorSetCount = 1;
+	alloc_info.pSetLayouts = &globalDescriptorSetLayout;
+    if (init.disp.allocateDescriptorSets(&alloc_info, &data.scene_map_descriptor[indexScene][image_index].descriptorSet) != VK_SUCCESS)
     {
         std::cout << "failed to allocate global descriptor set\n";
-        return -1; // failed to allocate descriptor set
-    }
+        return -1;
+	}
+	// store layout reference
+	data.scene_map_descriptor[indexScene][image_index].descriptorSetLayout = globalDescriptorSetLayout;
+	// Update descriptor set with UBOs
 
-    data.global_descriptor[image_index].descriptorSetLayout = globalDescriptorSetLayout;
     return 0;
 }
 
@@ -744,8 +752,8 @@ VkPipeline VulkanRender::create_graphics_pipeline(Init& init, RenderData& data, 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-    descriptorSetLayouts.push_back(data.global_descriptor[0].descriptorSetLayout);
-    descriptorSetLayouts.push_back(data.material_descriptor[0].descriptorSetLayout);
+    descriptorSetLayouts.push_back(globalDescriptorSetLayout);
+    descriptorSetLayouts.push_back(materialDescriptorSetLayout);
     pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
     pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
     VkPushConstantRange push_constant;
@@ -854,8 +862,9 @@ void VulkanRender::update_material_descriptor_set(Init& init, RenderData& data, 
 
 
 
-void VulkanRender::update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+void VulkanRender::update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene)
 {
+	RenderScene& scene = renderScenes[indexScene];
     lightBufferData.count = static_cast<int>(scene.sceneLight.size());
     for (size_t i = 0; i < scene.sceneLight.size() && i < 125; i++)
     {
@@ -863,25 +872,12 @@ void VulkanRender::update_light_descriptor_set(Init& init, RenderData& data, uin
         lightBufferData.lights[i].lightColors = scene.sceneLight[i].light.color;
         lightBufferData.lights[i].intensity = scene.sceneLight[i].light.intensity;
     }
-    lightUbo[image_index]->setData(&lightBufferData, sizeof(lightBufferData), BufferUsage::DYNAMIC);
-    VkDescriptorBufferInfo bufferInfo{};
-    VkBuffer lightBuffer = lightUbo[image_index]->getVulkanBuffer();
-    bufferInfo.buffer = lightBuffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = VK_WHOLE_SIZE;
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = data.global_descriptor[image_index].descriptorSet;
-    descriptorWrite.dstBinding = 2;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+    sceneLightUbo[indexScene][image_index]->setData(&lightBufferData, sizeof(lightBufferData), BufferUsage::DYNAMIC);
 }
 
-void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene)
 {
+	RenderScene& scene = renderScenes[indexScene];
     // Prendi le matrici generate da GLM (probabilmente in stile GL)
     glm::mat4 projGL = scene.activeCamera->getProjectionMatrix();
     glm::mat4 viewGL = scene.activeCamera->getViewMatrix();
@@ -896,31 +892,73 @@ void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, ui
     cameraBufferData.projection = projGL;
     cameraBufferData.view = viewGL;
     cameraBufferData.cameraPosition = glm::vec4(scene.activeCamera->getPosition(), 1.0f);
-
-
-    cameraUbo[image_index]->setData(&cameraBufferData, sizeof(cameraBufferData), BufferUsage::DYNAMIC);
-    VkDescriptorBufferInfo bufferInfo{};
-    VkBuffer cameraBuffer = cameraUbo[image_index]->getVulkanBuffer();
-    bufferInfo.buffer = cameraBuffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = VK_WHOLE_SIZE;
-    VkWriteDescriptorSet descriptorWrite{};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = data.global_descriptor[image_index].descriptorSet;
-    descriptorWrite.dstBinding = 1;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-    init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-
-
+    sceneCameraUbo[indexScene][image_index]->setData(&cameraBufferData, sizeof(cameraBufferData), BufferUsage::DYNAMIC);
 }
 
-void VulkanRender::update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene)
+void VulkanRender::update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene)
 {
-    update_light_descriptor_set(init, data, image_index, scene);
-    update_camera_descriptor_set(init, data, image_index, scene);
+	if (data.scene_map_descriptor.find(indexScene) == data.scene_map_descriptor.end())
+    {
+        // Initialize per-scene array of descriptor infos for each swapchain image
+        int frameCount = static_cast<int>(data.global_descriptor.size());
+        data.scene_map_descriptor[indexScene] = std::vector<DescriptorSetInfo>(frameCount);
+
+        // Ensure UBO containers exist and have the same size
+        sceneLightUbo[indexScene].resize(frameCount);
+        sceneCameraUbo[indexScene].resize(frameCount);
+
+        // Allocate descriptor sets and create / bind UBOs for every frame index (NOT only the current image_index)
+        for (int i = 0; i < frameCount; ++i)
+        {
+            // Allocate descriptor set for this scene and frame
+            if (create_global_descriptor_set(init, data, static_cast<uint32_t>(i), indexScene) != 0)
+            {
+                std::cerr << "create_global_descriptor_set: failed for scene " << indexScene << " frame " << i << "\n";
+                continue;
+            }
+
+            // Create UBOs per-frame
+            sceneLightUbo[indexScene][i] = std::make_shared<VulkanUniformBuffer>(0, sizeof(LightBufferStruct));
+            sceneCameraUbo[indexScene][i] = std::make_shared<VulkanUniformBuffer>(0, sizeof(CameraBufferStruct));
+
+            // bind light UBO to descriptor set (binding = 2)
+            VkDescriptorBufferInfo lightBufferInfo{};
+            lightBufferInfo.buffer = sceneLightUbo[indexScene][i]->getVulkanBuffer();
+            lightBufferInfo.offset = 0;
+            lightBufferInfo.range = VK_WHOLE_SIZE;
+            VkWriteDescriptorSet lightDescriptorWrite{};
+            lightDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            lightDescriptorWrite.dstSet = data.scene_map_descriptor[indexScene][i].descriptorSet;
+            lightDescriptorWrite.dstBinding = 2;
+            lightDescriptorWrite.dstArrayElement = 0;
+            lightDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            lightDescriptorWrite.descriptorCount = 1;
+            lightDescriptorWrite.pBufferInfo = &lightBufferInfo;
+
+            // bind camera UBO to descriptor set (binding = 1)
+            VkDescriptorBufferInfo cameraBufferInfo{};
+            cameraBufferInfo.buffer = sceneCameraUbo[indexScene][i]->getVulkanBuffer();
+            cameraBufferInfo.offset = 0;
+            cameraBufferInfo.range = VK_WHOLE_SIZE;
+            VkWriteDescriptorSet cameraDescriptorWrite{};
+            cameraDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            cameraDescriptorWrite.dstSet = data.scene_map_descriptor[indexScene][i].descriptorSet;
+            cameraDescriptorWrite.dstBinding = 1;
+            cameraDescriptorWrite.dstArrayElement = 0;
+            cameraDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            cameraDescriptorWrite.descriptorCount = 1;
+            cameraDescriptorWrite.pBufferInfo = &cameraBufferInfo;
+
+            VkWriteDescriptorSet writes[2] = { lightDescriptorWrite, cameraDescriptorWrite };
+            init.disp.updateDescriptorSets(2, writes, 0, nullptr);
+        }
+    }
+
+    // Always update the contents of the UBOs for the currently used image_index
+
+    // Always update the contents of the UBOs for the currently used image_index
+    update_light_descriptor_set(init, data, image_index, indexScene);
+    update_camera_descriptor_set(init, data, image_index, indexScene);
 
 }
 
@@ -950,8 +988,9 @@ void VulkanRender::shut_mesh_buffers()
     }
 }
 
-void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& scene)
+void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
 {
+	RenderScene& scene = renderScenes[indexScene];
     auto batches = scene.batches;
     for (const auto& pair : batches)
     {
@@ -987,7 +1026,7 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, RenderScene& sce
             else if (!pipeline_layouts.empty()) bindLayout = pipeline_layouts[0]; // fallback (non ideale)
 
             std::vector<VkDescriptorSet> descriptorSets;
-            descriptorSets.push_back(data.global_descriptor[data.image_index].descriptorSet);
+            descriptorSets.push_back(data.scene_map_descriptor[indexScene][data.image_index].descriptorSet);
             descriptorSets.push_back(data.material_map_descriptor[material][data.image_index].descriptorSet);
             init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
                 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
@@ -1033,18 +1072,19 @@ void VulkanRender::BeginFrame()
     data.image_index = image_index;
     updateAllDescriptorDSet();
     begin_record_command_buffer(init, data, data.image_index);
-    for (auto& scene : renderScenes)
+    for (int i = 0; i  < renderScenes.size(); i++)
     {
-        render_scene(data.command_buffers[data.image_index], scene);
+        render_scene(data.command_buffers[data.image_index], i);
     }
 }
 
 void VulkanRender::updateAllDescriptorDSet()
 {
-    for (auto& scene : renderScenes)
+    for (int i = 0; i < renderScenes.size(); i++)
     {
+		RenderScene& scene = renderScenes[i];
         // Aggiorna globali (luce, camera)
-        update_global_descriptor_set(init, data, data.image_index, scene);
+        update_global_descriptor_set(init, data, data.image_index, i);
 
         // Per ogni batch aggiorna material e model descriptor prima della registrazione
         for (const auto& pair : scene.batches)
@@ -1130,21 +1170,92 @@ void VulkanRender::submit()
 
 void VulkanRender::Shutdown()
 {
+    // Ensure GPU is idle before destroying resources
     init.disp.deviceWaitIdle();
 
-    for (auto& ubo : cameraUbo)
+    // 1) Free and destroy per-scene descriptor sets
+    for (auto& scenePair : data.scene_map_descriptor)
     {
-        ubo->shutdown();
+        auto& vec = scenePair.second;
+        std::vector<VkDescriptorSet> sets;
+        sets.reserve(vec.size());
+        for (auto& info : vec)
+        {
+            if (info.descriptorSet != VK_NULL_HANDLE)
+                sets.push_back(info.descriptorSet);
+        }
+        if (!sets.empty())
+        {
+            init.disp.freeDescriptorSets(data.descriptors_pool, static_cast<uint32_t>(sets.size()), sets.data());
+        }
     }
-    for (auto& ubo : lightUbo)
-    {
-        ubo->shutdown();
-    }
-    shut_mesh_buffers();
-    shut_shaders();
-    vkDestroyDescriptorPool(init.device, data.descriptors_pool, nullptr);
+    data.scene_map_descriptor.clear();
 
-    // Destroy the unique descriptor set layouts once
+    // 2) Free and destroy per-material descriptor sets
+    for (auto& matPair : data.material_map_descriptor)
+    {
+        auto& vec = matPair.second;
+        std::vector<VkDescriptorSet> sets;
+        sets.reserve(vec.size());
+        for (auto& info : vec)
+        {
+            if (info.descriptorSet != VK_NULL_HANDLE)
+                sets.push_back(info.descriptorSet);
+        }
+        if (!sets.empty())
+        {
+            init.disp.freeDescriptorSets(data.descriptors_pool, static_cast<uint32_t>(sets.size()), sets.data());
+        }
+    }
+    data.material_map_descriptor.clear();
+
+    // 3) Shutdown and clear all UBOs created per-material
+    for (auto& pair : materialUboMap)
+    {
+        for (auto& ubo : pair.second)
+        {
+            if (ubo) ubo->shutdown();
+        }
+    }
+    materialUboMap.clear();
+
+    // 4) Shutdown per-scene UBOs (camera + lights)
+    for (auto& [it,vec ]: sceneCameraUbo)
+    {
+        for (auto& ubo : vec) if (ubo) ubo->shutdown();
+    }
+    sceneCameraUbo.clear();
+    for (auto& [it, vec] : sceneLightUbo)
+    {
+        for (auto& ubo : vec) if (ubo) ubo->shutdown();
+    }
+    sceneLightUbo.clear();
+
+    // 5) Shutdown global per-frame UBOs (if still present)
+    for (auto& ubo : cameraUbo) if (ubo) ubo->shutdown();
+    cameraUbo.clear();
+    for (auto& ubo : lightUbo) if (ubo) ubo->shutdown();
+    lightUbo.clear();
+
+    // 6) Destroy mesh GPU resources
+    shut_mesh_buffers();
+    meshGPUMap.clear();
+
+    // 7) Destroy pipelines and shader resources (and pipeline layouts)
+    shut_shaders();
+    pipelines.clear();
+    pipeline_layouts.clear();
+    g_pipeline_layout_map.clear();
+
+    // 8) Destroy descriptor pool (after individual sets freed)
+    if (data.descriptors_pool != VK_NULL_HANDLE)
+    {
+        // use dispatch if available
+        init.disp.destroyDescriptorPool(data.descriptors_pool, nullptr);
+        data.descriptors_pool = VK_NULL_HANDLE;
+    }
+
+    // 9) Destroy descriptor set layouts (unique ones)
     if (globalDescriptorSetLayout != VK_NULL_HANDLE)
     {
         init.disp.destroyDescriptorSetLayout(globalDescriptorSetLayout, nullptr);
@@ -1156,27 +1267,78 @@ void VulkanRender::Shutdown()
         materialDescriptorSetLayout = VK_NULL_HANDLE;
     }
 
-    vmaDestroyAllocator(allocator);
-    for (size_t i = 0; i < init.swapchain.image_count; i++) {
-        init.disp.destroySemaphore(data.finished_semaphore[i], nullptr);
-    }
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        init.disp.destroySemaphore(data.available_semaphores[i], nullptr);
-        init.disp.destroyFence(data.in_flight_fences[i], nullptr);
+    // 10) Destroy VMA allocator
+    if (allocator != VK_NULL_HANDLE)
+    {
+        vmaDestroyAllocator(allocator);
+        allocator = VK_NULL_HANDLE;
     }
 
-    init.disp.destroyCommandPool(data.command_pool, nullptr);
+    // 11) Destroy semaphores and fences
+    for (size_t i = 0; i < data.finished_semaphore.size(); ++i)
+    {
+        if (data.finished_semaphore[i] != VK_NULL_HANDLE)
+            init.disp.destroySemaphore(data.finished_semaphore[i], nullptr);
+    }
+    data.finished_semaphore.clear();
 
-    for (auto framebuffer : data.framebuffers) {
-        init.disp.destroyFramebuffer(framebuffer, nullptr);
+    for (size_t i = 0; i < data.available_semaphores.size(); ++i)
+    {
+        if (data.available_semaphores[i] != VK_NULL_HANDLE)
+            init.disp.destroySemaphore(data.available_semaphores[i], nullptr);
+    }
+    data.available_semaphores.clear();
+
+    for (size_t i = 0; i < data.in_flight_fences.size(); ++i)
+    {
+        if (data.in_flight_fences[i] != VK_NULL_HANDLE)
+            init.disp.destroyFence(data.in_flight_fences[i], nullptr);
+    }
+    data.in_flight_fences.clear();
+    data.image_in_flight.clear();
+
+    // 12) Destroy command pool
+    if (data.command_pool != VK_NULL_HANDLE)
+    {
+        init.disp.destroyCommandPool(data.command_pool, nullptr);
+        data.command_pool = VK_NULL_HANDLE;
     }
 
-    init.disp.destroyRenderPass(data.render_pass, nullptr);
+    // 13) Destroy framebuffers
+    for (auto fb : data.framebuffers)
+    {
+        if (fb != VK_NULL_HANDLE)
+            init.disp.destroyFramebuffer(fb, nullptr);
+    }
+    data.framebuffers.clear();
 
-    init.swapchain.destroy_image_views(data.swapchain_image_views);
+    // 14) Destroy render pass
+    if (data.render_pass != VK_NULL_HANDLE)
+    {
+        init.disp.destroyRenderPass(data.render_pass, nullptr);
+        data.render_pass = VK_NULL_HANDLE;
+    }
 
-    vkb::destroy_swapchain(init.swapchain);
-    vkb::destroy_device(init.device);
-    vkb::destroy_surface(init.instance, init.surface);
-    vkb::destroy_instance(init.instance);
+    // 15) Destroy swapchain image views and swapchain
+    if (!data.swapchain_image_views.empty())
+    {
+        init.swapchain.destroy_image_views(data.swapchain_image_views);
+        data.swapchain_image_views.clear();
+    }
+    data.swapchain_images.clear();
+
+    if (init.swapchain != VK_NULL_HANDLE)
+    {
+        vkb::destroy_swapchain(init.swapchain);
+    }
+
+    // 16) Destroy device, surface and instance
+    if (init.device) { vkb::destroy_device(init.device); init.device = {}; }
+    if (init.surface != VK_NULL_HANDLE) { vkb::destroy_surface(init.instance, init.surface); init.surface = VK_NULL_HANDLE; }
+    if (init.instance) { vkb::destroy_instance(init.instance); init.instance = {}; }
+
+    // 17) Clear remaining runtime containers
+    data.command_buffers.clear();
+    data.swapchain_images.clear();
+    renderScenes.clear();
 }

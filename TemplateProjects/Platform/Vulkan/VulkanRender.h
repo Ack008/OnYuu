@@ -50,7 +50,7 @@ private:
         VkDescriptorPool descriptors_pool;
 
         std::vector<DescriptorSetInfo> global_descriptor;
-
+        std::unordered_map <int , std::vector<DescriptorSetInfo>> scene_map_descriptor;
         std::unordered_map<std::shared_ptr<Material>, std::vector<DescriptorSetInfo>> material_map_descriptor;
         std::vector<DescriptorSetInfo> material_descriptor;
 
@@ -118,15 +118,16 @@ private:
     int create_descriptor_sets(Init& init, RenderData& data);
     int begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
     int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+    int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
     int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
     int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
     int create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
     VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
     void shut_shaders();
     void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
-    void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
-    void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
-    void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, RenderScene& scene);
+    void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
+    void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
+    void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
     void create_material_ubo(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void shut_mesh_buffers();
@@ -148,7 +149,12 @@ private:
         alignas(16) glm::vec4 cameraPosition; // changed from vec3 -> vec4 to match GLSL vec4
     } cameraBufferData;
 
+	std::unordered_map<int, std::vector<std::shared_ptr<VulkanUniformBuffer>>> sceneLightUbo;
+    std::unordered_map<int, std::vector<std::shared_ptr<VulkanUniformBuffer>>> sceneCameraUbo;
+
+
+
     std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
     std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
-    void render_scene(VkCommandBuffer command_buffer, RenderScene& scene);
+    void render_scene(VkCommandBuffer command_buffer, int indexScene);
 };
