@@ -14,7 +14,7 @@ class Material {
 public:
 	using UniformValue = std::variant<
 		int, float, glm::vec2, glm::vec3, glm::vec4,
-		glm::mat3, glm::mat4, Texture*>;
+		glm::mat3, glm::mat4, std::shared_ptr<Texture>>;
 
 	Material(std::shared_ptr<Shader> shader);
 	Material(const Material&) = default;
@@ -47,6 +47,8 @@ public:
 	const std::unordered_map<std::string, UniformValue>& getUniforms() const { return uniforms_; }
 	// Overload non-const per modificare la mappa se necessario
 	std::unordered_map<std::string, UniformValue>& getUniforms() { return uniforms_; }
+	// get texture
+	const std::vector<std::shared_ptr<Texture>>& getTextures() const { return textures_; }
 
 private:
 	std::shared_ptr<Shader> _shader;
@@ -54,4 +56,6 @@ private:
 	std::unordered_map<std::string, UniformValue> uniforms_;
 	// Traccia quali uniform sono già stati impostati (per evitare set ridondanti)
 	std::unordered_map<std::string, bool> alreadySet_;
+	// texture
+	std::vector<std::shared_ptr<Texture>> textures_;
 };

@@ -83,7 +83,7 @@ private:
 
     Init init;
     RenderData data;
-    static const int MAX_FRAMES_IN_FLIGHT = 2;
+    int MAX_FRAMES_IN_FLIGHT = 3;
     GLFWwindow* window = nullptr;
     VmaAllocator allocator = nullptr;
     std::vector<VkPipelineLayout> pipeline_layouts;

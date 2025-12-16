@@ -75,3 +75,16 @@ CubeMap* AssetManager::getCubeMap(const std::string& name) const
 {
     return getCubeMapPtr(name).get();
 }
+
+
+void AssetManager::shutdown() {
+	for (auto& [name, texture] : textures_) {
+        if(texture) {
+            texture->shutdown();
+        }
+    }
+    meshes_.clear();
+    materials_.clear();
+    textures_.clear();
+    cubeMaps_.clear();
+}

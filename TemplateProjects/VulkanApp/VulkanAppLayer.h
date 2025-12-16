@@ -19,4 +19,6 @@ class VulkanAppLayer :
 
 	std::shared_ptr<Camera> camera;
 	std::shared_ptr<Shader> shader;
+	std::shared_ptr<Shader> shader2;
+
 };

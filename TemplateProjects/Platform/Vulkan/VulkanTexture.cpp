@@ -17,6 +17,14 @@ void VulkanTexture::bind(uint32_t slot)
 {
 }
 
+void VulkanTexture::shutdown()
+{
+	VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
+	vkDestroySampler(renderer->getInit().device, textureSampler, nullptr);
+	vkDestroyImageView(renderer->getInit().device, textureImageView, nullptr);
+	vmaDestroyImage(renderer->getAllocator(), textureImage, textureImageAllocation);
+}
+
 void VulkanTexture::createTextureImage(const std::string& path)
 {
 	// Implementazione della creazione dell'immagine Vulkan dalla texture caricata
@@ -47,7 +55,6 @@ void VulkanTexture::createTextureImage(const std::string& path)
 
 	stbi_image_free(pixels);
 	// Creazione dell'immagine Vulkan e copia dei dati dallo staging buffer
-	VmaAllocation textureAlloc;
 
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -69,8 +76,10 @@ void VulkanTexture::createTextureImage(const std::string& path)
 	VmaAllocationCreateInfo imgAllocInfo{};
 	imgAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
+
+	((VulkanRender*)(Render::getInstance().get()))->endSingleTimeCommands(((VulkanRender*)(Render::getInstance().get()))->beginSingleTimeCommands());
 	vmaCreateImage(allocator, &imageInfo, &imgAllocInfo,
-		&textureImage, &textureAlloc, nullptr);
+		&textureImage, &this->textureImageAllocation, nullptr);
 
 	copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 	vmaDestroyBuffer(allocator, stagingBuffer, stagingAlloc);
@@ -138,7 +147,7 @@ void VulkanTexture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t w
 {
 	VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
 	VkCommandBuffer cmd = renderer->beginSingleTimeCommands();
-	transitionImageLayout(cmd, image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	transitionImageLayout(cmd, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	
 	VkBufferImageCopy region{};
 	region.bufferOffset = 0;
@@ -162,6 +171,6 @@ void VulkanTexture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t w
 		1,
 		&region
 	);
-	transitionImageLayout(cmd, image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	transitionImageLayout(cmd, image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	renderer->endSingleTimeCommands(cmd);
 }

@@ -30,6 +30,7 @@ public:
 	virtual void bind(unsigned int unit = 0) { slot = unit; };
 	operator bool() const { return textureID != 0; }
 	operator unsigned int() const { return textureID; }
+	virtual void shutdown() {};
 	static std::shared_ptr<Texture> createTexture(const std::string& path, TextureFormat format = RGBA, TextureWrap wrap = REPEAT, TextureType type = NORMAL);
 	
 protected:

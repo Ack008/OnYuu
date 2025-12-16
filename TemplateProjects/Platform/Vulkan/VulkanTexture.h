@@ -10,6 +10,7 @@ class VulkanTexture : public Texture
 	virtual void bind(uint32_t slot = 0) override;
 	VkImageView getImageView() const { return textureImageView; }
 	VkSampler getSampler() const { return textureSampler; }
+	virtual void shutdown() override;
 private:
 	VkImage textureImage;
 	VmaAllocation textureImageAllocation;

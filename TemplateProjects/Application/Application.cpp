@@ -1,6 +1,7 @@
 #include "Application.h"
 #include "Render/Renderer.h"
 #include <iostream>
+#include "AssetManager.h"
 
 Application* Application::instance = nullptr;
 
@@ -66,10 +67,11 @@ void Application::Shutdown()
 		}
 	}
 	layers.clear();
-
+	
 	// Distruggo l'imGui layer se presente
 	imGuiLayer->onDetach();
 	delete imGuiLayer;
+	AssetManager::instance().shutdown();
 	Render::getInstance()->Shutdown();
 }
 Application::~Application()

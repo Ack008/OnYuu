@@ -1,4 +1,4 @@
-#include "VulkanRender.h"
+﻿#include "VulkanRender.h"
 #include "Application/Application.h"
 #include "Core/View/View.h"
 #include <iostream>
@@ -6,13 +6,14 @@
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include <memory>
 #include <unordered_map>
+#include "Platform/Vulkan/VulkanTexture.h"
 #define MAX_SAMPLERS 120
 #define CHECK_RESULT(x) \
     if (x != 0) { \
         std::cout << "Failed" << "\n"; \
         std::exit( -1); \
     }
-// Map pipeline -> pipelineLayout per garantire compatibilit� al bind dei descriptor sets
+// Map pipeline -> pipelineLayout per garantire compatibilità al bind dei descriptor sets
 static std::unordered_map<VkPipeline, VkPipelineLayout> g_pipeline_layout_map;
 
 VulkanRender::VulkanRender()
@@ -102,7 +103,10 @@ int VulkanRender::device_initialization(Init& init)
 {
 
     vkb::InstanceBuilder instance_builder;
-    auto instance_ret = instance_builder.use_default_debug_messenger().request_validation_layers().build();
+    auto instance_ret = instance_builder
+        .use_default_debug_messenger()
+        .request_validation_layers()
+        .build();
     if (!instance_ret) {
         std::cout << instance_ret.error().message() << "\n";
         return -1;
@@ -118,6 +122,13 @@ int VulkanRender::device_initialization(Init& init)
     auto phys_device_ret = phys_device_selector
         .set_surface(init.surface)
         .set_minimum_version(1, 2)
+        .add_required_extensions(
+            {
+                "VK_EXT_descriptor_indexing" ,
+                "VK_KHR_maintenance3"
+            }
+        )
+
         .select();
     if (!phys_device_ret) {
         std::cout << phys_device_ret.error().message() << "\n";
@@ -160,13 +171,26 @@ int VulkanRender::device_initialization(Init& init)
 int VulkanRender::create_swapchain(Init& init)
 {
     vkb::SwapchainBuilder swapchain_builder{ init.device };
-    auto swap_ret = swapchain_builder.set_old_swapchain(init.swapchain).build();
+    VkSurfaceFormatKHR preferred_surface;
+    preferred_surface.colorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+    preferred_surface.format = VK_FORMAT_R8G8B8A8_UNORM;
+    std::vector<VkSurfaceFormatKHR> formats;
+	formats.push_back(preferred_surface);
+
+    auto swap_ret = swapchain_builder
+		.add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+		.set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+		.set_desired_format(preferred_surface)
+        .set_desired_min_image_count(3)
+        .set_old_swapchain(init.swapchain)
+        .build();
     if (!swap_ret) {
         std::cout << swap_ret.error().message() << " " << swap_ret.vk_result() << "\n";
         return -1;
     }
     vkb::destroy_swapchain(init.swapchain);
     init.swapchain = swap_ret.value();
+	MAX_FRAMES_IN_FLIGHT = init.swapchain.image_count;
     return 0;
 }
 
@@ -433,7 +457,7 @@ int VulkanRender::create_descriptor_pool(Init& init, RenderData& data)
 
 int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
 {
-    int frame_count = static_cast<int>(data.swapchain_image_views.size());
+    int frame_count = static_cast<int>(MAX_FRAMES_IN_FLIGHT);
     data.global_descriptor.resize(frame_count);
     data.material_descriptor.resize(frame_count);
 
@@ -453,44 +477,54 @@ int VulkanRender::create_descriptor_sets(Init& init, RenderData& data)
     return 0;
 }
 
-int VulkanRender::begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index)
-{
-    init.disp.resetCommandBuffer(data.command_buffers[image_index], 0);
-    VkCommandBufferBeginInfo begin_info = {};
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-    if (init.disp.beginCommandBuffer(data.command_buffers[image_index], &begin_info) != VK_SUCCESS) {
-        return -1; // failed to begin recording command buffer
+int VulkanRender::begin_record_command_buffer(
+    Init& init,
+    RenderData& data,
+    uint32_t image_index
+) {
+    VkCommandBuffer cmd = data.command_buffers[data.current_frame];
+
+    // Assicuriamoci che il command buffer non sia in uso:
+    // la fence del frame corrente è già stata attesa/reset in BeginFrame,
+    // e la fence associata all'immagine (se esiste) è stata attesa prima.
+    // È quindi sicuro resettare il command buffer.
+    if (vkResetCommandBuffer(cmd, 0) != VK_SUCCESS) {
+        std::cerr << "vkResetCommandBuffer failed\n";
+        return -1;
     }
 
-    VkRenderPassBeginInfo render_pass_info = {};
-    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_info.renderPass = data.render_pass;
-    render_pass_info.framebuffer = data.framebuffers[image_index];
-    render_pass_info.renderArea.offset = { 0, 0 };
-    render_pass_info.renderArea.extent = init.swapchain.extent;
-    VkClearValue clearColor{ { { 0.2,0.2,0.1, 1.0f } } };
-    render_pass_info.clearValueCount = 1;
-    render_pass_info.pClearValues = &clearColor;
+    VkCommandBufferBeginInfo begin_info{};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags = 0; // NO SIMULTANEOUS_USE
 
-    VkViewport viewport = {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)init.swapchain.extent.width;
-    viewport.height = (float)init.swapchain.extent.height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
+    if (vkBeginCommandBuffer(cmd, &begin_info) != VK_SUCCESS) {
+        std::cerr << "vkBeginCommandBuffer failed\n";
+        return -1;
+    }
 
-    VkRect2D scissor = {};
-    scissor.offset = { 0, 0 };
-    scissor.extent = init.swapchain.extent;
+    VkRenderPassBeginInfo rp_info{};
+    rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    rp_info.renderPass = data.render_pass;
+    rp_info.framebuffer = data.framebuffers[image_index];
+    rp_info.renderArea.offset = { 0, 0 };
+    rp_info.renderArea.extent = init.swapchain.extent;
 
-    init.disp.cmdSetViewport(data.command_buffers[image_index], 0, 1, &viewport);
-    init.disp.cmdSetScissor(data.command_buffers[image_index], 0, 1, &scissor);
+    VkClearValue clear{};
+    clear.color = { {0.2f, 0.2f, 0.1f, 1.0f} };
+    rp_info.clearValueCount = 1;
+    rp_info.pClearValues = &clear;
 
-    init.disp.cmdBeginRenderPass(data.command_buffers[image_index], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(cmd, &rp_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    //init.disp.cmdDraw(data.command_buffers[i], 3, 1, 0, 0);
+    VkViewport viewport{ 0, 0,
+        (float)init.swapchain.extent.width,
+        (float)init.swapchain.extent.height,
+        0.0f, 1.0f };
+
+    VkRect2D scissor{ {0, 0}, init.swapchain.extent };
+
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
 
     return 0;
 }
@@ -805,12 +839,12 @@ void VulkanRender::shut_shaders()
     }
 
     // Non distruggiamo i DescriptorSetLayout qui (evitiamo doppie distruzioni).
-    // L'eliminazione dei layout unici sar� fatta in Shutdown() in modo controllato.
+    // L'eliminazione dei layout unici sarà fatta in Shutdown() in modo controllato.
 
     for (auto& pair : pipelines)
     {
         init.disp.destroyPipeline(pair.second, nullptr);
-        // controllo che la shader non sia gi� presente nella lista
+        // controllo che la shader non sia già presente nella lista
         if (std::find(toFree.begin(), toFree.end(), pair.first.first) == toFree.end())
         {
             toFree.push_back(pair.first.first);
@@ -849,6 +883,30 @@ void VulkanRender::update_material_descriptor_set(Init& init, RenderData& data, 
             descriptorWrite.descriptorCount = 1;
             descriptorWrite.pBufferInfo = &bufferInfo;
             init.disp.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+
+			std::vector<VkDescriptorImageInfo> imageInfos;
+            for (size_t j = 0; j < material->getTextures().size(); j++)
+            {
+                auto texture = material->getTextures()[j];
+                VulkanTexture* vulkanTexture = static_cast<VulkanTexture*>(texture.get());
+                VkDescriptorImageInfo imageInfo{};
+                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageInfo.imageView = vulkanTexture->getImageView();
+                imageInfo.sampler = vulkanTexture->getSampler();
+                imageInfos.push_back(imageInfo);
+            }
+            if (material->getTextures().size() > 0) {
+			    VkWriteDescriptorSet textureDescriptorWrite{};
+			    textureDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			    textureDescriptorWrite.dstSet = data.material_map_descriptor[material][i].descriptorSet;
+			    textureDescriptorWrite.dstBinding = 1;
+			    textureDescriptorWrite.dstArrayElement = 0;
+			    textureDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			    textureDescriptorWrite.descriptorCount = static_cast<uint32_t>(imageInfos.size());
+			    textureDescriptorWrite.pImageInfo = imageInfos.data();
+			    init.disp.updateDescriptorSets(1, &textureDescriptorWrite, 0, nullptr);
+            }
+			
         }
 
     }
@@ -1016,20 +1074,80 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
         for (const auto& renderData : batchRenders)
         {
             auto mesh = renderData.renderMesh;
-            auto meshKey = mesh->mesh.get();
-			auto it = meshGPUMap.find(meshKey);
+            if (!mesh)
+            {
+                std::cerr << "render_scene: renderData.renderMesh is null, skipping instance\n";
+                continue;
+            }
+
+            auto meshPtr = mesh->mesh.get();
+            if (!meshPtr)
+            {
+                std::cerr << "render_scene: mesh->mesh.get() is null, skipping instance\n";
+                continue;
+            }
+
+            // Recupera o crea VulkanMeshGPU in modo sicuro
+            auto [it, inserted] = meshGPUMap.try_emplace(meshPtr, *meshPtr);
             VulkanMeshGPU& meshGPU = it->second;
+            if (inserted)
+            {
+                // Se abbiamo appena creato l'entry, assicuriamoci che i dati siano caricati su GPU
+                // (uploadToGPU potrebbe essere chiamato anche altrove; chiamarlo qui è sicuro)
+                meshGPU.uploadToGPU();
+            }
+
             // Bind descriptor sets usando il pipelineLayout corrispondente al pipeline bindato
             VkPipelineLayout bindLayout = VK_NULL_HANDLE;
             auto itLayout = g_pipeline_layout_map.find(pipeline);
-            if (itLayout != g_pipeline_layout_map.end()) bindLayout = itLayout->second;
-            else if (!pipeline_layouts.empty()) bindLayout = pipeline_layouts[0]; // fallback (non ideale)
+            if (itLayout != g_pipeline_layout_map.end())
+                bindLayout = itLayout->second;
+            else if (!pipeline_layouts.empty())
+                bindLayout = pipeline_layouts[0]; // fallback (non ideale)
+
+            // Controlli di validità sui descriptor set della scena e del materiale
+            if (indexScene < 0 || static_cast<size_t>(indexScene) >= data.scene_map_descriptor.size())
+            {
+                std::cerr << "render_scene: invalid indexScene or no scene descriptor allocated\n";
+                continue;
+            }
+            if (data.current_frame >= data.scene_map_descriptor[indexScene].size())
+            {
+                std::cerr << "render_scene: invalid image_index for scene descriptors\n";
+                continue;
+            }
+            const DescriptorSetInfo& sceneDescInfo = data.scene_map_descriptor[indexScene][data.current_frame];
+            if (sceneDescInfo.descriptorSet == VK_NULL_HANDLE)
+            {
+                std::cerr << "render_scene: scene descriptor set is null, skipping instance\n";
+                continue;
+            }
+
+            auto matIt = data.material_map_descriptor.find(material);
+            if (matIt == data.material_map_descriptor.end())
+            {
+                std::cerr << "render_scene: material descriptor vector missing for material, skipping instance\n";
+                continue;
+            }
+            if (data.current_frame >= matIt->second.size())
+            {
+                std::cerr << "render_scene: invalid image_index for material descriptors\n";
+                continue;
+            }
+            const DescriptorSetInfo& matDescInfo = matIt->second[data.current_frame];
+            if (matDescInfo.descriptorSet == VK_NULL_HANDLE)
+            {
+                std::cerr << "render_scene: material descriptor set is null, skipping instance\n";
+                continue;
+            }
 
             std::vector<VkDescriptorSet> descriptorSets;
-            descriptorSets.push_back(data.scene_map_descriptor[indexScene][data.image_index].descriptorSet);
-            descriptorSets.push_back(data.material_map_descriptor[material][data.image_index].descriptorSet);
+            descriptorSets.push_back(sceneDescInfo.descriptorSet);
+            descriptorSets.push_back(matDescInfo.descriptorSet);
+
             init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
                 0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+
             vkCmdPushConstants(
                 command_buffer,
                 bindLayout,
@@ -1038,6 +1156,7 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
                 sizeof(glm::mat4),
                 &renderData.model
             );
+
             meshGPU.draw(command_buffer);
         }
     }
@@ -1051,30 +1170,63 @@ VulkanRender::~VulkanRender()
 
 void VulkanRender::BeginFrame()
 {
-    init.disp.waitForFences(1, &data.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
+    // 1. Attendi che il frame precedente (fence per questo slot) sia finito
+    vkWaitForFences(
+        init.device,
+        1,
+        &data.in_flight_fences[data.current_frame],
+        VK_TRUE,
+        UINT64_MAX
+    );
 
-    uint32_t image_index = 0;
-    VkResult result = init.disp.acquireNextImageKHR(
-        init.swapchain, UINT64_MAX, data.available_semaphores[data.current_frame], VK_NULL_HANDLE, &image_index);
+    // 2. Acquisisci immagine (semaphore associata a questo frame)
+    VkResult res = vkAcquireNextImageKHR(
+        init.device,
+        init.swapchain,
+        UINT64_MAX,
+        data.available_semaphores[data.current_frame],
+        VK_NULL_HANDLE,
+        &data.image_index
+    );
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        CHECK_RESULT(recreate_swapchain(init, data))
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreate_swapchain(init, data);
+        return;
     }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        std::cout << "failed to acquire swapchain image. Error " << result << "\n";
-        CHECK_RESULT(-1)
+    else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+        std::cerr << "Failed to acquire swap chain image (vkAcquireNextImageKHR): " << res << "\n";
+        return;
     }
-    if (data.image_in_flight[image_index] != VK_NULL_HANDLE) {
-        init.disp.waitForFences(1, &data.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
-        // optional: clear, the image will be assigned the current frame's fence at submit time
-        data.image_in_flight[image_index] = VK_NULL_HANDLE;
+
+    // 3. Se l'immagine è già in flight (da un altro frame), attendi la fence associata
+    if (data.image_in_flight[data.image_index] != VK_NULL_HANDLE
+        && data.image_in_flight[data.image_index] != data.in_flight_fences[data.current_frame]) {
+        vkWaitForFences(
+            init.device,
+            1,
+            &data.image_in_flight[data.image_index],
+            VK_TRUE,
+            UINT64_MAX
+        );
     }
-    data.image_index = image_index;
+
+    // 4. Ora è sicuro resettare la fence del frame corrente (non è più in uso)
+    vkResetFences(
+        init.device,
+        1,
+        &data.in_flight_fences[data.current_frame]
+    );
+
+    // 5. Associa immagine → fence corrente
+    data.image_in_flight[data.image_index] =
+        data.in_flight_fences[data.current_frame];
+
+    // 6. Registra command buffer PER FRAME
     updateAllDescriptorDSet();
     begin_record_command_buffer(init, data, data.image_index);
-    for (int i = 0; i  < renderScenes.size(); i++)
-    {
-        render_scene(data.command_buffers[data.image_index], i);
+
+    for (int i = 0; i < renderScenes.size(); i++) {
+        render_scene(data.command_buffers[data.current_frame], i);
     }
 }
 
@@ -1084,7 +1236,7 @@ void VulkanRender::updateAllDescriptorDSet()
     {
 		RenderScene& scene = renderScenes[i];
         // Aggiorna globali (luce, camera)
-        update_global_descriptor_set(init, data, data.image_index, i);
+        update_global_descriptor_set(init, data, data.current_frame, i);
 
         // Per ogni batch aggiorna material e model descriptor prima della registrazione
         for (const auto& pair : scene.batches)
@@ -1093,7 +1245,8 @@ void VulkanRender::updateAllDescriptorDSet()
             VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
             // stampo il contenuto del buffer delle shader
             material->bind();
-            update_material_descriptor_set(init, data, data.image_index, material);
+			material->apply();
+            update_material_descriptor_set(init, data, data.current_frame, material);
 
             // Per ogni istanza aggiorna il modello (model UBO) prima di registrare
             for (const auto& renderData : pair.second)
@@ -1102,7 +1255,7 @@ void VulkanRender::updateAllDescriptorDSet()
                 auto meshKey = mesh->mesh.get();
                 auto [it, inserted] = meshGPUMap.try_emplace(meshKey, *(mesh->mesh.get()));
                 VulkanMeshGPU& meshGPU = it->second;
-                meshGPU.uploadToGPU(); // se upload usa single-time-submit � ok farlo qui
+                meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
             }
         }
     }
@@ -1110,61 +1263,59 @@ void VulkanRender::updateAllDescriptorDSet()
 
 void VulkanRender::submit()
 {
-    init.disp.cmdEndRenderPass(data.command_buffers[data.image_index]);
+    VkCommandBuffer cmd = data.command_buffers[data.current_frame];
 
-    if (init.disp.endCommandBuffer(data.command_buffers[data.image_index]) != VK_SUCCESS) {
-        std::cout << "failed to record command buffer\n";
-        std::exit(-1); // failed to record command buffer!
+    vkCmdEndRenderPass(cmd);
+
+    if (vkEndCommandBuffer(cmd) != VK_SUCCESS) {
+        std::exit(-1);
     }
-    if (data.image_in_flight[data.image_index] != VK_NULL_HANDLE) {
-        init.disp.waitForFences(1, &data.image_in_flight[data.image_index], VK_TRUE, UINT64_MAX);
-    }
-    data.image_in_flight[data.image_index] = data.in_flight_fences[data.current_frame];
-    VkSubmitInfo submitInfo = {};
+
+    VkSemaphore wait_semaphores[] = {
+        data.available_semaphores[data.current_frame]
+    };
+
+    VkPipelineStageFlags wait_stages[] = {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+
+    VkSemaphore signal_semaphores[] = {
+        data.finished_semaphore[data.image_index]
+    };
+
+    VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-    VkSemaphore wait_semaphores[] = { data.available_semaphores[data.current_frame] };
-    VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = wait_semaphores;
     submitInfo.pWaitDstStageMask = wait_stages;
-
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &data.command_buffers[data.image_index];
-
-    VkSemaphore signal_semaphores[] = { data.finished_semaphore[data.image_index] };
+    submitInfo.pCommandBuffers = &cmd;
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signal_semaphores;
 
-    init.disp.resetFences(1, &data.in_flight_fences[data.current_frame]);
-
-    if (init.disp.queueSubmit(data.graphics_queue, 1, &submitInfo, data.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
-        std::cout << "failed to submit draw command buffer\n";
-        CHECK_RESULT(-1); //"failed to submit draw command buffer
+    if (vkQueueSubmit(
+        data.graphics_queue,
+        1,
+        &submitInfo,
+        data.in_flight_fences[data.current_frame]
+    ) != VK_SUCCESS) {
+        std::exit(-1);
     }
 
-    VkPresentInfoKHR present_info = {};
-    present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signal_semaphores;
+    presentInfo.swapchainCount = 1;
+	VkSwapchainKHR swapChains[] = { init.swapchain };
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &data.image_index;
 
-    present_info.waitSemaphoreCount = 1;
-    present_info.pWaitSemaphores = signal_semaphores;
+    vkQueuePresentKHR(data.present_queue, &presentInfo);
 
-    VkSwapchainKHR swapChains[] = { init.swapchain };
-    present_info.swapchainCount = 1;
-    present_info.pSwapchains = swapChains;
+    data.current_frame =
+        (data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-    present_info.pImageIndices = &data.image_index;
-
-    VkResult result = init.disp.queuePresentKHR(data.present_queue, &present_info);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        CHECK_RESULT(recreate_swapchain(init, data));
-    }
-    else if (result != VK_SUCCESS) {
-        std::cout << "failed to present swapchain image\n";
-        CHECK_RESULT(-1);
-    }
-
-    data.current_frame = (data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
     renderScenes.clear();
 }
 
@@ -1267,12 +1418,7 @@ void VulkanRender::Shutdown()
         materialDescriptorSetLayout = VK_NULL_HANDLE;
     }
 
-    // 10) Destroy VMA allocator
-    if (allocator != VK_NULL_HANDLE)
-    {
-        vmaDestroyAllocator(allocator);
-        allocator = VK_NULL_HANDLE;
-    }
+   
 
     // 11) Destroy semaphores and fences
     for (size_t i = 0; i < data.finished_semaphore.size(); ++i)
@@ -1331,7 +1477,12 @@ void VulkanRender::Shutdown()
     {
         vkb::destroy_swapchain(init.swapchain);
     }
-
+    // 10) Destroy VMA allocator
+    if (allocator != VK_NULL_HANDLE)
+    {
+        vmaDestroyAllocator(allocator);
+        allocator = VK_NULL_HANDLE;
+    }
     // 16) Destroy device, surface and instance
     if (init.device) { vkb::destroy_device(init.device); init.device = {}; }
     if (init.surface != VK_NULL_HANDLE) { vkb::destroy_surface(init.instance, init.surface); init.surface = VK_NULL_HANDLE; }

@@ -94,9 +94,9 @@ private:
 									ImGui::Text("Value (mat4): [matrix]");
 								}
 								// Texture* (non editabile qui, mostra immagine e puntatore)
-								else if (std::holds_alternative<Texture*>(uniformValue)) {
-									Texture* tex = std::get<Texture*>(uniformValue);
-									ImGui::Text("Value (Texture*): %p", static_cast<void*>(tex));
+								else if (std::holds_alternative<std::shared_ptr<Texture>>(uniformValue)) {
+									std::shared_ptr<Texture> tex = std::get<std::shared_ptr<Texture>>(uniformValue);
+									ImGui::Text("Value (Texture*): %p", static_cast<void*>(tex.get()));
 									if (tex)
 										ImGui::Image(reinterpret_cast<void*>(static_cast<uintptr_t>(tex->getID())), ImVec2(64, 64));
 								}

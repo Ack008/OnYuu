@@ -301,14 +301,14 @@ void Scene3D::initializeMaterials()
 	mat5->set("material.shininess", 13.f);
 	mat5->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat5->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
-	mat5->set("texture1", AssetManager::instance().getTexture("interLoveTexture"));
+	mat5->set("texture1", AssetManager::instance().getTexturePtr("interLoveTexture"));
 
 	auto mat6 = AssetManager::instance().addMaterial("bling-phong-cat", std::make_shared<Material>(shaderBlingPhongInterTexture));
 	mat6->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));
 	mat6->set("material.shininess", 13.f);
 	mat6->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat6->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
-	mat6->set("texture1", AssetManager::instance().getTexture("catTexture"));
+	mat6->set("texture1", AssetManager::instance().getTexturePtr("catTexture"));
 
 	mat6 = AssetManager::instance().addMaterial("reflectiveMaterial", std::make_shared<Material>(shaderReflective));
 	mat6->set("material.ambient", glm::vec3(0.19125f, 0.0735f, 0.0225f));

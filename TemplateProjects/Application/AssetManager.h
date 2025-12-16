@@ -77,6 +77,8 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
         return materials_;
 	}
+
+	void shutdown();
 private:
     AssetManager() = default;
 

@@ -28,6 +28,7 @@ void Material::apply()
 		return;
 	}
 	int slot = 0;
+	textures_.clear();
 	for (const auto& [name, value] : uniforms_) {
 		if (alreadySet_.find(name) != alreadySet_.end() && alreadySet_.at(name)) {
 			continue; // Skip already set uniforms
@@ -55,11 +56,12 @@ void Material::apply()
 				else if constexpr (std::is_same_v<T, glm::mat4>) {
 					_shader->setUniformMat4(name.c_str(), &arg[0][0]);
 				}
-				else if constexpr (std::is_same_v<T, Texture*>) {
+				else if constexpr (std::is_same_v<T, std::shared_ptr<Texture>>) {
 					if (arg) {
 						arg->bind(slot);
+						_shader->setUniformInt(name.c_str(), slot);
+						textures_.push_back(arg);
 						slot++;
-						_shader->setUniformInt(name.c_str(), arg->getSlot());
 					}
 				}
 

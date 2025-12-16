@@ -126,7 +126,7 @@ void ImGuiLayer::end() {
 	case API::Vulkan:
 	{
 		VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
-		uint32_t i = vulkanRender->getRenderData().image_index;
+		uint32_t i = vulkanRender->getRenderData().current_frame;
 		VkCommandBuffer command_buffer = vulkanRender->getRenderData().command_buffers[i];
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),command_buffer); // Esegue il rendering dei dati ImGui con Vulkan
 

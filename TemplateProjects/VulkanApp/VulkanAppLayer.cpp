@@ -87,15 +87,20 @@ void VulkanAppLayer::onAttach()
 	camera = std::make_shared<Orthographic>(-5,5, -5,5, -100.f, .3f);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	shader = Shader::create("Asset/vulkan-shader/vert.o", "Asset/vulkan-shader/frag.o");
+	shader2 = Shader::create("Asset/vulkan-shader/texture-vert.o", "Asset/vulkan-shader/texture-frag.o");
+
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader));
-	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(shader));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(shader2));
+	auto mat3 = AssetManager::instance().addMaterial("default_material3", std::make_shared<Material>(shader2));
+
 
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
 	mat->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	mat->set("ambient",glm::vec3(1,0,1));
+	mat->set("diffuse",glm::vec3(1,0,1));
 
 	mat2->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	mat2->set("ambient", glm::vec3(1, 0, 0));
+	mat2->set("diffuse", glm::vec3(1, 0, 0));
+	mat2->set("diffuseMap", texture);
 
 	renderMesh.material = mat;
 	renderMesh2.mesh = triangle2;
