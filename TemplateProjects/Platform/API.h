@@ -8,5 +8,5 @@ enum API {
 	Metal = 5,
 	NoneAPI = 6
 };
-static API apiInUse = API::Vulkan;
+static API apiInUse = API::OpenGL;
 

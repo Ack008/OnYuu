@@ -1,6 +1,7 @@
 #include "Scene3D.h"
 #include "scripts/CameraScript.h"
 #include "scripts/RotatingScripts.h"
+#include "scripts/lightScript.h"
 #include "scripts/Controller.h"
 Scene3D::Scene3D()
 	:Scene()
@@ -77,6 +78,15 @@ void Scene3D::initializeScene()
 	);
 	car.getComponent<Trasform>().position = glm::vec3(.6f, -1.05f, 7.6f);	
 
+	cilindro.addComponent<RenderMeshComponent>();
+	auto& renderCilindro = cilindro.getComponent<RenderMeshComponent>();
+	renderCilindro.mesh = AssetManager::instance().getMeshPtr("cilindroMesh");
+	renderCilindro.material = AssetManager::instance().getMaterialPtr("phongMat1");
+	cilindro.getComponent<Trasform>().position = glm::vec3(-4.0f, 0.0f, -5.0f);
+	cilindro.getComponent<TagComponent>().tag = "Cilindro";
+	cilindro.addComponent<BoxCollider>();
+
+
 	//defining lights
 	settingLight();
 
@@ -90,18 +100,20 @@ void Scene3D::settingLight()
 	lightDirectional.getComponent<Trasform>().position = glm::vec3(0.0f, 1.0f, 0.0f);
     auto &rb = lightDirectional.addComponent<RenderMeshComponent>();
     rb.mesh = AssetManager::instance().getMeshPtr("sphereMesh");
-    rb.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
+    rb.material = AssetManager::instance().getMaterialPtr("lightMaterial");
 	lightDirectional.addComponent<LightComponent>();
 	lightDirectional.getComponent<LightComponent>().color = glm::vec4(1,1,1,1);
 	lightDirectional.getComponent<TagComponent>().tag = "DirectionalLight";
+	lightDirectional.addComponent<lightScript>();
 
 	lightDirectional2.getComponent<Trasform>().position = glm::vec3(3.0f, 1.0f, 0.0f);
     auto& rb2 = lightDirectional2.addComponent<RenderMeshComponent>();
     rb2.mesh = AssetManager::instance().getMeshPtr("sphereMesh");
-    rb2.material = AssetManager::instance().getMaterialPtr("defaultMaterial");
+    rb2.material = AssetManager::instance().getMaterialPtr("lightMaterial2");
 	lightDirectional2.addComponent<LightComponent>();
 	lightDirectional2.getComponent<LightComponent>().color = glm::vec4(1, 1, 1, 1);
 	lightDirectional2.getComponent<TagComponent>().tag = "DirectionalLight2";
+	lightDirectional2.addComponent<lightScript>();
 }
 
 void Scene3D::OnResize(uint32_t width, uint32_t height)
@@ -239,6 +251,7 @@ void Scene3D::initializeMaterials()
 	createPyramid();
 	createPiano(glm::vec4(0.5, 0.5, 0.5, 1.0));
 	createToro({0,1,1,1});
+	createCilindro(glm::vec4(1.0, 0.0, 1.0, 1.0));
 	std::shared_ptr<Shader> shader = Shader::create("MeshVertexShader.glsl", "fragmentShaderC.glsl");
 	std::shared_ptr<Shader> shaderPhongInter = Shader::create("Asset/Shader/phongVerInter.glsl", "Asset/Shader/phongFragInter.glsl");
 	std::shared_ptr<Shader> shaderPhong = Shader::create("Asset/Shader/phongVer.glsl", "Asset/Shader/phongFrag.glsl");	
@@ -246,6 +259,8 @@ void Scene3D::initializeMaterials()
 	std::shared_ptr<Shader> shaderBlingPhongInter = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter.glsl");
 	std::shared_ptr<Shader> shaderBlingPhongInterTexture = Shader::create("Asset/Shader/bling-phongVerInter.glsl", "Asset/Shader/bling-phongFragInter-Texture.glsl");
 	std::shared_ptr<Shader> shaderReflective = Shader::create("Asset/Shader/ReflectiveShader/reflective-ver.glsl", "Asset/Shader/ReflectiveShader/reflective-frag.glsl");
+	std::shared_ptr<Shader> lightShader = Shader::create("Asset/Shader/phongVer.glsl", "Asset/Shader/light-frag.glsl");
+	
 	// skybox shader
 	std::shared_ptr<Shader> skyboxShader = Shader::create(
 		"Asset/Shader/SkyBoxShader/SkyBoxVer.glsl",
@@ -315,6 +330,11 @@ void Scene3D::initializeMaterials()
 	mat6->set("material.shininess", 13.f);
 	mat6->set("material.diffuse", glm::vec3(0.7038f, 0.27048f, 0.0828f));
 	mat6->set("material.specular", glm::vec3(0.256777f, 0.137622f, 0.086014f));
+
+	auto matLight = AssetManager::instance().addMaterial("lightMaterial", std::make_shared<Material>(lightShader));
+	matLight->set("material.lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	auto matLight2 = AssetManager::instance().addMaterial("lightMaterial2", std::make_shared<Material>(lightShader));
+	matLight2->set("material.lightColor", glm::vec3(1.0f, .0f, 1.0f));
 }
 void Scene3D::createCube()
 {
@@ -465,4 +485,59 @@ void Scene3D::createPiano(glm::vec4 color)
 
 	int nv = mesh->position.size();
 	mesh->indices.push_back(nv - 1);
+}
+
+void Scene3D::createCilindro(glm::vec4 color)
+{
+	AssetManager::instance().addMesh("cilindroMesh", std::make_shared<Mesh>(Mesh()));
+	Mesh* mesh = AssetManager::instance().getMesh("cilindroMesh");
+	int Stacks = 30;  //numero di suddivisioni sull'asse x
+	int Slices = 30;  // numero di suddivisioni sull'asse y
+
+	float s, t;
+	//Calc The Vertices
+	for (int i = 0; i <= Stacks; ++i) {
+
+		float V = i / (float)Stacks;
+		float h = V;
+
+		// Loop Through Slices
+		for (int j = 0; j <= Slices; ++j) {
+
+			float U = j / (float)Slices;
+			float theta = U * (glm::pi <float>() * 2);
+
+			// Calc The Vertex Positions
+			float x = cosf(theta);
+			float y = h;
+			float z = sinf(theta);
+
+
+			// Push Back Vertex Data
+			mesh->position.push_back(glm::vec3(x, y, z));
+			mesh->color.push_back(color);
+			mesh->normal.push_back(glm::vec3(glm::normalize(glm::vec3(cos(theta), 0, sin(theta)))));
+			//Coordinata di texture
+			s = U;
+			t = V;
+			mesh->texCoord.push_back(glm::vec2(s, t));
+		}
+	}
+
+	// Calc The Index Positions
+	for (int i = 0; i < Slices * Stacks + Slices; ++i) {
+
+		mesh->indices.push_back(i);
+		mesh->indices.push_back(i + Slices + 1);
+		mesh->indices.push_back(i + Slices);
+
+
+		mesh->indices.push_back(i + Slices + 1);
+		mesh->indices.push_back(i);
+		mesh->indices.push_back(i + 1);
+	}
+
+	mesh->position.push_back(glm::vec3(0.0, 0.0, 0.0));
+	mesh->color.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+
 }

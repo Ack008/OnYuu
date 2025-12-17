@@ -232,6 +232,7 @@
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
     <ClInclude Include="Platform\Vulkan\VulkanTexture.h" />
+    <ClInclude Include="3DGame\scripts\lightScript.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

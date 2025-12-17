@@ -222,6 +222,7 @@
     <ClInclude Include="3DGame\Scene3D.h" />
     <ClInclude Include="3DGame\scripts\CameraScript.h" />
     <ClInclude Include="3DGame\scripts\Controller.h" />
+    <ClInclude Include="3DGame\scripts\lightScript.h" />
     <ClInclude Include="3DGame\scripts\RotatingScripts.h" />
     <ClInclude Include="Application\MeshImporter.h" />
     <ClInclude Include="Core\CubeMap.h" />

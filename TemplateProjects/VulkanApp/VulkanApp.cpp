@@ -10,7 +10,7 @@ public:
 private:
 };
 
-
+/*
 Application* Application::createApplication() {
 	return new VulkanApp();
-}
+}*/

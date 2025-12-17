@@ -146,13 +146,8 @@ private:
         for (GameObject& go : meshObjects) {
 			Trasform transform = go.getAbsoluteTransform();
             glm::vec3 sphereCenter = transform.position;
-			float sphereRadius = glm::min(transform.scale.x, glm::min(transform.scale.y, transform.scale.z)) * 0.5f; // raggio approssimato
-			if (go.hasComponent<BoxCollider>()) {
-                BoxCollider& collider = go.getComponent<BoxCollider>();
-                // Calcolo il raggio massimo dell'AABB come raggio della sfera
-                glm::vec3 aabbSize = collider.getMaxPoint() - collider.getMinPoint();
-                sphereRadius = glm::length(aabbSize) * 0.5f * glm::max(transform.scale.x, glm::max(transform.scale.y, transform.scale.z));
-            }
+			float sphereRadius = 2; // Raggio della sfera di approssimazione
+			
             float t;
             if (raySphereIntersect(mouseRay, sphereCenter, sphereRadius, t)) {
                 // Intersezione trovata
@@ -176,7 +171,7 @@ private:
             return false; // Nessuna intersezione
         } else {
             t = (-b - sqrt(discriminant)) / (2.0f * a);
-            return true; // Intersezione trovata
+            return t > 0; // Intersezione trovata
         }
 	}
 

@@ -21,6 +21,7 @@ private:
 	GameObject toro = createEntity();
 	GameObject pyramid = createEntity();
 	GameObject piano = createEntity();
+	GameObject cilindro = createEntity();
 
 	//lights
 	GameObject lightDirectional = createEntity();
@@ -33,6 +34,7 @@ private:
 	void createToro(glm::vec4 color);
 	void createPyramid();
 	void createPiano(glm::vec4 color);
+	void createCilindro(glm::vec4 color);
 	void settingLight();
 	friend class Game3DLayer;
 

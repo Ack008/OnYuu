@@ -20,9 +20,7 @@ OpenGLBatchRender::OpenGLBatchRender()
 void OpenGLBatchRender::submit()
 {
 	BatchRender::submit();
-	for (RenderScene& scene : renderScenes) {
-		drawScene(scene);
-	}
+	
 	renderScenes.clear();
 }
 
@@ -30,6 +28,9 @@ void OpenGLBatchRender::BeginFrame()
 {
 	glClearColor(0.1, 0.2, 0.7, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Pulisce il buffer colore
+	for (RenderScene& scene : renderScenes) {
+		drawScene(scene);
+	}
 }
 
 void OpenGLBatchRender::drawSkybox(RenderScene& scene)
