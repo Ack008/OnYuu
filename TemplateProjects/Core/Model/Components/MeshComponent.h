@@ -16,6 +16,9 @@ struct Mesh {
 	std::vector<glm::vec2> texCoord;
 	std::vector<glm::vec3> normal;
 	std::vector<uint32_t> indices;
+	bool empty() const {
+		return position.empty() || indices.empty();
+	}
 };
 
 // RenderMeshComponent: semplice wrapper che collega una `Mesh` a un

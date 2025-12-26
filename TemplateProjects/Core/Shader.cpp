@@ -3,9 +3,10 @@
 #include "Platform/Vulkan/VulkanShader.h"
 #include <memory>
 #include "Platform/API.h"
+#include "Render/Renderer.h"
 std::shared_ptr<Shader> Shader::create(const char* vertexfilename, const char* fragmentfilename)
 {
-	switch (apiInUse) {
+	switch (Render::getAPI()) {
 	case API::OpenGL:
 		return std::make_shared<OpenGLShader>(vertexfilename, fragmentfilename);
 		break;

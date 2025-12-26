@@ -1,7 +1,8 @@
 #include "VulkanMeshGPU.h"
 #include "Platform/Vulkan/VulkanRender.h"
 #include <iostream>
-VulkanMeshGPU::VulkanMeshGPU(Mesh mesh)
+VulkanMeshGPU::VulkanMeshGPU(Mesh &mesh)
+	:mesh(mesh)
 {
 	int max_images = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().framebuffers.size();
 	this->mesh = mesh;
@@ -57,10 +58,19 @@ void VulkanMeshGPU::shutdown()
 
 void VulkanMeshGPU::uploadToGPU()
 {
-	if (uploaded) return;
-	createVertexBuffer();
-	createIndexBuffer();
-	uploaded = true;
+	if (!mesh.empty()) 
+	{
+		if (uploaded) return;
+		createVertexBuffer();
+		createIndexBuffer();
+		uploaded = true;
+		mesh.position.clear();
+		mesh.color.clear();
+		mesh.texCoord.clear();
+		mesh.normal.clear();
+		mesh.indices.clear();
+	}
+
 }
 
 void VulkanMeshGPU::draw(VkCommandBuffer commandBuffer)
@@ -127,19 +137,33 @@ void VulkanMeshGPU::createVertexBuffer()
 		sizeof(glm::vec4) * mesh.color.size() +
 		sizeof(glm::vec2) * mesh.texCoord.size() +
 		sizeof(glm::vec3) * mesh.normal.size();
-	// Create staging buffer
-	VkBufferCreateInfo stagingBufferInfo{};
-	stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	stagingBufferInfo.size = bufferSize;
-	stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT ;
-	VmaAllocationCreateInfo stagingAllocInfo{};
-	stagingAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-	stagingAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-		VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	VmaAllocator allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
-	vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocInfo,
-		&stagingVertexBuffer, &stagingVertexBufferAllocation, &stagingVertexAllocInfo);
-	std::cout << "Created staging vertex buffer " << stagingVertexBuffer << " of size " << bufferSize << " bytes\n";
+	if (stagingVertexBuffer == VK_NULL_HANDLE || vertexBuffer == VK_NULL_HANDLE)
+	{
+		// Create staging buffer
+		VkBufferCreateInfo stagingBufferInfo{};
+		stagingBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		stagingBufferInfo.size = bufferSize;
+		stagingBufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT ;
+		VmaAllocationCreateInfo stagingAllocInfo{};
+		stagingAllocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+		stagingAllocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+			VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		vmaCreateBuffer(allocator, &stagingBufferInfo, &stagingAllocInfo,
+			&stagingVertexBuffer, &stagingVertexBufferAllocation, &stagingVertexAllocInfo);
+		std::cout << "Created staging vertex buffer " << stagingVertexBuffer << " of size " << bufferSize << " bytes\n";
+		// Create device local vertex buffer
+		// Create device local vertex buffer
+		VkBufferCreateInfo vertexBufferInfo{};
+		vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		vertexBufferInfo.size = bufferSize;
+		vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		VmaAllocationCreateInfo vertexAllocInfo{};
+		vertexAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+		VmaAllocationInfo vertexAllocInfoInfo{};
+		vmaCreateBuffer(allocator, &vertexBufferInfo, &vertexAllocInfo,
+			&vertexBuffer, &vertexBufferAllocation, &vertexAllocInfoInfo);
+	}
 	// Copy vertex data to staging buffer
 	size_t offset = 0;
 	std::vector<float> vertexData;
@@ -161,16 +185,7 @@ void VulkanMeshGPU::createVertexBuffer()
 	}
 	memcpy(stagingVertexAllocInfo.pMappedData,
 		vertexData.data(), bufferSize);
-	// Create device local vertex buffer
-	VkBufferCreateInfo vertexBufferInfo{};
-	vertexBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	vertexBufferInfo.size = bufferSize;
-	vertexBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-	VmaAllocationCreateInfo vertexAllocInfo{};
-	vertexAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-	VmaAllocationInfo vertexAllocInfoInfo{};
-	vmaCreateBuffer(allocator, &vertexBufferInfo, &vertexAllocInfo,
-		&vertexBuffer, &vertexBufferAllocation, &vertexAllocInfoInfo);
+	
 
 	// Copy data from staging buffer to device local buffer
 	copyBuffer(stagingVertexBuffer, vertexBuffer, bufferSize);

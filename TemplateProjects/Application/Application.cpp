@@ -1,12 +1,13 @@
 #include "Application.h"
 #include "Render/Renderer.h"
+#include "Platform/API.h"
 #include <iostream>
 #include "AssetManager.h"
 
 Application* Application::instance = nullptr;
-
-Application::Application()
+Application::Application(API api)
 {
+	Render::setAPI(api);
 	Application::instance = this;
 
 	window = Window::create(1280, 720);

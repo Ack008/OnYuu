@@ -8,6 +8,7 @@
 #include "Core/Model/Components/SkyBoxComponent.h"
 #include "Core/Model/Components/Lights.h "
 #include "Core/Model/Components/Camera.h"
+#include "Platform/API.h"
 // Render: interfaccia astratta che rappresenta il sistema di rendering di alto
 // livello. Contiene funzioni virtuali che dovranno essere implementate da una
 // specifica API (es. OpenGL, DirectX, Vulkan).
@@ -58,6 +59,12 @@ public:
 	virtual void EndScene() {}
 	virtual void submit() {}
 	virtual void Shutdown() = 0;
+	static void setAPI(API renderAPI) {
+		api = renderAPI;
+	}
+	static API getAPI() {
+		return api;
+	}
 public:
 	void static init() {
 		s_instance = create();
@@ -75,4 +82,5 @@ private:
 	Camera* currentCamera = nullptr;
     static std::shared_ptr<Render> s_instance;
 	static std::shared_ptr<Render> create();
+	static API api;
 };

@@ -2,9 +2,10 @@
 #include "Platform/API.h"
 #include "Platform/OpenGL/OpenGLTexture.h"
 #include "Platform/Vulkan/VulkanTexture.h"
+#include "Render/Renderer.h"
 std::shared_ptr<Texture> Texture::createTexture(const std::string& path, TextureFormat format, TextureWrap wrap, TextureType type)
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 		case API::OpenGL:
 			return std::make_shared<OpenGLTexture>(path, format, wrap, type);

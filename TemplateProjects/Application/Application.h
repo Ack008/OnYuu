@@ -9,7 +9,7 @@
 class Application {
 public:
 	// Costruttore / Distruttore
-	Application();
+	Application(API api = OpenGL);
 	~Application();
 	void Shutdown();
 

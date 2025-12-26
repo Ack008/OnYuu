@@ -2,9 +2,10 @@
 #include "Platform/API.h"
 #include "Platform/OpenGL/OpenGLVertexArray.h"
 #include <memory>
+#include "Render/Renderer.h"
 std::shared_ptr<VertexArray> VertexArray::create()
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 		case API::OpenGL:
 		// Return OpenGLVertexArray instance

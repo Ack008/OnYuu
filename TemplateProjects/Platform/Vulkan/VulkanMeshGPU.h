@@ -11,7 +11,7 @@
 class VulkanMeshGPU
 {
 	public:
-	VulkanMeshGPU(Mesh mesh);
+	VulkanMeshGPU(Mesh &mesh);
 	virtual void shutdown();
 	void uploadToGPU();
 	void draw(VkCommandBuffer commandBuffer);
@@ -27,7 +27,7 @@ class VulkanMeshGPU
 		shutdown();
 	}
 private:
-	Mesh mesh;
+	Mesh &mesh;
 	VkBuffer vertexBuffer = VK_NULL_HANDLE;
 	VkBuffer indexBuffer = VK_NULL_HANDLE;
 	uint32_t indexCount = 0;

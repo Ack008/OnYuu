@@ -45,12 +45,22 @@ void VulkanUniformBuffer::bindToBindingPoint(uint32_t bindingPoint)
 
 void VulkanUniformBuffer::setData(const void* data, size_t size, BufferUsage usage)
 {
+	size_t newHash = calculateHash(data, size);
+
+	if (lastDataHash == newHash) {
+		return; // Dati identici, skip update
+	}
+
+	// Aggiorna buffer
 	memcpy(uniformAllocInfo.pMappedData, data, size);
 	usedSize = size;
+	lastDataHash = newHash;
 }
 
 void VulkanUniformBuffer::updateData(const void* data, size_t size, size_t offset)
 {
+	size_t newHash = calculateHash(data, size);
+
 	memcpy(static_cast<uint8_t*>(uniformAllocInfo.pMappedData) + offset, data, size);
 }
 

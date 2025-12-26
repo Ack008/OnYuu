@@ -61,6 +61,13 @@ private:
         size_t current_frame = 0;
         uint32_t image_index = 0;
     };
+    struct SceneRenderCache {
+        std::vector<VkCommandBuffer> secondaryBuffers; // Uno per frame in flight
+        bool isDirty = true;
+        size_t geometryHash = 0; // Per invalidare cache
+    };
+    std::unordered_map<int, SceneRenderCache> sceneRenderCaches;
+    VkCommandPool secondaryCommandPool;
 
     typedef std::pair<std::shared_ptr<Shader>, RenderingTypeEnum > pipelineKey;
 
@@ -130,6 +137,7 @@ private:
     void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
     void create_material_ubo(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    size_t calculateSceneHash(int indexScene);
     void shut_mesh_buffers();
 private:
     // Light UBO structures
@@ -157,4 +165,6 @@ private:
     std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
     std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
     void render_scene(VkCommandBuffer command_buffer, int indexScene);
+    void get_or_create_pipeline(VulkanRender::pipelineKey& pipelineKey, VkPipeline& pipeline, std::shared_ptr<Material>& material, RenderingTypeEnum renderingType);
+    void bindMaterialDescriptorsSet(VkPipeline& pipeline, VkPipelineLayout& bindLayout, int& indexScene, std::shared_ptr<Material>& material, VkCommandBuffer command_buffer, int& retFlag);
 };

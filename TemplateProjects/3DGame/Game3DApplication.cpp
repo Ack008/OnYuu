@@ -11,7 +11,8 @@ class Game3DApplication : public Application {
 private:
 	Scene3D scene;
 };
+/*
 Application* Application::createApplication() {
 	return new Game3DApplication();
-}
+}*/
 

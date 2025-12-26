@@ -1048,6 +1048,25 @@ void VulkanRender::shut_mesh_buffers()
 
 void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
 {
+    auto& cache = sceneRenderCaches[indexScene];
+
+    // Calcola hash della geometria
+    size_t currentHash = calculateSceneHash(indexScene);
+
+   
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+
+    VkCommandBufferInheritanceInfo inheritanceInfo{};
+    inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+    inheritanceInfo.renderPass = data.render_pass;
+    inheritanceInfo.framebuffer = data.framebuffers[data.image_index];
+    beginInfo.pInheritanceInfo = &inheritanceInfo;
+
+
+    // Registra comandi draw (codice esistente)
 	RenderScene& scene = renderScenes[indexScene];
     auto batches = scene.batches;
     for (const auto& pair : batches)
@@ -1058,18 +1077,27 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
         auto pipelineKey = std::make_pair(material->getShader(), renderingType);
         VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
         VkPipeline pipeline;
-        if (pipelines.find(pipelineKey) == pipelines.end())
-        {
-            pipeline = create_graphics_pipeline(init, data, material->getShader(), renderingType);
-            pipelines[pipelineKey] = pipeline;
-        }
-        else
-        {
-            pipeline = pipelines[pipelineKey];
-        }
+        get_or_create_pipeline(pipelineKey, pipeline, material, renderingType);
 
         // Bind exactly il pipeline usato (obbligatorio)
         init.disp.cmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        // Bind descriptor sets usando il pipelineLayout corrispondente al pipeline bindato
+        VkPipelineLayout bindLayout = VK_NULL_HANDLE;
+        int retFlag;
+        bindMaterialDescriptorsSet(pipeline, bindLayout, indexScene, material, command_buffer, retFlag);
+        if (retFlag == 3) continue;
+
+		std::unordered_map<Mesh*, std::vector<glm::mat4>> meshInstance;
+        for (const auto& renderData : batchRenders) {
+            RenderMeshComponent* mesh = renderData.renderMesh;
+            if (!mesh)
+            {
+                std::cerr << "render_scene: renderData.renderMesh is null, skipping instance\n";
+                continue;
+            }
+            meshInstance[mesh->mesh.get()].push_back(renderData.model);
+
+        }
 
         for (const auto& renderData : batchRenders)
         {
@@ -1097,56 +1125,9 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
                 meshGPU.uploadToGPU();
             }
 
-            // Bind descriptor sets usando il pipelineLayout corrispondente al pipeline bindato
-            VkPipelineLayout bindLayout = VK_NULL_HANDLE;
-            auto itLayout = g_pipeline_layout_map.find(pipeline);
-            if (itLayout != g_pipeline_layout_map.end())
-                bindLayout = itLayout->second;
-            else if (!pipeline_layouts.empty())
-                bindLayout = pipeline_layouts[0]; // fallback (non ideale)
-
-            // Controlli di validità sui descriptor set della scena e del materiale
-            if (indexScene < 0 || static_cast<size_t>(indexScene) >= data.scene_map_descriptor.size())
-            {
-                std::cerr << "render_scene: invalid indexScene or no scene descriptor allocated\n";
-                continue;
-            }
-            if (data.current_frame >= data.scene_map_descriptor[indexScene].size())
-            {
-                std::cerr << "render_scene: invalid image_index for scene descriptors\n";
-                continue;
-            }
-            const DescriptorSetInfo& sceneDescInfo = data.scene_map_descriptor[indexScene][data.current_frame];
-            if (sceneDescInfo.descriptorSet == VK_NULL_HANDLE)
-            {
-                std::cerr << "render_scene: scene descriptor set is null, skipping instance\n";
-                continue;
-            }
-
-            auto matIt = data.material_map_descriptor.find(material);
-            if (matIt == data.material_map_descriptor.end())
-            {
-                std::cerr << "render_scene: material descriptor vector missing for material, skipping instance\n";
-                continue;
-            }
-            if (data.current_frame >= matIt->second.size())
-            {
-                std::cerr << "render_scene: invalid image_index for material descriptors\n";
-                continue;
-            }
-            const DescriptorSetInfo& matDescInfo = matIt->second[data.current_frame];
-            if (matDescInfo.descriptorSet == VK_NULL_HANDLE)
-            {
-                std::cerr << "render_scene: material descriptor set is null, skipping instance\n";
-                continue;
-            }
-
-            std::vector<VkDescriptorSet> descriptorSets;
-            descriptorSets.push_back(sceneDescInfo.descriptorSet);
-            descriptorSets.push_back(matDescInfo.descriptorSet);
-
-            init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
-                0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
+          
+            
+            
 
             vkCmdPushConstants(
                 command_buffer,
@@ -1160,6 +1141,77 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
             meshGPU.draw(command_buffer);
         }
     }
+
+    // Esegui
+
+    cache.isDirty = false;
+    cache.geometryHash = currentHash;
+}
+
+void VulkanRender::get_or_create_pipeline(VulkanRender::pipelineKey& pipelineKey, VkPipeline& pipeline, std::shared_ptr<Material>& material, RenderingTypeEnum renderingType)
+{
+    if (pipelines.find(pipelineKey) == pipelines.end())
+    {
+        pipeline = create_graphics_pipeline(init, data, material->getShader(), renderingType);
+        pipelines[pipelineKey] = pipeline;
+    }
+    else
+    {
+        pipeline = pipelines[pipelineKey];
+    }
+}
+
+void VulkanRender::bindMaterialDescriptorsSet(VkPipeline& pipeline, VkPipelineLayout& bindLayout, int& indexScene, std::shared_ptr<Material>& material, VkCommandBuffer command_buffer, int& retFlag)
+{
+    retFlag = 1;
+    auto itLayout = g_pipeline_layout_map.find(pipeline);
+    if (itLayout != g_pipeline_layout_map.end())
+        bindLayout = itLayout->second;
+    else if (!pipeline_layouts.empty())
+        bindLayout = pipeline_layouts[0]; // fallback (non ideale)
+
+    // Controlli di validità sui descriptor set della scena e del materiale
+    if (indexScene < 0 || static_cast<size_t>(indexScene) >= data.scene_map_descriptor.size())
+    {
+        std::cerr << "render_scene: invalid indexScene or no scene descriptor allocated\n";
+        { retFlag = 3; return; };
+    }
+    if (data.current_frame >= data.scene_map_descriptor[indexScene].size())
+    {
+        std::cerr << "render_scene: invalid image_index for scene descriptors\n";
+        { retFlag = 3; return; };
+    }
+    auto matIt = data.material_map_descriptor.find(material);
+    if (matIt == data.material_map_descriptor.end())
+    {
+        std::cerr << "render_scene: material descriptor vector missing for material, skipping instance\n";
+        { retFlag = 3; return; };
+    }
+    if (data.current_frame >= matIt->second.size())
+    {
+        std::cerr << "render_scene: invalid image_index for material descriptors\n";
+        { retFlag = 3; return; };
+    }
+    const DescriptorSetInfo& matDescInfo = matIt->second[data.current_frame];
+    if (matDescInfo.descriptorSet == VK_NULL_HANDLE)
+    {
+        std::cerr << "render_scene: material descriptor set is null, skipping instance\n";
+        { retFlag = 3; return; };
+    }
+    const DescriptorSetInfo& sceneDescInfo = data.scene_map_descriptor[indexScene][data.current_frame];
+    if (sceneDescInfo.descriptorSet == VK_NULL_HANDLE)
+    {
+        std::cerr << "render_scene: scene descriptor set is null, skipping instance\n";
+        { retFlag = 3; return; };
+    }
+
+
+    std::vector<VkDescriptorSet> descriptorSets;
+    descriptorSets.push_back(sceneDescInfo.descriptorSet);
+    descriptorSets.push_back(matDescInfo.descriptorSet);
+
+    init.disp.cmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bindLayout,
+        0, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0, nullptr);
 }
 
 
@@ -1167,7 +1219,18 @@ VulkanRender::~VulkanRender()
 {
 
 }
+size_t VulkanRender::calculateSceneHash(int indexScene) {
+    size_t hash = 0;
+    RenderScene& scene = renderScenes[indexScene];
 
+    for (const auto& pair : scene.batches) {
+        hash ^= std::hash<void*>{}(pair.first.first.get()); // Material
+        hash ^= static_cast<size_t>(pair.first.second);      // RenderingType
+        hash ^= pair.second.size();                          // Numero istanze
+    }
+
+    return hash;
+}
 void VulkanRender::BeginFrame()
 {
     // 1. Attendi che il frame precedente (fence per questo slot) sia finito

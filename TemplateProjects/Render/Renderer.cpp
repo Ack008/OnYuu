@@ -3,12 +3,13 @@
 #include "Platform/API.h"
 #include "Platform/Vulkan/VulkanRender.h"
 std::shared_ptr<Render> Render::s_instance = nullptr;
+API Render::api = API::OpenGL;
 std::shared_ptr<Render> Render::create()
 {
 	// Here you can add logic to choose which Render subclass to instantiate
 	// based on the current graphics API or other criteria.
 	// For simplicity, we'll just return an OpenGLBatchRender instance.
-	switch (apiInUse)
+	switch (Render::api)
 	{
 		case API::OpenGL:
 			// Return OpenGLBatchRender instance

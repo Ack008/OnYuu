@@ -3,14 +3,14 @@
 class VulkanApp : public Application {
 public:
 	VulkanApp() 
-		:Application()
+		:Application(Vulkan)
 	{
 		pushLayer(new VulkanAppLayer());
 	}
 private:
 };
 
-/*
+
 Application* Application::createApplication() {
 	return new VulkanApp();
-}*/
+}

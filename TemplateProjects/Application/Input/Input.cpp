@@ -1,10 +1,12 @@
 #include "Input.h"
 #include "Platform/API.h"
+#include "Render/Renderer.h"
 #include "Platform/OpenGL/Input/OpenGLInput.h"
 std::shared_ptr<Input> Input::instance = Input::create();
 std::shared_ptr<Input> Input::create() {
-	switch (apiInUse) {
+	switch (Render::getAPI()) {
 		case API::OpenGL:
+		case API::Vulkan:
 			return std::make_shared<OpenGLInput>();
 		break;
 	}

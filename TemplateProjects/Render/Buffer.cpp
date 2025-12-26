@@ -1,5 +1,6 @@
 #include "Buffer.h"
 #include "Platform/API.h"
+#include "Render/Renderer.h"
 #include "Platform/OpenGL/OpenGLBuffer.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include <memory>
@@ -10,7 +11,7 @@
 
 std::shared_ptr<VertexBuffer> VertexBuffer::create()
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 	case API::OpenGL:
 		// Restituisce l'implementazione OpenGL di VertexBuffer
@@ -24,7 +25,7 @@ std::shared_ptr<VertexBuffer> VertexBuffer::create()
 
 std::shared_ptr<IndexBuffer> IndexBuffer::create()
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 	case API::OpenGL:
 		// Restituisce l'implementazione OpenGL di IndexBuffer
@@ -38,7 +39,7 @@ std::shared_ptr<IndexBuffer> IndexBuffer::create()
 
 std::shared_ptr<UniformBuffer> UniformBuffer::create(uint32_t bindingPoint, size_t size)
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 	case API::OpenGL:
 		// Restituisce l'implementazione OpenGL di UniformBuffer

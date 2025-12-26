@@ -3,6 +3,7 @@
 #include "Platform/API.h"
 #include "Platform/OpenGL/OpenGLView.h"
 #include "Platform/Vulkan/VulkanWindow.h"
+#include "Render/Renderer.h"
 Window::Window(uint32_t width, uint32_t height)
 	:_witdh(width), _height(height)
 {
@@ -28,7 +29,7 @@ void Window::resize(uint32_t width, uint32_t height)
 
 std:: shared_ptr<Window> Window::create(uint32_t width, uint32_t height)
 {
-	switch (apiInUse)
+	switch (Render::getAPI())
 	{
 		case API::OpenGL:
 		// Return OpenGLWindow instance
