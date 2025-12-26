@@ -1,9 +1,0 @@
-#pragma once
-#include <glm/glm.hpp>
-struct Ray {
-	glm::vec3 origin;    // Punto di origine del raggio
-	glm::vec3 direction; // Direzione del raggio (deve essere normalizzata)
-	Ray(const glm::vec3& orig, const glm::vec3& dir)
-		: origin(orig), direction(glm::normalize(dir)) {}
-	Ray() = default;
-};

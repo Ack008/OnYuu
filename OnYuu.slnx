@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="OnYuu/OnYuu.vcxproj" Id="f96a063a-d4e6-40dd-98fb-46b076414288" />
+  <Project Path="VulkanEngine/VulkanEngine.vcxproj" Id="da147cb8-6280-4b2c-b3f7-7078b84f8b2f" />
+</Solution>

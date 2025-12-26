@@ -1,0 +1,19 @@
+#include "Render/RenderCommand.h"
+#include "Platform/API.h"
+#include "Render/Renderer.h"
+#include "Platform/OpenGL/OpenGLRenderCommand.h"
+namespace OnYuu {
+
+	// Inizializza lo singleton con l'implementazione corretta basata su `apiInUse`.
+	std::shared_ptr<RenderCommand> RenderCommand::s_instance = RenderCommand::create();
+
+	std::shared_ptr<RenderCommand> RenderCommand::create() {
+		switch (Render::getAPI()) {
+		case OpenGL:
+			return std::make_shared<OpenGLRenderCommand>();
+			break;
+		}
+		// Se non è stato selezionato un API valido, ritorniamo nullptr.
+		return nullptr;
+	}
+}

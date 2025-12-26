@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+
+    <link rel="stylesheet" type="text/css" href="stylesheet.css" media="screen">
+
+    <title>Attività iniziali</title>
+  </head>
+
+<body>
+
+    <div class="container">
+        <div id="header">
+            <h1>Attività iniziali</h1>
+            <h2>Visual C++ per lo sviluppo in remoto</h2>
+        </div>
+    
+    <table>
+    <tr>    
+    <div id="main_content">
+        
+        <td>
+        <div id="lpanel">
+            <h1>Configurazione del progetto per lo sviluppo in remoto</h1>
+
+            <p>Questo carico di lavoro consente di creare codice C++ per server, desktop e dispositivi remoti. È possibile gestire le connessioni a questi computer all'interno di Visual Studio. Visual Studio copia automaticamente e compila in remoto i file del codice sorgente e può avviare l'applicazione con il debugger. Il sistema di progetto supporta l'uso di architetture specifiche come destinazione, tra cui Azure Resource Manager.</p>
+            <img src="images\ArchOptions.gif"/>
+            
+            <h1>Connessione al computer remoto</h1>
+            <h2>Prerequisiti</h2>
+            <p>Al momento la compilazione remota è supportata solo nel computer di destinazione. Sono presenti dipendenze sotto forma di alcuni strumenti. In particolare, sono necessari openssh-server, g++, gdb e gdbserver. Utilizzare l'utilità di gestione pacchetti preferita per installarli, ad esempio, in sistemi basati su Debian, utilizzare sudo apt-get install openssh-server g++ gdb gdbserver</p>
+            
+            <h2>Prima connessione</h2>
+            <p>La prima volta che si imposta un computer remoto come destinazione, verranno richieste le informazioni sulla connessione.  Viene attivato dalla compilazione del progetto.</p>
+            <img src="images\firstconnection.png"/>
+                
+            <h2>Aggiunta e rimozione di connessioni</h2>
+            <p>Per aggiungere una nuova connessione, passare a Strumenti > Opzioni e cercare Connessione. Gestione connessioni si trova in Multipiattaforma. Da tale posizione è possibile aggiungere e rimuovere connessioni.</p>
+            <img src="images\ManageConnections.gif"/>
+            
+            <p>Per cambiare la connessione usata da un progetto, passare alle proprietà del progetto e nelle impostazioni generali aggiornare l'opzione Computer di compilazione remota.</p>
+            <img src="images\ChangeRemote.gif"/>
+            
+            <h1>Proprietà del progetto</h1>
+            <p>Tutte le opzioni necessarie per controllare la compilazione in C++ sono esposte nella pagina delle proprietà del progetto. Verranno trattati solo alcuni aspetti dell'operazione per i computer remoti. In primo luogo, si noterà che nelle impostazioni generali la radice remota è impostata su ~/projects/ per impostazione predefinita ma la directory di progetto remota verrà modificata in modo che corrisponda al nome del progetto in tale percorso.</p>
+            <img src="images\OutputTypes.gif"/>
+            
+            <p>Osservando le impostazioni generali del progetto è possibile notare la configurazione delle directory di output e intermedia. Si noterà anche che questo progetto è stato configurato come applicazione, di conseguenza l'eseguibile è ConsoleApplication1.out e si trova in bin/x64/Debug/. Tenere presente che come tipi di configurazione sono supportate anche le librerie statiche e dinamiche.</p>
+            
+            <p>Aggiungere dipendenze aggiuntive alle librerie nella pagina delle proprietà Linker > Input.</p>
+            <img src="images\linker.png"/>
+            
+            <p>È possibile passare al debugger comandi di pre-avvio aggiuntivi per eseguire operazioni quali l'avvio di app grafiche nel computer remoto.</p>
+            <img src="images\debuggerexport.png"/>
+            
+            <p>È anche possibile inviare eventi di post-compilazione per controllare il comportamento remoto, come in questo esempio che esporta un PIN GPIO per l'uso senza richiedere l'esecuzione dell'eseguibile come utente con privilegi avanzati.</p>
+            <img src="images\postbuild.png"/>
+            
+        </div>
+        </td>
+        <td>
+        <div id="rpanel">
+
+            <h1>Risorse</h1>
+
+            <p>Vedere la <a href="http://aka.ms/vslinux">pagina relativa allo sviluppo con VC++ per Linux</a> in cui vengono pubblicato aggiornamenti e informazioni più dettagliate sull'utilizzo.</p>
+            <h1>Invia feedback</h1>
+            <p>Usare la funzione di invio feedback in Visual Studio o contattare gli sviluppatori tramite <a href=" https://developercommunity.visualstudio.com/">Developer Community</a></p>
+        </div>
+        </td>   
+    </div>
+    </tr>
+    </table>
+    </div>
+</body>
+</html>
