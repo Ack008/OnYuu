@@ -554,10 +554,17 @@ int VulkanRender::create_global_descriptor_set(Init& init, RenderData& data, uin
         lightBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         lightBinding.pImmutableSamplers = nullptr;
 
-        VkDescriptorSetLayoutBinding bindings[] = { timeBinding, viewProjBinding, lightBinding };
+        VkDescriptorSetLayoutBinding modelMatricesBinding = {};
+        modelMatricesBinding.binding = 3;
+        modelMatricesBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        modelMatricesBinding.descriptorCount = 1;
+        modelMatricesBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        modelMatricesBinding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutBinding bindings[] = { timeBinding, viewProjBinding, lightBinding, modelMatricesBinding };
         VkDescriptorSetLayoutCreateInfo layout_info = {};
         layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        layout_info.bindingCount = 3;
+        layout_info.bindingCount = 4;
         layout_info.pBindings = bindings;
         if (init.disp.createDescriptorSetLayout(&layout_info, nullptr, &globalDescriptorSetLayout) != VK_SUCCESS)
         {
@@ -1118,27 +1125,11 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
             // Recupera o crea VulkanMeshGPU in modo sicuro
             auto [it, inserted] = meshGPUMap.try_emplace(meshPtr, *meshPtr);
             VulkanMeshGPU& meshGPU = it->second;
-            if (inserted)
-            {
-                // Se abbiamo appena creato l'entry, assicuriamoci che i dati siano caricati su GPU
-                // (uploadToGPU potrebbe essere chiamato anche altrove; chiamarlo qui è sicuro)
-                meshGPU.uploadToGPU();
-            }
+            auto rangeIt = instanceRanges.find({ meshPtr, material });
+            if (rangeIt == instanceRanges.end()) continue;
 
-          
-            
-            
-
-            vkCmdPushConstants(
-                command_buffer,
-                bindLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0,
-                sizeof(glm::mat4),
-                &renderData.model
-            );
-
-            meshGPU.draw(command_buffer);
+            const auto& range = rangeIt->second;
+			meshGPU.drawInstanced(command_buffer, range.instanceCount, range.firstInstance);
         }
     }
 
@@ -1298,20 +1289,45 @@ void VulkanRender::updateAllDescriptorDSet()
     for (int i = 0; i < renderScenes.size(); i++)
     {
 		RenderScene& scene = renderScenes[i];
-        // Aggiorna globali (luce, camera)
-        update_global_descriptor_set(init, data, data.current_frame, i);
+		// take all model matrices of the scene 
+        std::vector<ModelMatrixData> allModelMatrices;
+        instanceRanges.clear();
+        
 
-        // Per ogni batch aggiorna material e model descriptor prima della registrazione
         for (const auto& pair : scene.batches)
         {
             auto material = pair.first.first;
+            auto renderingType = pair.first.second;
+            const auto& batchRenders = pair.second;
+			// group by mesh
+            std::unordered_map<Mesh*, std::vector<glm::mat4>> meshInstances;
+            for (const auto& renderData : batchRenders) {
+                meshInstances[renderData.renderMesh->mesh.get()].push_back(renderData.model);
+            }
+
+			// add to all model matrices and record instance ranges
+            for (const auto& meshPair : meshInstances) {
+                Mesh* meshPtr = meshPair.first;
+                const auto& matrices = meshPair.second;
+
+                uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
+                for (const auto& mat : matrices) {
+                    allModelMatrices.push_back({ mat });
+                }
+
+                instanceRanges[{meshPtr, material}] = {
+                    firstInstance,
+                    static_cast<uint32_t>(matrices.size())
+                };
+            }
+
+
             VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
-            // stampo il contenuto del buffer delle shader
             material->bind();
 			material->apply();
             update_material_descriptor_set(init, data, data.current_frame, material);
 
-            // Per ogni istanza aggiorna il modello (model UBO) prima di registrare
+			// for every instance, update model (model UBO) before recording
             for (const auto& renderData : pair.second)
             {
                 auto mesh = renderData.renderMesh;
@@ -1321,6 +1337,47 @@ void VulkanRender::updateAllDescriptorDSet()
                 meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
             }
         }
+		// Aggiorna SSBO globale delle model matrices
+         // Crea/aggiorna SSBO per questa scena e frame
+        size_t bufferSize = allModelMatrices.size() * sizeof(ModelMatrixData);
+        if (sceneModelMatricesSSBO[i].size() <= data.current_frame) {
+            sceneModelMatricesSSBO[i].resize(MAX_FRAMES_IN_FLIGHT);
+            for (auto& ssbo : sceneModelMatricesSSBO[i])
+            {
+                ssbo = std::make_shared<VulkanStorageBuffer>(3, bufferSize * 5);
+            }
+           
+            
+        }
+
+
+        if (bufferSize > 0) {
+            sceneModelMatricesSSBO[i][data.current_frame]->setData(
+                allModelMatrices.data(),
+                bufferSize,
+                BufferUsage::DYNAMIC
+            );
+        }
+
+        // Aggiorna global descriptor set
+        update_global_descriptor_set(init, data, data.current_frame, i);
+
+        // Bind SSBO al descriptor set
+        VkDescriptorBufferInfo ssboInfo{};
+        ssboInfo.buffer = sceneModelMatricesSSBO[i][data.current_frame]->getVulkanBuffer();
+        ssboInfo.offset = 0;
+        ssboInfo.range = VK_WHOLE_SIZE;
+
+        VkWriteDescriptorSet ssboWrite{};
+        ssboWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        ssboWrite.dstSet = data.scene_map_descriptor[i][data.current_frame].descriptorSet;
+        ssboWrite.dstBinding = 3;
+        ssboWrite.dstArrayElement = 0;
+        ssboWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        ssboWrite.descriptorCount = 1;
+        ssboWrite.pBufferInfo = &ssboInfo;
+
+        init.disp.updateDescriptorSets(1, &ssboWrite, 0, nullptr);
     }
 }
 
@@ -1450,6 +1507,12 @@ void VulkanRender::Shutdown()
     cameraUbo.clear();
     for (auto& ubo : lightUbo) if (ubo) ubo->shutdown();
     lightUbo.clear();
+
+	// 10) Shutdown per-scene SSBOs
+    for (auto& [it, vec] : sceneModelMatricesSSBO)
+    {
+        for (auto& ssbo : vec) if (ssbo) ssbo->shutdown();
+	}
 
     // 6) Destroy mesh GPU resources
     shut_mesh_buffers();

@@ -86,7 +86,7 @@ void VulkanAppLayer::onAttach()
 	renderMesh.mesh = triangle;
 	camera = std::make_shared<Orthographic>(-5,5, -5,5, -100.f, .3f);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-	shader2 = Shader::create("Asset/vulkan-shader/texture-vert.o", "Asset/vulkan-shader/texture-frag.o");
+	shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
 
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader2));
 	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(shader2));

@@ -86,6 +86,18 @@ void VulkanMeshGPU::draw(VkCommandBuffer commandBuffer)
 
 }
 
+void VulkanMeshGPU::drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount, uint32_t firstInstance)
+{
+	VkBuffer vertexBuffers[] = { vertexBuffer };
+	VkDeviceSize offsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	if(indexCount > 0)
+		vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, firstInstance);
+	else 
+		vkCmdDraw(commandBuffer, static_cast<uint32_t>(mesh.position.size()), instanceCount, 0, firstInstance);
+}
+
 VkBuffer VulkanMeshGPU::updateModelBuffer(int image_index,glm::mat4 modelMatrix)
 {
 	modelBuffers[image_index]->setData(&modelMatrix, sizeof(glm::mat4), BufferUsage::DYNAMIC);

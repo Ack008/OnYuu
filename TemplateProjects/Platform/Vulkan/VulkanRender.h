@@ -99,6 +99,29 @@ private:
     VkDescriptorSetLayout globalDescriptorSetLayout = VK_NULL_HANDLE;
     VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
 
+	// model data structures
+    struct ModelMatrixData {
+        glm::mat4 model;
+        // Padding per alignment std430 se necessario
+    };
+    // Hash personalizzato per std::pair<Mesh*, std::shared_ptr<Material>>
+    struct MeshMaterialHash {
+        std::size_t operator()(const std::pair<Mesh*, std::shared_ptr<Material>>& p) const {
+            std::size_t h1 = std::hash<Mesh*>{}(p.first);
+            std::size_t h2 = std::hash<void*>{}(p.second.get());
+            return h1 ^ (h2 << 1); // Combina gli hash
+        }
+    };
+    // Storage buffer per tutte le model matrices della scena
+    std::unordered_map<int, std::vector<std::shared_ptr<VulkanStorageBuffer>>> sceneModelMatricesSSBO;
+
+    // Mappa: (mesh, material) -> range di istanze nell'SSBO
+    struct InstanceRange {
+        uint32_t firstInstance;
+        uint32_t instanceCount;
+    };
+    std::unordered_map<std::pair<Mesh*, std::shared_ptr<Material>>, InstanceRange, MeshMaterialHash> instanceRanges;
+
 public:
     Init& getInit() { return init; }
     RenderData& getRenderData() { return data; }

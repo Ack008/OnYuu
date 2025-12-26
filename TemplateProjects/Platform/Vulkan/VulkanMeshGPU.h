@@ -15,6 +15,7 @@ class VulkanMeshGPU
 	virtual void shutdown();
 	void uploadToGPU();
 	void draw(VkCommandBuffer commandBuffer);
+	void drawInstanced(VkCommandBuffer commandBuffer, uint32_t instanceCount, uint32_t firstInstance = 0);
 	VkBuffer getVertexBuffer() const { return vertexBuffer; }
 	VkBuffer getIndexBuffer() const { return indexBuffer; }
 	uint32_t getIndexCount() const { return indexCount; }
