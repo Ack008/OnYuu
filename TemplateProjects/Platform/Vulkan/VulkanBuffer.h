@@ -1,6 +1,7 @@
 #pragma once
 #include "Render/Buffer.h"
 #include <vulkan/vulkan.h>
+#include <xxhash.h>
 #include "vma/vk_mem_alloc.h"
 
 // VulkanUniformBuffer: implementazione concreta di UniformBuffer per Vulkan.
@@ -74,7 +75,12 @@ class VulkanStorageBuffer : public UniformBuffer
         }
         return hash;
 	}
+    std::vector<size_t> chunkHashes; // Hash per blocchi da 4KB
+    static constexpr size_t CHUNK_SIZE = 4096;
     public:
     VkBuffer getVulkanBuffer() const { return vulkanBuffer; }
+    size_t quickHash(const void* data, size_t len) {
+        return XXH64(data, len, 0); // ~10x più veloce
+    }
 	// eventuali altri membri o helper specifici per Vulkan
 };

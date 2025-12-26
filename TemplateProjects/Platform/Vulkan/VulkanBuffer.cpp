@@ -1,4 +1,4 @@
-#include "VulkanBuffer.h"
+﻿#include "VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanRender.h"
 #include <iostream>
 VulkanUniformBuffer::VulkanUniformBuffer(uint32_t bindingPoint, size_t size ,VmaAllocator allocator_)
@@ -92,7 +92,7 @@ VulkanStorageBuffer::VulkanStorageBuffer(uint32_t bindingPoint, size_t size, Vma
 	allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
 	allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
 		VMA_ALLOCATION_CREATE_MAPPED_BIT;
-	// Questo fa s� che il buffer sia gi� mappato e scrivibile da CPU
+	// Questo fa sì che il buffer sia già mappato e scrivibile da CPU
 
 	vmaCreateBuffer(allocator, &bufferInfo, &allocInfo,
 		&vulkanBuffer, &vulkanBufferAllocation, &storageAllocInfo);
@@ -113,32 +113,63 @@ void VulkanStorageBuffer::unbind()
 void VulkanStorageBuffer::bindToBindingPoint(uint32_t bindingPoint)
 {
 }
+// Modifica setData() con aggiornamento incrementale:
 void VulkanStorageBuffer::setData(const void* data, size_t size, BufferUsage usage)
 {
+	// ✅ Resize se necessario (pre-alloca più spazio per evitare resize frequenti)
 	if (size > bufferSize) {
-		resize(size * 5);
+		// Alloca 1.5x invece di 5x per ridurre spreco memoria
+		resize(size + size / 2);
 	}
-	size_t newHash = calculateHash(data, size);
-	if (lastDataHash == newHash) {
-		return; // Dati identici, skip update
+
+	// ✅ Calcola numero di chunk
+	size_t numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+
+	// ✅ Ridimensiona array hash se necessario
+	if (chunkHashes.size() != numChunks) {
+		chunkHashes.resize(numChunks, 0);
 	}
-	// Aggiorna buffer
-	memcpy(storageAllocInfo.pMappedData, data, size);
-	usedSize = size;
-	lastDataHash = newHash;
-	// print debug
-	/*
-	const glm::mat4* matData = static_cast<const glm::mat4*>(data);
-	const int quantity = size / sizeof(glm::mat4);
-	for(int i = 0; i < quantity; i++) {
-		std::cout << "VulkanStorageBuffer Data Matrix:\n";
-		for (int j = 0; j < 4; ++j) {
-			std::cout << matData->operator[](j).x << " " << matData->operator[](j).y << " "
-				<< matData->operator[](j).z << " " << matData->operator[](j).w << "\n";
+
+	bool anyChunkChanged = false;
+
+	// ✅ Aggiorna solo chunk modificati
+	for (size_t i = 0; i < numChunks; ++i) {
+		size_t offset = i * CHUNK_SIZE;
+		size_t chunkSize = std::min(CHUNK_SIZE, size - offset);
+
+		// Calcola hash del chunk corrente
+		const uint8_t* chunkData = static_cast<const uint8_t*>(data) + offset;
+		size_t newHash = quickHash(chunkData, chunkSize);
+
+		// Confronta con hash precedente
+		if (chunkHashes[i] != newHash) {
+			// ✅ Copia SOLO questo chunk
+			memcpy(
+				static_cast<uint8_t*>(storageAllocInfo.pMappedData) + offset,
+				chunkData,
+				chunkSize
+			);
+
+			chunkHashes[i] = newHash;
+			anyChunkChanged = true;
+
+#ifdef _DEBUG
+			std::cout << "Updated chunk " << i << "/" << numChunks
+				<< " (offset: " << offset << ", size: " << chunkSize << ")\n";
+#endif
 		}
-		matData++;
-		size -= sizeof(glm::mat4);
-	}*/
+	}
+
+	// ✅ Aggiorna size usata
+	if (anyChunkChanged) {
+		usedSize = size;
+	}
+
+#ifdef _DEBUG
+	if (!anyChunkChanged) {
+		std::cout << "VulkanStorageBuffer: No chunks changed, skipped memcpy\n";
+	}
+#endif
 }
 void VulkanStorageBuffer::updateData(const void* data, size_t size, size_t offset)
 {
@@ -147,7 +178,10 @@ void VulkanStorageBuffer::updateData(const void* data, size_t size, size_t offse
 }
 void VulkanStorageBuffer::resize(size_t newSize)
 {
-	if (newSize == bufferSize) return; // Early exit
+	if (newSize == bufferSize) return;
+
+	std::cout << "Resizing VulkanStorageBuffer from " << bufferSize
+		<< " to " << newSize << " bytes\n";
 
 	// Salva vecchie risorse
 	VmaAllocation oldAllocation = vulkanBufferAllocation;
@@ -168,7 +202,7 @@ void VulkanStorageBuffer::resize(size_t newSize)
 
 	if (vmaCreateBuffer(allocator, &bufferInfo, &allocInfo,
 		&vulkanBuffer, &vulkanBufferAllocation, &storageAllocInfo) != VK_SUCCESS) {
-		// Gestione errore: ripristina stato
+		// Ripristina stato
 		vulkanBuffer = oldBuffer;
 		vulkanBufferAllocation = oldAllocation;
 		storageAllocInfo = oldAllocInfo;
@@ -183,14 +217,16 @@ void VulkanStorageBuffer::resize(size_t newSize)
 		memcpy(storageAllocInfo.pMappedData, oldAllocInfo.pMappedData, copySize);
 	}
 
-	// IMPORTANTE: Assicurati che la GPU abbia finito di usare oldBuffer
-	// Potrebbe servire vkDeviceWaitIdle() o un fence/semaphore
+	// ✅ IMPORTANTE: Sincronizza GPU prima di distruggere vecchio buffer
+	// Ottieni device da VulkanRender
+	VulkanRender* render = static_cast<VulkanRender*>(Render::getInstance().get());
+	vkDeviceWaitIdle(render->getInit().device); // ⚠️ Costoso ma necessario
+
 	vmaDestroyBuffer(allocator, oldBuffer, oldAllocation);
 
-	// Reset hash per forzare il prossimo update
-	lastDataHash = 0;
+	// ✅ Reset hash - forza ricalcolo al prossimo setData
+	chunkHashes.clear();
 }
-
 void VulkanStorageBuffer::shutdown()
 {
 	vmaDestroyBuffer(allocator, vulkanBuffer, vulkanBufferAllocation);

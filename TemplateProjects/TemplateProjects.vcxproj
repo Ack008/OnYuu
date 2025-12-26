@@ -214,6 +214,7 @@
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="vendor\VkBootstrap.cpp" />
     <ClCompile Include="vendor\vma\VmaUsage.cpp" />
+    <ClCompile Include="vendor\xxhash.c" />
     <ClCompile Include="VulkanApp\VulkanApp.cpp" />
     <ClCompile Include="VulkanApp\VulkanAppLayer.cpp" />
   </ItemGroup>

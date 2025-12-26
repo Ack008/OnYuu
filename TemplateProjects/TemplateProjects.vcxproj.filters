@@ -146,6 +146,7 @@
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanTexture.cpp" />
+    <ClCompile Include="vendor\xxhash.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />

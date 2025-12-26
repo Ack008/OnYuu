@@ -1013,9 +1013,23 @@ void VulkanRender::update_global_descriptor_set(Init& init, RenderData& data, ui
             cameraDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             cameraDescriptorWrite.descriptorCount = 1;
             cameraDescriptorWrite.pBufferInfo = &cameraBufferInfo;
+            // Bind SSBO al descriptor set
+            VkDescriptorBufferInfo ssboInfo{};
+            ssboInfo.buffer = sceneModelMatricesSSBO[indexScene][i]->getVulkanBuffer();
+            ssboInfo.offset = 0;
+            ssboInfo.range = VK_WHOLE_SIZE;
 
-            VkWriteDescriptorSet writes[2] = { lightDescriptorWrite, cameraDescriptorWrite };
-            init.disp.updateDescriptorSets(2, writes, 0, nullptr);
+            VkWriteDescriptorSet ssboWrite{};
+            ssboWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            ssboWrite.dstSet = data.scene_map_descriptor[indexScene][i].descriptorSet;
+            ssboWrite.dstBinding = 3;
+            ssboWrite.dstArrayElement = 0;
+            ssboWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            ssboWrite.descriptorCount = 1;
+            ssboWrite.pBufferInfo = &ssboInfo;
+
+            VkWriteDescriptorSet writes[3] = { lightDescriptorWrite, cameraDescriptorWrite , ssboWrite};
+            init.disp.updateDescriptorSets(3, writes, 0, nullptr);
         }
     }
 
@@ -1337,6 +1351,7 @@ void VulkanRender::updateAllDescriptorDSet()
                 meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
             }
         }
+        // Aggiorna global descriptor set
 		// Aggiorna SSBO globale delle model matrices
          // Crea/aggiorna SSBO per questa scena e frame
         size_t bufferSize = allModelMatrices.size() * sizeof(ModelMatrixData);
@@ -1350,6 +1365,7 @@ void VulkanRender::updateAllDescriptorDSet()
             
         }
 
+        update_global_descriptor_set(init, data, data.current_frame, i);
 
         if (bufferSize > 0) {
             sceneModelMatricesSSBO[i][data.current_frame]->setData(
@@ -1359,25 +1375,9 @@ void VulkanRender::updateAllDescriptorDSet()
             );
         }
 
-        // Aggiorna global descriptor set
-        update_global_descriptor_set(init, data, data.current_frame, i);
+       
 
-        // Bind SSBO al descriptor set
-        VkDescriptorBufferInfo ssboInfo{};
-        ssboInfo.buffer = sceneModelMatricesSSBO[i][data.current_frame]->getVulkanBuffer();
-        ssboInfo.offset = 0;
-        ssboInfo.range = VK_WHOLE_SIZE;
-
-        VkWriteDescriptorSet ssboWrite{};
-        ssboWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        ssboWrite.dstSet = data.scene_map_descriptor[i][data.current_frame].descriptorSet;
-        ssboWrite.dstBinding = 3;
-        ssboWrite.dstArrayElement = 0;
-        ssboWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        ssboWrite.descriptorCount = 1;
-        ssboWrite.pBufferInfo = &ssboInfo;
-
-        init.disp.updateDescriptorSets(1, &ssboWrite, 0, nullptr);
+        
     }
 }
 
