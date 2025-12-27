@@ -42,6 +42,12 @@ namespace OnYuu {
             std::vector<VkImage> swapchain_images;
             std::vector<VkImageView> swapchain_image_views;
             std::vector<VkFramebuffer> framebuffers;
+			VkImage depth_image;
+			VkDeviceMemory depth_image_memory;
+			VkImageView depth_image_view;
+			VkFormat depthFormat;
+			VmaAllocation depth_image_allocation;
+
 
             VkRenderPass render_pass;
 
@@ -154,6 +160,7 @@ namespace OnYuu {
         int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
         int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
         int create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
+        int create_depth_resources(Init& init, RenderData& data);
         VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
         void shut_shaders();
         void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);

@@ -11,8 +11,6 @@ class VulkanAppLayer :
 	virtual void onImGuiRender() override;
 	virtual void onAttach() override;
 	virtual void onDetach() override;
-	std::shared_ptr<Mesh> triangle;
-	std::shared_ptr<Mesh> triangle2;
 
 	RenderMeshComponent renderMesh;
 	RenderMeshComponent renderMesh2;

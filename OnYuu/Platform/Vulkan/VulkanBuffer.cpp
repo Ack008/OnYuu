@@ -1,6 +1,9 @@
 ﻿#include "VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanRender.h"
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <future>
 namespace OnYuu {
 	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t bindingPoint, size_t size, VmaAllocator allocator_)
 	{
@@ -123,6 +126,7 @@ namespace OnYuu {
 			resize(size + size / 2);
 		}
 
+
 		// ✅ Calcola numero di chunk
 		size_t numChunks = (size + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
@@ -130,47 +134,21 @@ namespace OnYuu {
 		if (chunkHashes.size() != numChunks) {
 			chunkHashes.resize(numChunks, 0);
 		}
+		// ✅ Determina numero thread (non più di hardware_concurrency)
+		const size_t numThreads = std::min(
+			std::thread::hardware_concurrency(),
+			(uint32_t)numChunks
+		);
 
-		bool anyChunkChanged = false;
-
-		// ✅ Aggiorna solo chunk modificati
-		for (size_t i = 0; i < numChunks; ++i) {
-			size_t offset = i * CHUNK_SIZE;
-			size_t chunkSize = std::min(CHUNK_SIZE, size - offset);
-
-			// Calcola hash del chunk corrente
-			const uint8_t* chunkData = static_cast<const uint8_t*>(data) + offset;
-			size_t newHash = quickHash(chunkData, chunkSize);
-
-			// Confronta con hash precedente
-			if (chunkHashes[i] != newHash) {
-				// ✅ Copia SOLO questo chunk
-				memcpy(
-					static_cast<uint8_t*>(storageAllocInfo.pMappedData) + offset,
-					chunkData,
-					chunkSize
-				);
-
-				chunkHashes[i] = newHash;
-				anyChunkChanged = true;
-
-#ifdef _DEBUG
-				std::cout << "Updated chunk " << i << "/" << numChunks
-					<< " (offset: " << offset << ", size: " << chunkSize << ")\n";
-#endif
-			}
+		if (numThreads <= 1 || numChunks < 4) {
+			normalSetData(data, size, usage, numChunks);
+			return;
 		}
-
-		// ✅ Aggiorna size usata
-		if (anyChunkChanged) {
-			usedSize = size;
+		else {
+			parallelSetData(data, size, usage, numThreads, numChunks);
+			return;
 		}
-
-#ifdef _DEBUG
-		if (!anyChunkChanged) {
-			std::cout << "VulkanStorageBuffer: No chunks changed, skipped memcpy\n";
-		}
-#endif
+		
 	}
 	void VulkanStorageBuffer::updateData(const void* data, size_t size, size_t offset)
 	{
@@ -231,5 +209,93 @@ namespace OnYuu {
 	void VulkanStorageBuffer::shutdown()
 	{
 		vmaDestroyBuffer(allocator, vulkanBuffer, vulkanBufferAllocation);
+	}
+	void VulkanStorageBuffer::parallelSetData(const void* data, size_t size, BufferUsage usage, const size_t numThreads, size_t numChunks)
+	{
+		std::vector<std::future<void>> futures;
+		std::atomic<bool> anyChunkChanged{ false };
+
+		const size_t chunksPerThread = (numChunks + numThreads - 1) / numThreads;
+
+		// ✅ Spawna thread worker
+		for (size_t t = 0; t < numThreads; ++t) {
+			futures.push_back(std::async(std::launch::async, [&, t]() {
+				size_t startChunk = t * chunksPerThread;
+				size_t endChunk = std::min(startChunk + chunksPerThread, numChunks);
+
+				for (size_t i = startChunk; i < endChunk; ++i) {
+					size_t offset = i * CHUNK_SIZE;
+					size_t chunkSize = std::min(CHUNK_SIZE, size - offset);
+
+					const uint8_t* chunkData = static_cast<const uint8_t*>(data) + offset;
+					size_t newHash = quickHash(chunkData, chunkSize);
+
+					if (chunkHashes[i] != newHash) {
+						// ✅ memcpy è thread-safe qui (range non overlappanti)
+						memcpy(
+							static_cast<uint8_t*>(storageAllocInfo.pMappedData) + offset,
+							chunkData,
+							chunkSize
+						);
+
+						chunkHashes[i] = newHash;
+						anyChunkChanged.store(true, std::memory_order_relaxed);
+					}
+				}
+				}));
+		}
+
+		// ✅ Aspetta completamento
+		for (auto& f : futures) {
+			f.wait();
+		}
+
+		if (anyChunkChanged.load()) {
+			usedSize = size;
+		}
+	}
+	void VulkanStorageBuffer::normalSetData(const void* data, size_t size, BufferUsage usage, size_t numChunks)
+	{
+		bool anyChunkChanged = false;
+
+		// ✅ Aggiorna solo chunk modificati
+		for (size_t i = 0; i < numChunks; ++i) {
+			size_t offset = i * CHUNK_SIZE;
+			size_t chunkSize = std::min(CHUNK_SIZE, size - offset);
+
+			// Calcola hash del chunk corrente
+			const uint8_t* chunkData = static_cast<const uint8_t*>(data) + offset;
+			size_t newHash = quickHash(chunkData, chunkSize);
+
+			// Confronta con hash precedente
+			if (chunkHashes[i] != newHash) {
+				VulkanRender* render = static_cast<VulkanRender*>(Render::getInstance().get());
+				// ✅ Copia SOLO questo chunk
+				memcpy(
+					static_cast<uint8_t*>(storageAllocInfo.pMappedData) + offset,
+					chunkData,
+					chunkSize
+				);
+
+				chunkHashes[i] = newHash;
+				anyChunkChanged = true;
+
+#ifdef _DEBUG
+				std::cout << "Updated chunk " << i << "/" << numChunks
+					<< " (offset: " << offset << ", size: " << chunkSize << ")\n";
+#endif
+			}
+		}
+
+		// ✅ Aggiorna size usata
+		if (anyChunkChanged) {
+			usedSize = size;
+		}
+
+#ifdef _DEBUG
+		if (!anyChunkChanged) {
+			std::cout << "VulkanStorageBuffer: No chunks changed, skipped memcpy\n";
+		}
+#endif
 	}
 } // namespace OnYuu

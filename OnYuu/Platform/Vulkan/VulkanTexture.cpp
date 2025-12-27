@@ -5,6 +5,7 @@ namespace OnYuu {
 
 	VulkanTexture::VulkanTexture(const std::string& path, TextureFormat format, TextureWrap wrap, TextureType type)
 	{
+		stbi_set_flip_vertically_on_load(1);
 		allocator = ((VulkanRender*)(Render::getInstance().get()))->getAllocator();
 		createTextureImage(path);
 		createTextureImageView();

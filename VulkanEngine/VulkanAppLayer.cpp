@@ -25,66 +25,10 @@ void VulkanAppLayer::onImGuiRender()
 
 void VulkanAppLayer::onAttach()
 {
-	triangle = std::make_shared<Mesh>();
-	triangle->position = {
-		{ -0.4f, -.3f, 0.0f },
-		{ -.4f, .3f, 0.0f },
-		{  .4f, .4f, 0.0f  },
-		{ .4f, -1.0f, 0.0f },
-	};
-	triangle->indices = { 0, 1, 3 ,
-		1,2,3};
-	triangle->color = {
-		{ 1.0f, 0.0f, 0.0f, 1.0f },
-		{ 0.0f, 1.0f, 0.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f, 1.0f }
-
-	};
-	triangle->texCoord = {
-		{ 0.0f, 0.0f },
-		{ .0f, 1.0f },
-		{ 1.0f, 1.0f },
-		{  1.0f, 0.0f  }
-	};
-	triangle->normal = {
-		{ 0.0f, 0.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f },
-		{  0.0f, 0.0f, 1.0f  }
-	};
-
-
-	triangle2 = std::make_shared<Mesh>();
-	triangle2->position = {
-		{ -1.f, -1.f, 2.0f },
-		{ -1.f, 1.f, 2.0f },
-		{  1.f, 1.f, 2.0f  },
-		{ 1.f, -1.0f, 2.0f },
-	};
-	triangle2->indices = { 0, 1, 3 ,
-		1,2,3 };
-	triangle2->color = {
-		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f, 1.0f, 0.0f, 1.0f },
-		{ 1.0f, 1.0f, 0.0f, 1.0f }
-
-	};
-	triangle2->texCoord = {
-		{ 0.0f, 0.0f },
-		{ .0f, 1.0f },
-		{ 1.0f, 1.0f },
-		{  1.0f, 0.0f  }
-	};
-	triangle2->normal = {
-		{ 0.0f, 0.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f },
-		{ 0.0f, 0.0f, 1.0f },
-		{  0.0f, 0.0f, 1.0f  }
-	};
-	renderMesh.mesh = triangle2;
-	camera = std::make_shared<Orthographic>(-5,5, -5,5, -100.f, .3f);
+	
+	renderMesh.mesh = AssetManager::instance().getMeshPtr("cube");
+	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
+	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,100);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 	shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
 
@@ -104,9 +48,8 @@ void VulkanAppLayer::onAttach()
 	mat2->set("diffuseMap", texture);
 
 	renderMesh.material = mat;
-	renderMesh2.mesh = triangle2;
+	renderMesh2.mesh = AssetManager::instance().getMeshPtr("cube");
 	renderMesh2.material = mat2;
-	camera->setPosition(glm::vec3(0.0f, 0.0f, 2.0f));
 
 }
 

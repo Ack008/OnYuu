@@ -44,7 +44,7 @@ namespace OnYuu {
         // Restituisce l'istanza singleton. L'implementazione dovrebbe usare una
         // variabile statica locale per garantire l'inizializzazione thread-safe.
         static AssetManager& instance();
-
+        AssetManager();
         // Mesh
         // ----
         // Aggiunge una mesh al manager. Il manager conserva uno shared_ptr alla mesh.
@@ -82,13 +82,23 @@ namespace OnYuu {
 
         void shutdown();
     private:
-        AssetManager() = default;
 
         // Considerare di cancellare copy/move per far rispettare il comportamento singleton.
         std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
         std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
         std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
         std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
+    private:
+        // Disabilita copy e assign per il singleton
+        AssetManager(const AssetManager&) = delete;
+		AssetManager& operator=(const AssetManager&) = delete;
+		void loadDefaultAssets();
+        void loadCube();
+		void loadSphere();
+		void loadCylinder();
+		void loadQuad();
+        void loadPlane();
+		void loadDefaultMaterials();
 
     };
 } // namespace OnYuu

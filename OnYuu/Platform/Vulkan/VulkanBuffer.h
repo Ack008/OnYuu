@@ -57,6 +57,8 @@ class VulkanStorageBuffer : public UniformBuffer
     virtual void updateData(const void* data, size_t size, size_t offset) override;
     virtual void resize(size_t newSize) override;
 	virtual void shutdown() override;
+	void parallelSetData(const void* data, size_t size, BufferUsage usage, const size_t numThreads, size_t numChunks);
+	void normalSetData(const void* data, size_t size, BufferUsage usage, size_t numChunks);
     private:
     uint32_t bindingPoint;
     VkBuffer vulkanBuffer = VK_NULL_HANDLE;
