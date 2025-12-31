@@ -29,7 +29,7 @@ void VulkanAppLayer::onAttach()
 	renderMesh.mesh = AssetManager::instance().getMeshPtr("cube");
 	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
 	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,100);
-	camera->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+	camera->setPosition(glm::vec3(0.0f, 0.0f, 5.0f));
 	shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
 
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader2));
