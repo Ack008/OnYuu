@@ -139,6 +139,12 @@
     <ClCompile Include="vendor\xxhash.c" />
     <ClCompile Include="Platform\Vulkan\VulkanBufferPool.cpp" />
     <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanDevice.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanSwapchain.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanCommandManager.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanSyncManager.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanDescriptorManager.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanPipelineManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -218,6 +224,12 @@
     <ClInclude Include="3DGame\scripts\lightScript.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBufferPool.h" />
     <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanDevice.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanSwapchain.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanCommandManager.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanSyncManager.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanDescriptorManager.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanPipelineManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
