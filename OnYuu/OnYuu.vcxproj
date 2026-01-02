@@ -149,7 +149,9 @@
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanBufferPool.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
@@ -224,7 +226,9 @@
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanBufferPool.h" />
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />

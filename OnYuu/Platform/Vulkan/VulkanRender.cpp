@@ -34,6 +34,8 @@ VulkanRender::VulkanRender()
     CHECK_RESULT(create_sync_objects(init, data));
     CHECK_RESULT(create_descriptor_pool(init, data));
     CHECK_RESULT(create_descriptor_sets(init, data));
+    geometryPool = std::make_shared<GeometryPool>(allocator, this,128 * 1024 * 1024);
+    indirectDrawManager = std::make_shared<IndirectDrawManager>(allocator);
     // Inizializza gli UBO per luci e camera
     for (int i = 0; i < data.framebuffers.size(); i++)
     {
@@ -254,10 +256,13 @@ int VulkanRender::create_render_pass(Init& init, RenderData& data)
     VkSubpassDependency dependency = {};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT; ;
     dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+        VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;;
     std::array<VkAttachmentDescription, 2> attachments = { color_attachment, depthAttachment };
 
     VkRenderPassCreateInfo render_pass_info = {};
@@ -1029,7 +1034,7 @@ void VulkanRender::update_camera_descriptor_set(Init& init, RenderData& data, ui
     // Correzione GL -> Vulkan (flip Y + mappa depth [-1,1] -> [0,1])
     glm::mat4 glToVk = glm::mat4(1.0f);
     glToVk[1][1] = -1.0f;   // flip Y
-    glToVk[2][2] = -0.5f;
+    glToVk[2][2] = 0.5f;
     glToVk[3][2] = 0.5f;
 
     // Applica la conversione e assegna i campi nell'ordine atteso dallo shader (proj, view, position)
@@ -1173,63 +1178,56 @@ void VulkanRender::render_scene(VkCommandBuffer command_buffer, int indexScene)
     {
         auto material = pair.first.first;
         auto renderingType = pair.first.second;
-        auto batchRenders = pair.second;
+        auto indirectBuffer = indirectDrawManager->getOrCreateBuffer(material);
+
+        if (indirectBuffer->isEmpty()) continue;
+
+        // Setup pipeline e descriptors
         auto pipelineKey = std::make_pair(material->getShader(), renderingType);
-        VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
         VkPipeline pipeline;
         get_or_create_pipeline(pipelineKey, pipeline, material, renderingType);
 
-        // Bind exactly il pipeline usato (obbligatorio)
-        init.disp.cmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-        // Bind descriptor sets usando il pipelineLayout corrispondente al pipeline bindato
+        init.disp.cmdBindPipeline(command_buffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
         VkPipelineLayout bindLayout = VK_NULL_HANDLE;
         int retFlag;
-        bindMaterialDescriptorsSet(pipeline, bindLayout, indexScene, material, command_buffer, retFlag);
+        bindMaterialDescriptorsSet(pipeline, bindLayout, indexScene, material,
+            command_buffer, retFlag);
         if (retFlag == 3) continue;
 
-		std::unordered_map<Mesh*, std::vector<glm::mat4>> meshInstance;
-        for (const auto& renderData : batchRenders) {
-            RenderMeshComponent* mesh = renderData.renderMesh;
-            if (!mesh)
-            {
-                std::cerr << "render_scene: renderData.renderMesh is null, skipping instance\n";
-                continue;
-            }
-            meshInstance[mesh->mesh.get()].push_back(renderData.model);
+        // ⚡ Bind vertex/index buffer UNA VOLTA per materiale
+        VkBuffer vertexBuffers[] = { geometryPool->getVertexBuffer() };
+        VkDeviceSize offsets[] = { 0 };
 
-        }
+        vkCmdBindVertexBuffers(command_buffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(command_buffer, geometryPool->getIndexBuffer(),
+            0, VK_INDEX_TYPE_UINT32);
 
-        for (const auto& renderData : batchRenders)
-        {
-            auto mesh = renderData.renderMesh;
-            if (!mesh)
-            {
-                std::cerr << "render_scene: renderData.renderMesh is null, skipping instance\n";
-                continue;
-            }
-
-            auto meshPtr = mesh->mesh.get();
-            if (!meshPtr)
-            {
-                std::cerr << "render_scene: mesh->mesh.get() is null, skipping instance\n";
-                continue;
-            }
-
-            // Recupera o crea VulkanMeshGPU in modo sicuro
-            auto [it, inserted] = meshGPUMap.try_emplace(meshPtr, *meshPtr);
-            VulkanMeshGPU& meshGPU = it->second;
-            auto rangeIt = instanceRanges.find({ meshPtr, material });
-            if (rangeIt == instanceRanges.end()) continue;
-
-            const auto& range = rangeIt->second;
-			meshGPU.drawInstanced(command_buffer, range.instanceCount, range.firstInstance);
-        }
+        // 🚀 UNA SOLA DRAW CALL per TUTTE le mesh di questo materiale!
+        indirectBuffer->executeMultiDrawIndirect(command_buffer);
     }
 
     // Esegui
-
+	indirectDrawManager->resetAll();
     cache.isDirty = false;
     cache.geometryHash = currentHash;
+}
+
+void VulkanRender::printRenderStats() {
+    size_t totalDrawCalls = 0;
+    size_t totalInstances = 0;
+
+    for (const auto& [mat, buffer] : indirectDrawManager->getBuffers()) {
+        totalDrawCalls++; // Una draw call per materiale!
+        totalInstances += buffer->getDrawCount();
+    }
+
+    std::cout << "=== RENDER STATS ===\n"
+        << "Total Materials: " << totalDrawCalls << "\n"
+        << "Total Mesh Draws: " << totalInstances << "\n"
+        << "Draw Calls: " << totalDrawCalls << " (MASSIVE REDUCTION!)\n"
+        << "====================\n";
 }
 
 void VulkanRender::get_or_create_pipeline(VulkanRender::pipelineKey& pipelineKey, VkPipeline& pipeline, std::shared_ptr<Material>& material, RenderingTypeEnum renderingType)
@@ -1393,42 +1391,79 @@ void VulkanRender::updateAllDescriptorDSet()
             auto renderingType = pair.first.second;
             const auto& batchRenders = pair.second;
 			// group by mesh
-            std::unordered_map<Mesh*, std::vector<glm::mat4>> meshInstances;
+            std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> meshInstances;
             for (const auto& renderData : batchRenders) {
-                meshInstances[renderData.renderMesh->mesh.get()].push_back(renderData.model);
+                meshInstances[renderData.renderMesh->mesh].push_back(renderData.model);
             }
+            auto indirectBuffer = indirectDrawManager->getOrCreateBuffer(material);
 
 			// add to all model matrices and record instance ranges
             for (const auto& meshPair : meshInstances) {
-                Mesh* meshPtr = meshPair.first;
+                std::shared_ptr<Mesh> meshPtr = meshPair.first;
                 const auto& matrices = meshPair.second;
 
                 uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
                 for (const auto& mat : matrices) {
                     allModelMatrices.push_back({ mat });
                 }
-
-                instanceRanges[{meshPtr, material}] = {
-                    firstInstance,
+                InstanceRange range = {
+					firstInstance,
                     static_cast<uint32_t>(matrices.size())
                 };
+                instanceRanges[{meshPtr, material}] = range;
+                auto [meshIt, inserted] = meshGPUMapPooled.try_emplace(
+                    meshPtr,
+                    std::make_shared<PooledMeshGPU>(*(meshPtr.get()), geometryPool)
+                );
+                auto& pooledMesh = meshIt->second;
+                if (!pooledMesh->isUploaded()) {
+                    pooledMesh->uploadToGPU();
+
+                    // Salva draw info per questa mesh
+                    MeshDrawInfo drawInfo;
+                    drawInfo.vertexRegion = pooledMesh->getVertexRegion();
+                    drawInfo.indexRegion = pooledMesh->getIndexRegion();
+                    drawInfo.indexCount = pooledMesh->getIndexCount();
+                    drawInfo.vertexCount = pooledMesh->getVertexCount();
+
+                    // Calcola offset in ELEMENTI (non bytes!)
+                    constexpr size_t VERTEX_STRIDE =
+                        sizeof(glm::vec3) +  // position
+                        sizeof(glm::vec4) +  // color
+                        sizeof(glm::vec2) +  // texCoord
+                        sizeof(glm::vec3);   // normal
+
+                    drawInfo.firstIndex = static_cast<uint32_t>(
+                        drawInfo.indexRegion.offset / sizeof(uint32_t)
+                        );
+                    drawInfo.vertexOffset = static_cast<int32_t>(
+                        drawInfo.vertexRegion.offset / VERTEX_STRIDE
+                        );
+
+                    meshDrawInfoMap[meshPtr] = drawInfo;
+                }
+                // Trova instance range per questa mesh+material
+
+                const auto& drawInfo = meshDrawInfoMap[meshPtr];
+
+                // Costruisci comando indirect
+                VkDrawIndexedIndirectCommand indirectCmd{};
+                indirectCmd.indexCount = drawInfo.indexCount;
+                indirectCmd.instanceCount = range.instanceCount;
+                indirectCmd.firstIndex = drawInfo.firstIndex;
+                indirectCmd.vertexOffset = drawInfo.vertexOffset;
+                indirectCmd.firstInstance = range.firstInstance;
+
+                // Aggiungi al buffer indirect
+                indirectBuffer->addDrawCommand(indirectCmd);
             }
 
+            indirectDrawManager->finalizeAll();
 
             VulkanShader* vulkanShader = static_cast<VulkanShader*>(material->getShader().get());
             material->bind();
 			material->apply();
             update_material_descriptor_set(init, data, data.current_frame, material);
-
-			// for every instance, update model (model UBO) before recording
-            for (const auto& renderData : pair.second)
-            {
-                auto mesh = renderData.renderMesh;
-                auto meshKey = mesh->mesh.get();
-                auto [it, inserted] = meshGPUMap.try_emplace(meshKey, *(mesh->mesh.get()));
-                VulkanMeshGPU& meshGPU = it->second;
-                meshGPU.uploadToGPU(); // se upload usa single-time-submit è ok farlo qui
-            }
         }
         // Aggiorna global descriptor set
 		// Aggiorna SSBO globale delle model matrices
@@ -1453,10 +1488,6 @@ void VulkanRender::updateAllDescriptorDSet()
                 BufferUsage::DYNAMIC
             );
         }
-
-       
-
-        
     }
 }
 
@@ -1514,8 +1545,7 @@ void VulkanRender::submit()
 
     data.current_frame =
         (data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-    renderScenes.clear();
+    renderScenes.clear( );
 }
 
 void VulkanRender::Shutdown()
@@ -1596,7 +1626,8 @@ void VulkanRender::Shutdown()
     // 6) Destroy mesh GPU resources
     shut_mesh_buffers();
     meshGPUMap.clear();
-
+	geometryPool->shutdown();
+	indirectDrawManager->shutdown();
     // 7) Destroy pipelines and shader resources (and pipeline layouts)
     shut_shaders();
     pipelines.clear();

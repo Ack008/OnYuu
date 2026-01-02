@@ -9,8 +9,9 @@
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include "Core/Material.h"
 #include <functional> // aggiunto per std::hash
+#include "Platform/Vulkan/VulkanBufferPool.h"
+#include "IndirectDrawSystem.h"
 namespace OnYuu {
-
     class VulkanRender : public BatchRender
     {
     public:
@@ -114,8 +115,8 @@ namespace OnYuu {
         };
         // Hash personalizzato per std::pair<Mesh*, std::shared_ptr<Material>>
         struct MeshMaterialHash {
-            std::size_t operator()(const std::pair<Mesh*, std::shared_ptr<Material>>& p) const {
-                std::size_t h1 = std::hash<Mesh*>{}(p.first);
+            std::size_t operator()(const std::pair<std::shared_ptr<Mesh>, std::shared_ptr<Material>>& p) const {
+                std::size_t h1 = std::hash<std::shared_ptr<Mesh>>{}(p.first);
                 std::size_t h2 = std::hash<void*>{}(p.second.get());
                 return h1 ^ (h2 << 1); // Combina gli hash
             }
@@ -128,7 +129,14 @@ namespace OnYuu {
             uint32_t firstInstance;
             uint32_t instanceCount;
         };
-        std::unordered_map<std::pair<Mesh*, std::shared_ptr<Material>>, InstanceRange, MeshMaterialHash> instanceRanges;
+        std::unordered_map<std::pair<std::shared_ptr<Mesh>, std::shared_ptr<Material>>, InstanceRange, MeshMaterialHash> instanceRanges;
+        std::shared_ptr<GeometryPool> geometryPool;
+        std::shared_ptr<IndirectDrawManager> indirectDrawManager;
+        std::unordered_map<std::shared_ptr<Mesh>, std::shared_ptr<PooledMeshGPU>> meshGPUMapPooled;
+
+
+        // Mappa mesh -> draw info (per costruire indirect commands)
+        std::unordered_map<std::shared_ptr<Mesh>, MeshDrawInfo> meshDrawInfoMap;
 
     public:
         Init& getInit() { return init; }
@@ -169,8 +177,10 @@ namespace OnYuu {
         void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
         void create_material_ubo(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        void printRenderStats();
         size_t calculateSceneHash(int indexScene);
         void shut_mesh_buffers();
+        void setUseIndirectDraw(bool enabled) { useIndirectDraw = enabled; }
     private:
         // Light UBO structures
         struct LightCPUStruct {
@@ -199,5 +209,6 @@ namespace OnYuu {
         void render_scene(VkCommandBuffer command_buffer, int indexScene);
         void get_or_create_pipeline(VulkanRender::pipelineKey& pipelineKey, VkPipeline& pipeline, std::shared_ptr<Material>& material, RenderingTypeEnum renderingType);
         void bindMaterialDescriptorsSet(VkPipeline& pipeline, VkPipelineLayout& bindLayout, int& indexScene, std::shared_ptr<Material>& material, VkCommandBuffer command_buffer, int& retFlag);
+        bool useIndirectDraw = false;
     };
 }

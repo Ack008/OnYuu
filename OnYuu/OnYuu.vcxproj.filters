@@ -137,6 +137,8 @@
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanTexture.cpp" />
     <ClCompile Include="vendor\xxhash.c" />
+    <ClCompile Include="Platform\Vulkan\VulkanBufferPool.cpp" />
+    <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -214,6 +216,8 @@
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
     <ClInclude Include="Platform\Vulkan\VulkanTexture.h" />
     <ClInclude Include="3DGame\scripts\lightScript.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanBufferPool.h" />
+    <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
