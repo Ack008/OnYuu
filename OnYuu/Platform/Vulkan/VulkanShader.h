@@ -35,12 +35,10 @@ namespace OnYuu {
 		// Mappa per memorizzare gli uniform e i loro offset/posizione
 		std::unordered_map<std::string, size_t> uniformData;
 		std::vector<uint8_t> uniformBuffer;
-		std::vector<std::shared_ptr<UniformBuffer>> materialBufferObject;
 		bool initialized = true;
 	public:
 		VkShaderModule getVertexShaderModule() const { return vertexShaderModule; }
 		VkShaderModule getFragmentShaderModule() const { return fragmentShaderModule; }
-		std::vector < std::shared_ptr<UniformBuffer>> getMaterialBufferObject() const { return materialBufferObject; }
 		std::vector<uint8_t>& getUniformBuffer() { return uniformBuffer; }
 	};
 }

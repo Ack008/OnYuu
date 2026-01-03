@@ -1,4 +1,4 @@
-#include "VulkanMeshGPU.h"
+/*#include "VulkanMeshGPU.h"
 #include "Platform/Vulkan/VulkanRender.h"
 #include <iostream>
 using namespace OnYuu;
@@ -251,3 +251,4 @@ void VulkanMeshGPU::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceS
 	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 	render->endSingleTimeCommands(commandBuffer);
 }
+*/

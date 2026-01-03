@@ -80,8 +80,8 @@ namespace OnYuu {
         bool isValid() const { return swapchain_.swapchain != VK_NULL_HANDLE; }
 
     private:
-        void cleanup();
         bool createFramebuffers(VkRenderPass renderPass, VkImageView depthView);
+        void cleanup();
 
         VulkanDevice* device_;
         vkb::Swapchain swapchain_;

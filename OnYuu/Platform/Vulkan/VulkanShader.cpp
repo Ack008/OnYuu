@@ -120,22 +120,15 @@ namespace OnYuu {
 			}
 		}
 		printMappingInfo();
-		int frames_in_flight = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().framebuffers.size();
-		materialBufferObject.resize(frames_in_flight);
-		for (size_t i = 0; i < frames_in_flight; i++)
-		{
-			materialBufferObject[i] = UniformBuffer::create(1, uniformBuffer.size());
-		}
+		int frames_in_flight = ((VulkanRender*)(Render::getInstance().get()))->getSwapchain()->getImageCount();
+		
 		flushCostants();
 	}
 	void VulkanShader::shutdown()
 	{
 		if (initialized)
 		{
-			for (auto& buffer : materialBufferObject)
-			{
-				buffer->shutdown();
-			}
+			
 			std::cout << "Destroying VulkanShader\n";
 			// Distruzione dei moduli shader
 			if (vertexShaderModule != VK_NULL_HANDLE) {
@@ -257,8 +250,7 @@ namespace OnYuu {
 
 	void VulkanShader::flushCostants()
 	{
-		int index = ((VulkanRender*)(Render::getInstance().get()))->getRenderData().image_index;
-		materialBufferObject[index]->setData(uniformBuffer.data(), uniformBuffer.size(), BufferUsage::DYNAMIC);
+		int index = ((VulkanRender*)(Render::getInstance().get()))->getCurrentFrame();
 	}
 
 	bool VulkanShader::isBatchingSupported() const

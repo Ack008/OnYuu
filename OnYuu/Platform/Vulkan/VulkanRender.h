@@ -1,214 +1,257 @@
 #pragma once
+#ifdef _BEBUG
+#define LOG(X) std::cout << X << std::endl;
+#else
+#define LOG(X)
+#endif
 #include "Render/BatchRenderer.h"
+#include "VulkanDevice.h"
+#include "VulkanSwapchain.h"
+#include "VulkanCommandManager.h"
+#include "VulkanSyncManager.h"
+#include "VulkanDescriptorManager.h"
+#include "VulkanPipelineManager.h"
 #include "vulkan-bts/VkBootstrap.h"
-#include "Platform/Vulkan/VulkanShader.h"
 #include "vma/vk_mem_alloc.h"
-#include "Render/Renderer.h"
 #include <GLFW/glfw3.h>
-#include "VulkanMeshGPU.h"
-#include "Platform/Vulkan/VulkanBuffer.h"
-#include "Core/Material.h"
-#include <functional> // aggiunto per std::hash
-#include "Platform/Vulkan/VulkanBufferPool.h"
-#include "IndirectDrawSystem.h"
+#include <memory>
+#include <unordered_map>
+#include "VulkanBufferPool.h"
+
 namespace OnYuu {
-    class VulkanRender : public BatchRender
-    {
+
+    /**
+     * VulkanRender - Classe principale renderer Vulkan (REFACTORED)
+     * Responsabilità: Orchestrazione dei delegate, rendering loop, gestione risorse alto livello
+     */
+    class VulkanRender : public BatchRender {
     public:
         VulkanRender();
-        ~VulkanRender();
-        virtual void BeginFrame() override;
-        void updateAllDescriptorDSet();
-        virtual void submit() override;
-        virtual void Shutdown() override;
+        ~VulkanRender() ;
+
+        // Non copiabile
+        VulkanRender(const VulkanRender&) = delete;
+        VulkanRender& operator=(const VulkanRender&) = delete;
+
+        // Override BatchRender interface
+        void BeginFrame() override;
+        void submit() override;
+        void Shutdown() override;
         void setSkyBox(SkyBoxComponent* skybox) override;
         void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
-    private:
-        struct Init {
-            vkb::Instance instance;
-            vkb::InstanceDispatchTable inst_disp;
-            VkSurfaceKHR surface;
-            vkb::Device device;
-            vkb::DispatchTable disp;
-            vkb::Swapchain swapchain;
+
+        // Accessors per i delegate (per uso esterno se necessario)
+        VkInstance getVkInstance() const { return instance_.instance; }
+        VulkanDevice* getDevice() const { return device_.get(); }
+        VulkanSwapchain* getSwapchain() const { return swapchain_.get(); }
+        VulkanCommandManager* getCommandManager() const { return commandManager_.get(); }
+        VulkanSyncManager* getSyncManager() const { return syncManager_.get(); }
+        VulkanDescriptorManager* getDescriptorManager() const { return descriptorManager_.get(); }
+        VulkanPipelineManager* getPipelineManager() const { return pipelineManager_.get(); }
+
+
+        VmaAllocator getAllocator() const { return allocator_; }
+        VkRenderPass getRenderPass() const { return renderPass_; }
+
+        // Restituisce la queue family index usata per la graphics queue
+        uint32_t getQueueFamily() const {
+            // Assumendo che VulkanDevice abbia un metodo getGraphicsQueueFamily()
+            // Se non esiste, sostituire con il modo corretto per ottenere il queue family index
+            return device_ ? device_->getGraphicsQueueFamily() : 0;
+        }
+
+        VkQueue getGraphicQueue() const { return device_->getGraphicsQueue(); }
+
+        uint32_t getCurrentFrame() const { return currentFrame_; }
+        // Struttura Init per compatibilità con getInit()
+        struct InitData {
+            VkDevice device;
+            struct {
+                uint32_t image_count;
+                VkFormat image_format;
+            } swapchain;
         };
-        struct DescriptorSetInfo {
-            VkDescriptorSetLayout descriptorSetLayout;
-            VkDescriptorSet descriptorSet;
-        };
+
+        
+
+        // Restituisce i dati di inizializzazione richiesti da ImGuiLayer
+        InitData getInit() const {
+            InitData data{};
+            data.device = device_ ? device_->getDevice() : VK_NULL_HANDLE;
+            if (swapchain_) {
+                data.swapchain.image_count = swapchain_->getImageCount();
+                data.swapchain.image_format = swapchain_->getFormat();
+            }
+            return data;
+        }
+
+
         struct RenderData {
-            VkQueue graphics_queue;
-            VkQueue present_queue;
 
-            std::vector<VkImage> swapchain_images;
-            std::vector<VkImageView> swapchain_image_views;
-            std::vector<VkFramebuffer> framebuffers;
-			VkImage depth_image;
-			VkDeviceMemory depth_image_memory;
-			VkImageView depth_image_view;
-			VkFormat depthFormat;
-			VmaAllocation depth_image_allocation;
-
-
-            VkRenderPass render_pass;
-
-
-            VkCommandPool command_pool;
-            std::vector<VkCommandBuffer> command_buffers;
-
-            VkDescriptorPool descriptors_pool;
-
-            std::vector<DescriptorSetInfo> global_descriptor;
-            std::unordered_map <int, std::vector<DescriptorSetInfo>> scene_map_descriptor;
-            std::unordered_map<std::shared_ptr<Material>, std::vector<DescriptorSetInfo>> material_map_descriptor;
-            std::vector<DescriptorSetInfo> material_descriptor;
-
-            std::vector<VkSemaphore> available_semaphores;
-            std::vector<VkSemaphore> finished_semaphore;
-            std::vector<VkFence> in_flight_fences;
-            std::vector<VkFence> image_in_flight;
-            size_t current_frame = 0;
-            uint32_t image_index = 0;
         };
-        struct SceneRenderCache {
-            std::vector<VkCommandBuffer> secondaryBuffers; // Uno per frame in flight
-            bool isDirty = true;
-            size_t geometryHash = 0; // Per invalidare cache
+        // Helper per operazioni single-time
+        VkCommandBuffer beginSingleTimeCommands();
+        void endSingleTimeCommands(VkCommandBuffer cmd);
+
+    private:
+        // ========================================================================
+        // DELEGATES - Gestiscono aree specifiche di responsabilità
+        // ========================================================================
+        std::unique_ptr<VulkanDevice> device_;
+        std::unique_ptr<VulkanSwapchain> swapchain_;
+        std::unique_ptr<VulkanCommandManager> commandManager_;
+        std::unique_ptr<VulkanSyncManager> syncManager_;
+        std::unique_ptr<VulkanDescriptorManager> descriptorManager_;
+        std::unique_ptr<VulkanPipelineManager> pipelineManager_;
+
+        // ========================================================================
+        // CORE VULKAN OBJECTS (gestiti direttamente)
+        // ========================================================================
+        vkb::Instance instance_;
+        VkSurfaceKHR surface_ = VK_NULL_HANDLE;
+        VmaAllocator allocator_ = VK_NULL_HANDLE;
+        VkRenderPass renderPass_ = VK_NULL_HANDLE;
+
+        // Depth resources
+        VkImage depthImage_ = VK_NULL_HANDLE;
+        VkImageView depthImageView_ = VK_NULL_HANDLE;
+        VmaAllocation depthAllocation_ = VK_NULL_HANDLE;
+        VkFormat depthFormat_ = VK_FORMAT_UNDEFINED;
+
+        // Window
+        GLFWwindow* window_ = nullptr;
+
+        // ========================================================================
+        // FRAME MANAGEMENT
+        // ========================================================================
+        static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+        uint32_t currentFrame_ = 0;
+        uint32_t imageIndex_ = 0;
+
+        // ========================================================================
+        // DESCRIPTOR SET LAYOUTS (condivisi tra frame)
+        // ========================================================================
+        VkDescriptorSetLayout globalDescriptorLayout_ = VK_NULL_HANDLE;
+        VkDescriptorSetLayout materialDescriptorLayout_ = VK_NULL_HANDLE;
+
+        // ========================================================================
+        // PER-SCENE RESOURCES
+        // ========================================================================
+        struct SceneResources {
+            std::vector<VkDescriptorSet> globalDescriptorSets; // uno per frame
+            std::vector<std::shared_ptr<class VulkanUniformBuffer>> cameraUbos;
+            std::vector<std::shared_ptr<class VulkanUniformBuffer>> lightUbos;
+            std::vector<std::shared_ptr<class VulkanStorageBuffer>> modelMatrixSsbos;
         };
-        std::unordered_map<int, SceneRenderCache> sceneRenderCaches;
-        VkCommandPool secondaryCommandPool;
+        std::unordered_map<int, SceneResources> sceneResources_;
 
-        typedef std::pair<std::shared_ptr<Shader>, RenderingTypeEnum > pipelineKey;
+        // ========================================================================
+        // PER-MATERIAL RESOURCES
+        // ========================================================================
+        struct MaterialResources {
+            std::vector<VkDescriptorSet> descriptorSets; // uno per frame
+            std::vector<std::shared_ptr<class VulkanUniformBuffer>> ubos;
+        };
+        std::unordered_map<std::shared_ptr<class Material>, MaterialResources> materialResources_;
 
-        // Hash ed equality personalizzate per `pipelineKey` (pair<shared_ptr<Shader>, RenderingTypeEnum>)
-        // Necessarie perchè la std::hash per std::pair non è fornita / non è utilizzabile qui.
+        // ========================================================================
+        // PIPELINE CACHE
+        // ========================================================================
+        struct PipelineKey {
+            std::shared_ptr<class Shader> shader;
+            RenderingTypeEnum renderingType;
+
+            bool operator==(const PipelineKey& other) const {
+                return shader.get() == other.shader.get() &&
+                    renderingType == other.renderingType;
+            }
+        };
+
         struct PipelineKeyHash {
-            std::size_t operator()(const pipelineKey& k) const noexcept {
-                Shader* raw = k.first ? k.first.get() : nullptr;
-                std::size_t h1 = std::hash<Shader*>{}(raw);
-                std::size_t h2 = std::hash<int>{}(static_cast<int>(k.second));
+            size_t operator()(const PipelineKey& k) const {
+                size_t h1 = std::hash<void*>{}(k.shader.get());
+                size_t h2 = std::hash<int>{}(static_cast<int>(k.renderingType));
                 return h1 ^ (h2 << 1);
             }
         };
-        struct PipelineKeyEqual {
-            bool operator()(const pipelineKey& a, const pipelineKey& b) const noexcept {
-                return a.first.get() == b.first.get() && a.second == b.second;
-            }
+
+        std::unordered_map<PipelineKey, VkPipeline, PipelineKeyHash> pipelineCache_;
+
+        // ========================================================================
+        // GEOMETRY & INDIRECT DRAW SYSTEM
+        // ========================================================================
+        std::shared_ptr<class GeometryPool> geometryPool_;
+        std::shared_ptr<class IndirectDrawManager> indirectDrawManager_;
+
+        struct MeshDrawInfo {
+            BufferRegion vertexRegion;
+            BufferRegion indexRegion;
+            uint32_t indexCount;
+            uint32_t vertexCount;
+            uint32_t firstIndex;
+            int32_t vertexOffset;
         };
+        std::unordered_map<std::shared_ptr<class Mesh>, MeshDrawInfo> meshDrawInfo_;
+        std::unordered_map<std::shared_ptr<class Mesh>, std::shared_ptr<class PooledMeshGPU>> pooledMeshes_;
 
-
-        Init init;
-        RenderData data;
-        int MAX_FRAMES_IN_FLIGHT = 3;
-        GLFWwindow* window = nullptr;
-        VmaAllocator allocator = nullptr;
-        std::vector<VkPipelineLayout> pipeline_layouts;
-
-        // Single (unique) layouts reused across frames to avoid double-creation / double-destroy issues
-        VkDescriptorSetLayout globalDescriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorSetLayout materialDescriptorSetLayout = VK_NULL_HANDLE;
-
-        // model data structures
-        struct ModelMatrixData {
-            glm::mat4 model;
-            // Padding per alignment std430 se necessario
-        };
-        // Hash personalizzato per std::pair<Mesh*, std::shared_ptr<Material>>
-        struct MeshMaterialHash {
-            std::size_t operator()(const std::pair<std::shared_ptr<Mesh>, std::shared_ptr<Material>>& p) const {
-                std::size_t h1 = std::hash<std::shared_ptr<Mesh>>{}(p.first);
-                std::size_t h2 = std::hash<void*>{}(p.second.get());
-                return h1 ^ (h2 << 1); // Combina gli hash
-            }
-        };
-        // Storage buffer per tutte le model matrices della scena
-        std::unordered_map<int, std::vector<std::shared_ptr<VulkanStorageBuffer>>> sceneModelMatricesSSBO;
-
-        // Mappa: (mesh, material) -> range di istanze nell'SSBO
-        struct InstanceRange {
-            uint32_t firstInstance;
-            uint32_t instanceCount;
-        };
-        std::unordered_map<std::pair<std::shared_ptr<Mesh>, std::shared_ptr<Material>>, InstanceRange, MeshMaterialHash> instanceRanges;
-        std::shared_ptr<GeometryPool> geometryPool;
-        std::shared_ptr<IndirectDrawManager> indirectDrawManager;
-        std::unordered_map<std::shared_ptr<Mesh>, std::shared_ptr<PooledMeshGPU>> meshGPUMapPooled;
-
-
-        // Mappa mesh -> draw info (per costruire indirect commands)
-        std::unordered_map<std::shared_ptr<Mesh>, MeshDrawInfo> meshDrawInfoMap;
-
-    public:
-        Init& getInit() { return init; }
-        RenderData& getRenderData() { return data; }
-        VmaAllocator getAllocator() { return allocator; }
-        VkCommandBuffer beginSingleTimeCommands();
-        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-    private:
-        // ora usa hash ed equal personalizzati
-        std::unordered_map<pipelineKey, VkPipeline, PipelineKeyHash, PipelineKeyEqual> pipelines;
-        std::unordered_map<Mesh*, VulkanMeshGPU> meshGPUMap;
-        std::unordered_map<std::shared_ptr<Material>, std::vector<std::shared_ptr<VulkanUniformBuffer>>> materialUboMap;
-        VkSurfaceKHR create_surface_glfw(VkInstance instance, VkAllocationCallbacks* allocator = nullptr);
-        int device_initialization(Init& init);
-        int create_swapchain(Init& init);
-        int get_queues(Init& init, RenderData& data);
-        int create_render_pass(Init& init, RenderData& data);
-        int create_framebuffers(Init& init, RenderData& data);
-        int create_command_pool(Init& init, RenderData& data);
-        int create_command_buffers(Init& init, RenderData& data);
-        int create_sync_objects(Init& init, RenderData& data);
-        int recreate_swapchain(Init& init, RenderData& data);
-        int create_allocator(VkPhysicalDevice physical_device, VkDevice device);
-        int create_descriptor_pool(Init& init, RenderData& data);
-        int create_descriptor_sets(Init& init, RenderData& data);
-        int begin_record_command_buffer(Init& init, RenderData& data, uint32_t image_index);
-        int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-        int create_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
-        int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-        int create_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
-        int create_model_descriptor_set(Init& init, RenderData& data, uint32_t image_index);
-        int create_depth_resources(Init& init, RenderData& data);
-        VkPipeline create_graphics_pipeline(Init& init, RenderData& data, std::shared_ptr<Shader> shader, RenderingTypeEnum renderingType);
-        void shut_shaders();
-        void update_material_descriptor_set(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
-        void update_light_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
-        void update_camera_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
-        void update_global_descriptor_set(Init& init, RenderData& data, uint32_t image_index, int indexScene);
-        void create_material_ubo(Init& init, RenderData& data, uint32_t image_index, std::shared_ptr<Material> material);
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-        void printRenderStats();
-        size_t calculateSceneHash(int indexScene);
-        void shut_mesh_buffers();
-        void setUseIndirectDraw(bool enabled) { useIndirectDraw = enabled; }
-    private:
-        // Light UBO structures
-        struct LightCPUStruct {
-            alignas(16) glm::vec3 lightPositions;
-            alignas(16) glm::vec3 lightColors;
+        // ========================================================================
+        // UBO DATA STRUCTURES
+        // ========================================================================
+        struct LightData {
+            alignas(16) glm::vec3 position;
+            alignas(16) glm::vec3 color;
             alignas(16) float intensity;
-        } lightData;
-        struct LightBufferStruct {
+        };
+
+        struct LightBufferData {
             alignas(16) int count;
-            alignas(16) LightCPUStruct lights[125];
-        } lightBufferData;
-        // camera UBO structures
-        struct CameraBufferStruct {
+            alignas(16) LightData lights[125];
+        };
+
+        struct CameraBufferData {
             alignas(16) glm::mat4 projection;
             alignas(16) glm::mat4 view;
-            alignas(16) glm::vec4 cameraPosition; // changed from vec3 -> vec4 to match GLSL vec4
-        } cameraBufferData;
+            alignas(16) glm::vec4 cameraPosition;
+        };
 
-        std::unordered_map<int, std::vector<std::shared_ptr<VulkanUniformBuffer>>> sceneLightUbo;
-        std::unordered_map<int, std::vector<std::shared_ptr<VulkanUniformBuffer>>> sceneCameraUbo;
+        struct ModelMatrixData {
+            glm::mat4 model;
+        };
 
+        // ========================================================================
+        // INITIALIZATION METHODS
+        // ========================================================================
+        bool initializeInstance();
+        bool initializeSurface();
+        bool initializeAllocator();
+        bool createRenderPass();
+        bool createDepthResources();
+        bool createDescriptorLayouts();
 
+        // ========================================================================
+        // RENDERING METHODS
+        // ========================================================================
+        void updateAllDescriptorSets();
+        void updateSceneDescriptors(int sceneIndex);
+        void updateMaterialDescriptors(std::shared_ptr<class Material> material);
 
-        std::vector<std::shared_ptr<VulkanUniformBuffer>> lightUbo;
-        std::vector<std::shared_ptr<VulkanUniformBuffer>> cameraUbo;
-        void render_scene(VkCommandBuffer command_buffer, int indexScene);
-        void get_or_create_pipeline(VulkanRender::pipelineKey& pipelineKey, VkPipeline& pipeline, std::shared_ptr<Material>& material, RenderingTypeEnum renderingType);
-        void bindMaterialDescriptorsSet(VkPipeline& pipeline, VkPipelineLayout& bindLayout, int& indexScene, std::shared_ptr<Material>& material, VkCommandBuffer command_buffer, int& retFlag);
-        bool useIndirectDraw = false;
+        void beginRenderPass(VkCommandBuffer cmd);
+        void endRenderPass(VkCommandBuffer cmd);
+        void renderScene(VkCommandBuffer cmd, int sceneIndex);
+
+        // Pipeline management
+        VkPipeline getOrCreatePipeline(const PipelineKey& key,
+            std::shared_ptr<class Material> material);
+
+        // ========================================================================
+        // HELPER METHODS
+        // ========================================================================
+        VkFormat findDepthFormat();
+        void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
+
+        // Cleanup
+        void cleanupDepthResources();
+        void cleanupDescriptorLayouts();
     };
-}
+
+} // namespace OnYuu

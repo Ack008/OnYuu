@@ -74,15 +74,17 @@ namespace OnYuu {
             frames_[i].image = imageVec[i];
             frames_[i].view = viewVec[i];
         }
-
         std::cout << "VulkanSwapchain: Created with " << frames_.size() << " images\n";
         std::cout << "  - Format: " << swapchain_.image_format << "\n";
         std::cout << "  - Extent: " << swapchain_.extent.width << "x" << swapchain_.extent.height << "\n";
 
         // Crea framebuffers
-        if (!createFramebuffers(renderPass, depthView)) {
-            std::cerr << "VulkanSwapchain: Failed to create framebuffers\n";
-            return false;
+        if (renderPass != VK_NULL_HANDLE && depthView != VK_NULL_HANDLE) {
+            if (!createFramebuffers(renderPass, depthView)) {
+                std::cerr << "VulkanSwapchain: Failed to create framebuffers\n";
+                return false;
+            }
+
         }
 
         return true;
@@ -97,6 +99,8 @@ namespace OnYuu {
 
         return create(surface, renderPass, depthView, config_);
     }
+
+   
 
     bool VulkanSwapchain::createFramebuffers(VkRenderPass renderPass, VkImageView depthView) {
         const auto& disp = device_->getDispatch();

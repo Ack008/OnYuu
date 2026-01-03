@@ -38,21 +38,22 @@ namespace OnYuu {
 			VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
 			ImGui_ImplGlfw_InitForVulkan(static_cast<GLFWwindow*>(app->getWindow()->getNativeWindow()), true);
 			ImGui_ImplVulkan_InitInfo init_info = {};
-			init_info.Instance = vulkanRender->getInit().instance;
-			init_info.PhysicalDevice = vulkanRender->getInit().device.physical_device;
-			init_info.Device = vulkanRender->getInit().device;
-			init_info.QueueFamily = vulkanRender->getInit().device.get_queue_index(vkb::QueueType::graphics).value();
-			init_info.Queue = vulkanRender->getRenderData().graphics_queue;
+			init_info.Instance = vulkanRender->getVkInstance();
+			init_info.PhysicalDevice = vulkanRender->getDevice()->getPhysicalDevice();
+			init_info.Device = vulkanRender->getDevice()->getDevice();
+			init_info.QueueFamily = vulkanRender->getQueueFamily();
+			init_info.Queue = vulkanRender->getGraphicQueue();
 			init_info.PipelineCache = VK_NULL_HANDLE;
 			vulkanInit(vulkanRender->getInit().device);
 			init_info.DescriptorPool = imguiDescriptorPool;
 			init_info.MinImageCount = vulkanRender->getInit().swapchain.image_count;
 			init_info.ImageCount = vulkanRender->getInit().swapchain.image_count;
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			init_info.RenderPass = vulkanRender->getRenderData().render_pass;
+			init_info.RenderPass = vulkanRender->getRenderPass();
 			init_info.PipelineRenderingCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
 			init_info.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-			init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &vulkanRender->getInit().swapchain.image_format;
+			VkFormat format = vulkanRender->getInit().swapchain.image_format;
+			init_info.PipelineRenderingCreateInfo.pColorAttachmentFormats = &format;
 
 
 			init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
@@ -126,8 +127,8 @@ namespace OnYuu {
 		case API::Vulkan:
 		{
 			VulkanRender* vulkanRender = static_cast<VulkanRender*>(Render::getInstance().get());
-			uint32_t i = vulkanRender->getRenderData().current_frame;
-			VkCommandBuffer command_buffer = vulkanRender->getRenderData().command_buffers[i];
+			uint32_t i = vulkanRender->getCurrentFrame();
+			VkCommandBuffer command_buffer = vulkanRender->getCommandManager()->getCommandBuffer(i);
 			ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer); // Esegue il rendering dei dati ImGui con Vulkan
 
 		}

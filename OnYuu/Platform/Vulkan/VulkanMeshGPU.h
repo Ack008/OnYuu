@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include "Core/Model/Components/MeshComponent.h"
 #include "Render/Buffer.h"
 #include <vulkan/vulkan.h>
@@ -47,4 +48,4 @@ private:
 	void createVertexBuffer();
 	void createIndexBuffer();
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-};
+};*/
