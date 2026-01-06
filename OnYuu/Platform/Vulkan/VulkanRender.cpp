@@ -478,7 +478,7 @@ namespace OnYuu {
         // Step 6: Begin render pass
         LOG( << "  6. Beginning render pass...\n");
         beginRenderPass(cmd);
-        LOG( << "     ✓ Render pass begun (clearing to color)\n");
+        LOG( << "  Render pass begun (clearing to color)\n");
 
         // Step 7: Render scenes
         if (renderScenes.empty()) {
