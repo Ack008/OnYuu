@@ -102,7 +102,7 @@ namespace OnYuu {
 
         // STEP 11: Sync manager
         syncManager_ = std::make_unique<VulkanSyncManager>(device_.get());
-        if (!syncManager_->initialize(MAX_FRAMES_IN_FLIGHT)) {
+        if (!syncManager_->initialize(MAX_FRAMES_IN_FLIGHT, frameCount)) {
             throw std::runtime_error("Failed to initialize sync manager");
         }
         LOG( << "✓ Sync manager initialized (" << MAX_FRAMES_IN_FLIGHT << " frames)\n");
@@ -407,10 +407,9 @@ namespace OnYuu {
     // ============================================================================
 
     void VulkanRender::BeginFrame() {
-        static int frameNumber = 0;
         frameNumber++;
 
-        LOG( << "\n=== BeginFrame #" << frameNumber << " (currentFrame=" << currentFrame_ << ") ===\n");
+        LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
 
         const auto& sync = syncManager_->getFrameSync(currentFrame_);
 
@@ -423,29 +422,47 @@ namespace OnYuu {
         LOG( << "  2. Acquiring swapchain image...\n");
         VkResult result = swapchain_->acquireNextImage(sync.imageAvailable, &imageIndex_);
 
+
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            LOG( << "     ! Swapchain out of date, recreating...\n");
+            LOG(<< "     ! Swapchain out of date, recreating...\n");
+
+            device_->waitIdle();
+
             cleanupDepthResources();
-            createDepthResources();
+
+            swapchain_->recreate(surface_, renderPass_, VK_NULL_HANDLE); // ⚠️ Passa NULL temporaneamente
+
+            if (!createDepthResources()) {
+                std::cerr << "Failed to recreate depth resources!\n";
+                return;
+            }
+
             swapchain_->recreate(surface_, renderPass_, depthImageView_);
-            return;
+
+            result = swapchain_->acquireNextImage(sync.imageAvailable, &imageIndex_);
+
+            if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+                std::cerr << "Failed to acquire image after recreate! Result: " << result << "\n";
+                syncManager_->resetFence(currentFrame_);
+                return;
+            }
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            std::cerr << "     ✗ Failed to acquire swapchain image! Result: " << result << "\n";
+            std::cerr << " Failed to acquire swapchain image! Result: " << result << "\n";
             return;
         }
 
-        LOG( << "     ✓ Acquired image " << imageIndex_ << "\n");
+        LOG( << "Acquired image " << imageIndex_ << "\n");
 
         // Step 3: Reset fence
         LOG( << "  3. Resetting fence...\n");
         syncManager_->resetFence(currentFrame_);
-        LOG( << "     ✓ Fence reset\n");
+        LOG( << " Fence reset\n");
 
         // Step 4: Update descriptors
         LOG( << "  4. Updating descriptor sets...\n");
         updateAllDescriptorSets();
-        LOG( << "     ✓ Descriptors updated\n");
+        LOG( << "  Descriptors updated\n");
 
         // Step 5: Begin command buffer
         LOG( << "  5. Recording command buffer...\n");
@@ -453,10 +470,10 @@ namespace OnYuu {
         commandManager_->reset(currentFrame_);
 
         if (!commandManager_->begin(currentFrame_)) {
-            std::cerr << "     ✗ Failed to begin command buffer!\n";
+            std::cerr << " Failed to begin command buffer!\n";
             return;
         }
-        LOG( << "     ✓ Command buffer recording started\n");
+        LOG( << "  Command buffer recording started\n");
 
         // Step 6: Begin render pass
         LOG( << "  6. Beginning render pass...\n");
@@ -475,35 +492,44 @@ namespace OnYuu {
             }
             LOG( << "     ✓ All scenes rendered\n");
         }
+
+        if (frameNumber % 60 == 0) {
+            geometryPool_->collectGarbage(frameNumber, 180); // Rimuovi mesh non usate da 3 secondi
+        }
     }
 
     void VulkanRender::submit() {
         static int submitNumber = 0;
         submitNumber++;
 
-        LOG( << "=== Submit #" << submitNumber << " ===\n");
+        LOG(<< "=== Submit #" << submitNumber << " ===\n");
 
         VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
 
         // Step 1: End render pass
-        LOG( << "  1. Ending render pass...\n");
+        LOG(<< "  1. Ending render pass...\n");
         endRenderPass(cmd);
-        LOG( << "     ✓ Render pass ended\n");
+        LOG(<< "     ✓ Render pass ended\n");
 
         // Step 2: End command buffer
-        LOG( << "  2. Ending command buffer...\n");
+        LOG(<< "  2. Ending command buffer...\n");
         if (!commandManager_->end(currentFrame_)) {
             std::cerr << "     ✗ Failed to end command buffer!\n";
             return;
         }
-        LOG( << "     ✓ Command buffer recording ended\n");
+        LOG(<< "     ✓ Command buffer recording ended\n");
 
-        const auto& sync = syncManager_->getFrameSync(currentFrame_);
+        const auto& frameSync = syncManager_->getFrameSync(currentFrame_);
+        const auto& imageSync = syncManager_->getImageSync(imageIndex_);
 
-        // Step 3: Submit to x  
-        LOG( << "  3. Submitting to graphics queue...\n");
-        VkSemaphore waitSemaphores[] = { sync.imageAvailable };
-        VkSemaphore signalSemaphores[] = { sync.renderFinished };
+        // Step 3: Wait per il fence dell'immagine (se in uso da un frame precedente)
+        LOG(<< "  3. Waiting for image fence...\n");
+        syncManager_->waitForImageFence(imageIndex_);
+
+        // Step 4: Submit to graphics queue
+        LOG(<< "  4. Submitting to graphics queue...\n");
+        VkSemaphore waitSemaphores[] = { frameSync.imageAvailable };
+        VkSemaphore signalSemaphores[] = { imageSync.renderFinished }; // ✅ USA IMMAGINE!
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
         VkSubmitInfo submitInfo{};
@@ -516,36 +542,37 @@ namespace OnYuu {
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        VkResult submitResult = vkQueueSubmit(device_->getGraphicsQueue(), 1, &submitInfo, sync.inFlight);
+        // Segnala sia frame fence che image fence
+        VkResult submitResult = vkQueueSubmit(device_->getGraphicsQueue(), 1, &submitInfo, frameSync.inFlight);
         if (submitResult != VK_SUCCESS) {
             std::cerr << "     ✗ Failed to submit draw command buffer! Result: " << submitResult << "\n";
             return;
         }
-        LOG( << "     ✓ Command buffer submitted\n");
+        LOG(<< "     ✓ Command buffer submitted\n");
 
-        // Step 4: Present
-        LOG( << "  4. Presenting image " << imageIndex_ << "...\n");
-        VkResult result = swapchain_->present(device_->getPresentQueue(), imageIndex_, sync.renderFinished);
+        // Step 5: Present
+        LOG(<< "  5. Presenting image " << imageIndex_ << "...\n");
+        VkResult result = swapchain_->present(device_->getPresentQueue(), imageIndex_, imageSync.renderFinished);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-            LOG( << "     ! Swapchain out of date/suboptimal, will recreate next frame\n");
+            LOG(<< "     ! Swapchain out of date/suboptimal, will recreate next frame\n");
         }
         else if (result != VK_SUCCESS) {
             std::cerr << "     ✗ Failed to present! Result: " << result << "\n";
         }
         else {
-            LOG( << "     ✓ Image presented successfully\n");
+            LOG(<< "     ✓ Image presented successfully\n");
         }
 
-        // Step 5: Advance frame
+        // Step 6: Advance frame
         uint32_t oldFrame = currentFrame_;
         currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
-        LOG( << "  5. Advanced frame: " << oldFrame << " → " << currentFrame_ << "\n");
+        LOG(<< "  6. Advanced frame: " << oldFrame << " → " << currentFrame_ << "\n");
 
-        // Step 6: Clear scenes
+        // Step 7: Clear scenes
         renderScenes.clear();
-        LOG( << "  6. Cleared render scenes\n");
-        LOG( << "=== Submit Complete ===\n\n");
+        LOG(<< "  7. Cleared render scenes\n");
+        LOG(<< "=== Submit Complete ===\n\n");
     }
 
     void VulkanRender::beginRenderPass(VkCommandBuffer cmd) {
@@ -799,6 +826,7 @@ namespace OnYuu {
 
             // For each mesh, create indirect command
             for (const auto& [meshPtr, matrices] : meshInstances) {
+                geometryPool_->updateMeshUsage(meshPtr, frameNumber);
                 uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
 
                 // Add all model matrices
@@ -1062,6 +1090,18 @@ namespace OnYuu {
         BatchRender::addMeshRender(mesh, model);
     }
 
+
+    void VulkanRender::removeCachedMesh(const std::shared_ptr<Mesh>& mesh) {
+        //std::lock_guard<std::mutex> lock(meshCacheMutex_); // Aggiungi mutex per thread-safety
+
+        auto it = pooledMeshes_.find(mesh);
+        if (it != pooledMeshes_.end()) {
+            std::cout << "Removing cached mesh from GPU\n";
+            it->second->shutdown(); // Libera risorse GPU
+            pooledMeshes_.erase(it);
+            meshDrawInfo_.erase(mesh);
+        }
+    }
     // ============================================================================
     // CLEANUP METHODS
     // ============================================================================

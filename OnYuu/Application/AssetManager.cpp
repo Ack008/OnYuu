@@ -101,6 +101,7 @@ namespace OnYuu {
 		loadSphere();
 		loadCylinder();
 		loadQuad();
+		loadPlane();
 		loadDefaultMaterials();
     }
     void AssetManager::loadCube()
@@ -271,8 +272,8 @@ namespace OnYuu {
             mesh->indices.push_back(i + 1);
         }
 
-        mesh->position.push_back(glm::vec3(0.0, 0.0, 0.0));
-        mesh->color.push_back(glm::vec4(0.0, 1.0, 0.0, 1.0));
+
+
     }
     void AssetManager::loadQuad()
     {
@@ -310,7 +311,7 @@ namespace OnYuu {
     void AssetManager::loadPlane()
     {
         glm::vec4 color = { 0.5,0.5,0.5,1 };
-        auto mesh = addMesh("pianoMesh", std::make_shared<Mesh>(Mesh()));
+        auto mesh = addMesh("plane", std::make_shared<Mesh>(Mesh()));
 
         mesh->position.push_back(glm::vec3(-0.5, 0.0, 0.5));
         mesh->color.push_back(color);

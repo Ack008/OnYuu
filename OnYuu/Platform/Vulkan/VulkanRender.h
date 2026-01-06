@@ -63,6 +63,7 @@ namespace OnYuu {
         VkQueue getGraphicQueue() const { return device_->getGraphicsQueue(); }
 
         uint32_t getCurrentFrame() const { return currentFrame_; }
+        void removeCachedMesh(const std::shared_ptr<Mesh>& mesh);
         // Struttura Init per compatibilità con getInit()
         struct InitData {
             VkDevice device;
@@ -127,6 +128,7 @@ namespace OnYuu {
         static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
         uint32_t currentFrame_ = 0;
         uint32_t imageIndex_ = 0;
+		uint32_t frameNumber = 0;
 
         // ========================================================================
         // DESCRIPTOR SET LAYOUTS (condivisi tra frame)

@@ -26,10 +26,11 @@ namespace OnYuu {
 
         /**
          * Inizializza oggetti di sincronizzazione
-         * @param frameCount Numero di frame in flight
+         * @param frameCount Numero di frame in flight (es. 2)
+         * @param swapchainImageCount Numero di immagini nella swapchain (es. 3)
          * @return true se successo
          */
-        bool initialize(uint32_t frameCount);
+        bool initialize(uint32_t frameCount, uint32_t swapchainImageCount = 0);
 
         /**
          * Libera tutte le risorse
@@ -42,6 +43,13 @@ namespace OnYuu {
          * @return Struttura FrameSync
          */
         const FrameSync& getFrameSync(uint32_t frameIndex) const;
+
+        /**
+         * Ottiene gli oggetti di sync per un'immagine swapchain specifica
+         * @param imageIndex Indice dell'immagine swapchain
+         * @return Struttura FrameSync
+         */
+        const FrameSync& getImageSync(uint32_t imageIndex) const;
 
         /**
          * Attende che un fence sia segnalato
@@ -57,6 +65,13 @@ namespace OnYuu {
         void resetFence(uint32_t frameIndex);
 
         /**
+         * Attende che il fence di un'immagine swapchain sia segnalato
+         * @param imageIndex Indice dell'immagine
+         * @param timeout Timeout in nanosecondi
+         */
+        void waitForImageFence(uint32_t imageIndex, uint64_t timeout = UINT64_MAX);
+
+        /**
          * Attende che tutti i fence siano segnalati
          * @param timeout Timeout in nanosecondi (default: infinito)
          */
@@ -69,10 +84,12 @@ namespace OnYuu {
 
         bool isValid() const { return !frameSyncs_.empty(); }
         uint32_t getFrameCount() const { return static_cast<uint32_t>(frameSyncs_.size()); }
+        uint32_t getImageCount() const { return static_cast<uint32_t>(imageSyncs_.size()); }
 
     private:
         VulkanDevice* device_;
-        std::vector<FrameSync> frameSyncs_;
+        std::vector<FrameSync> frameSyncs_;   // Per frame overlap CPU
+        std::vector<FrameSync> imageSyncs_;   // Per immagini swapchain
     };
 
 } // namespace OnYuu

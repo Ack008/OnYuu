@@ -7,8 +7,16 @@ void VulkanAppLayer::onUpdate(float deltaTime)
 	Render::getInstance()->BeginScene(camera.get());
 	glm::mat4 model1(1.0f);
 	model1 = glm::translate(model1, traslate);
-	Render::getInstance()->addMeshRender(&renderMesh, glm::mat4(1.0f));
+	if (Input::isKeyPressed(KeyCode::Space))
+	{
+		glm::mat4 model2(1.0f);
+		model2 = glm::translate(model2, glm::vec3(-2.0f, 0.0f, 0.0f));
+		Render::getInstance()->addMeshRender(&renderMesh, glm::mat4(1.0f));
+	}
 	Render::getInstance()->addMeshRender(&renderMesh2, model1);
+	glm::mat4 model3(1.0f);
+	model3 = glm::translate(model3, glm::vec3(-2.0f, 0.0f, 0.0f));
+	Render::getInstance()->addMeshRender(&renderMesh3, model3);
 	Render::getInstance()->EndScene();
 }
 
@@ -27,8 +35,8 @@ void VulkanAppLayer::onAttach()
 {
 	
 
-	//camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
-	camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);
+	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
+	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
 	shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
 
@@ -48,9 +56,11 @@ void VulkanAppLayer::onAttach()
 	mat2->set("diffuseMap", texture);
 
 	renderMesh.material = mat2;
-	renderMesh.mesh = AssetManager::instance().getMeshPtr("cube");
+	renderMesh.mesh = AssetManager::instance().getMeshPtr("sphere");
 	renderMesh2.mesh = AssetManager::instance().getMeshPtr("cube");
 	renderMesh2.material = mat2;
+	renderMesh3.mesh = AssetManager::instance().getMeshPtr("cylinder");
+	renderMesh3.material = mat2;
 
 }
 

@@ -1,4 +1,4 @@
-#include "VulkanBufferPool.h"
+ï»¿#include "VulkanBufferPool.h"
 #include "VulkanRender.h"
 #include <algorithm>
 #include <iostream>
@@ -12,7 +12,7 @@ namespace OnYuu {
     GeometryPool::GeometryPool(VmaAllocator allocator,  VulkanRender* renderer, VkDeviceSize initialSize)
         : allocator(allocator)
         , vertexBufferSize(initialSize)
-        , indexBufferSize(initialSize / 4) // Indices tipicamente più piccoli
+        , indexBufferSize(initialSize / 4) // Indices tipicamente piÃ¹ piccoli
         , stagingBufferSize(16 * 1024 * 1024) // 16MB staging riutilizzabile
 		, renderer(renderer)
     {
@@ -37,7 +37,7 @@ namespace OnYuu {
         vmaCreateBuffer(allocator, &indexInfo, &allocInfo,
             &indexBuffer, &indexAllocation, nullptr);
 
-        // Crea staging buffer riutilizzabile (più piccolo dei buffer finali!)
+        // Crea staging buffer riutilizzabile (piÃ¹ piccolo dei buffer finali!)
         ensureStagingBuffer(stagingBufferSize);
 
         std::cout << "GeometryPool created: Vertex=" << vertexBufferSize
@@ -51,7 +51,7 @@ namespace OnYuu {
 
     void GeometryPool::ensureStagingBuffer(VkDeviceSize requiredSize) {
         if (stagingBuffer != VK_NULL_HANDLE && stagingBufferSize >= requiredSize) {
-            return; // Già sufficientemente grande
+            return; // GiÃ  sufficientemente grande
         }
 
         // Distruggi vecchio staging
@@ -59,7 +59,7 @@ namespace OnYuu {
             vmaDestroyBuffer(allocator, stagingBuffer, stagingAllocation);
         }
 
-        // Crea nuovo staging più grande
+        // Crea nuovo staging piÃ¹ grande
         stagingBufferSize = std::max(requiredSize, stagingBufferSize * 2);
 
         VkBufferCreateInfo stagingInfo{};
@@ -212,6 +212,14 @@ namespace OnYuu {
         }
     }
 
+    void GeometryPool::defragment()
+    {
+        // Implementazione opzionale: complessa, richiede tracking delle regioni allocate
+        // e copia dei dati per compattare. Non implementata in questa versione.
+		std::cout << "Defragmentation not implemented.\n";
+
+    }
+
     void GeometryPool::growVertexBuffer(VkDeviceSize newSize) {
         std::cout << "Growing vertex buffer from " << vertexBufferSize
             << " to " << newSize << " bytes\n";
@@ -290,6 +298,78 @@ namespace OnYuu {
             indexBuffer = VK_NULL_HANDLE;
         }
     }
+    void GeometryPool::registerMesh(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame) {
+        //std::lock_guard<std::mutex> lock(trackerMutex_);
+
+        auto& info = meshUsageTracker_[mesh];
+        info.lastUsedFrame = currentFrame;
+        info.refCount = 1;
+        info.markedForDeletion = false;
+
+        std::cout << "[GeometryPool] Registered new mesh (total cached: "
+            << meshUsageTracker_.size() << ")\n";
+    }
+
+
+
+    void GeometryPool::updateMeshUsage(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame) {
+        std::lock_guard<std::mutex> lock(trackerMutex_);
+
+        auto it = meshUsageTracker_.find(mesh);
+        if (it != meshUsageTracker_.end()) {
+            it->second.lastUsedFrame = currentFrame; // âœ… Aggiorna timestamp
+            it->second.refCount++;
+        }
+        else {
+            // Mesh non ancora registrata (fallback)
+            std::cerr << "[GeometryPool] WARNING: Mesh used but not registered!\n";
+            registerMesh(mesh, currentFrame);
+        }
+    }
+
+
+    void GeometryPool::collectGarbage(uint64_t currentFrame, uint32_t framesToKeep) {
+        //std::lock_guard<std::mutex> lock(trackerMutex_);
+
+        std::vector<std::shared_ptr<Mesh>> toDelete;
+
+        std::cout << "[GC] Scanning " << meshUsageTracker_.size() << " cached meshes...\n";
+
+        for (auto it = meshUsageTracker_.begin(); it != meshUsageTracker_.end();) {
+            const auto& mesh = it->first;
+            auto& info = it->second;
+
+            uint64_t framesSinceLastUse = currentFrame - info.lastUsedFrame;
+
+            // âœ… Elimina mesh NON usate da N frame
+            if (framesSinceLastUse > framesToKeep && !info.markedForDeletion) {
+                std::cout << "[GC] Marking mesh for deletion (unused for "
+                    << framesSinceLastUse << " frames, last used: "
+                    << info.lastUsedFrame << ")\n";
+
+                info.markedForDeletion = true;
+                toDelete.push_back(mesh);
+            }
+
+            ++it;
+        }
+
+        // Elimina mesh marchiate
+        if (!toDelete.empty()) {
+            std::cout << "[GC] Deleting " << toDelete.size() << " meshes...\n";
+
+            for (const auto& mesh : toDelete) {
+                renderer->removeCachedMesh(mesh); // Libera risorse GPU
+                meshUsageTracker_.erase(mesh);
+            }
+
+            std::cout << "[GC] Remaining cached meshes: " << meshUsageTracker_.size() << "\n";
+        }
+        else {
+            std::cout << "[GC] No meshes to delete\n";
+        }
+    }
+
 
     // ============================================================================
     // PooledMeshGPU Implementation
@@ -350,12 +430,7 @@ namespace OnYuu {
 
         uploaded = true;
 
-        // Libera memoria CPU
-        mesh.position.clear();
-        mesh.color.clear();
-        mesh.texCoord.clear();
-        mesh.normal.clear();
-        mesh.indices.clear();
+        
 
         std::cout << "Uploaded mesh to pool: Vertex offset=" << vertexRegion.offset
             << " Index offset=" << indexRegion.offset << "\n";

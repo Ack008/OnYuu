@@ -1,10 +1,14 @@
-#pragma once
+﻿#pragma once
 #include <vulkan/vulkan.h>
 #include "Core/Model/Components/MeshComponent.h"
 #include <vma/vk_mem_alloc.h>
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <atomic>
+#include <mutex>
+
+
 
 namespace OnYuu {
     class VulkanRender;
@@ -15,6 +19,14 @@ namespace OnYuu {
         VkDeviceSize size = 0;
         uint32_t poolIndex = 0;
     };
+
+    // Tracking per mesh usage
+    struct MeshUsageInfo {
+        uint64_t lastUsedFrame = 0;
+        std::atomic<uint32_t> refCount{ 0 };
+        bool markedForDeletion = false;
+    };
+
 
     // Pool di geometry (vertex + index buffer unificati)
     class GeometryPool {
@@ -39,7 +51,15 @@ namespace OnYuu {
 
         VkBuffer getVertexBuffer() const { return vertexBuffer; }
         VkBuffer getIndexBuffer() const { return indexBuffer; }
+        // ✅ RINOMINA: markMeshUsed -> updateMeshUsage (più chiaro)
+        void updateMeshUsage(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
 
+
+        // ✅ NUOVO: Inizializza tracking quando la mesh viene uploadata
+        void registerMesh(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
+
+        // ✅ Garbage collection basato su LRU (Least Recently Used)
+        void collectGarbage(uint64_t currentFrame, uint32_t framesToKeep = 180);
         void shutdown();
 
     private:
@@ -75,6 +95,13 @@ namespace OnYuu {
         void growVertexBuffer(VkDeviceSize newSize);
         void growIndexBuffer(VkDeviceSize newSize);
 		VulkanRender* renderer = nullptr;
+
+
+
+        
+        // Tracking delle mesh
+        std::unordered_map<std::shared_ptr<Mesh>, MeshUsageInfo> meshUsageTracker_;
+        std::mutex trackerMutex_;
     };
 
     // Mesh modificata per usare il pool

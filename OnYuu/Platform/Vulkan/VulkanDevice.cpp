@@ -1,4 +1,4 @@
-#include "VulkanDevice.h"
+﻿#include "VulkanDevice.h"
 
 namespace OnYuu {
 
@@ -65,19 +65,33 @@ namespace OnYuu {
 
         vkb::PhysicalDevice physicalDevice = physDeviceRet.value();
 
-        // Setup descriptor indexing features
-        VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
-        indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-        indexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-        indexingFeatures.runtimeDescriptorArray = VK_TRUE;
-        indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-        indexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+        // ✅ Usa VkPhysicalDeviceVulkan12Features per Vulkan 1.2+
+        VkPhysicalDeviceVulkan12Features vulkan12Features{};
+        vulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        vulkan12Features.runtimeDescriptorArray = VK_TRUE;
+        vulkan12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+		vulkan12Features.shaderStorageImageArrayNonUniformIndexing = VK_TRUE;
+        vulkan12Features.descriptorBindingPartiallyBound = VK_TRUE;
+        vulkan12Features.descriptorBindingVariableDescriptorCount = VK_TRUE;
+        vulkan12Features.descriptorIndexing = VK_TRUE;
+		vulkan12Features.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+        vulkan12Features.runtimeDescriptorArray = VK_TRUE;
+		vulkan12Features.pNext = nullptr;
+		vulkan12Features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+
+        // ✅ Abilita multiDrawIndirect e altre features base
+        VkPhysicalDeviceFeatures2 deviceFeatures2{};
+        deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        deviceFeatures2.features.multiDrawIndirect = VK_TRUE;
+        deviceFeatures2.features.drawIndirectFirstInstance = VK_TRUE;
+        deviceFeatures2.pNext = &vulkan12Features;
 
         // Crea logical device
         vkb::DeviceBuilder deviceBuilder{ physicalDevice };
 
         auto deviceRet = deviceBuilder
-            .add_pNext(&indexingFeatures)
+            .add_pNext(&deviceFeatures2)
+			.add_pNext(&vulkan12Features)
             .build();
 
         if (!deviceRet) {
