@@ -11,64 +11,56 @@ OnYuu::OpenGLMetaShader::OpenGLMetaShader(const std::string& filename)
 
 void OnYuu::OpenGLMetaShader::setUniformMat4(const char* name, const float* value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformMat4(transformedName.c_str(), value);
-	}
+	getShader()->setUniformMat4(getUniformName(name).c_str(), value);	
 }
 
 void OnYuu::OpenGLMetaShader::setUniformInt(const char* name, int value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformInt(transformedName.c_str(), value);
-	}
+	getShader()->setUniformInt(getUniformName(name).c_str(), value);	
 }
 
 void OnYuu::OpenGLMetaShader::setUniformFloat(const char* name, float value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformFloat(transformedName.c_str(), value);
-	}
+	getShader()->setUniformFloat(getUniformName(name).c_str(), value);
 }
 
 void OnYuu::OpenGLMetaShader::setUniformVec2(const char* name, const float* value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformVec2(transformedName.c_str(), value);
-	}
+	getShader()->setUniformVec2(getUniformName(name).c_str(), value);
 }
 
 void OnYuu::OpenGLMetaShader::setUniformVec3(const char* name, const float* value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformVec3(transformedName.c_str(), value);
-	}
+	getShader()->setUniformVec3(getUniformName(name).c_str(), value);
 }
 
 void OnYuu::OpenGLMetaShader::setUniformVec4(const char* name, const float* value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformVec4(transformedName.c_str(), value);
-	}
+	getShader()->setUniformVec4(getUniformName(name).c_str(), value);
 }
 
 void OnYuu::OpenGLMetaShader::setUniformMat3(const char* name, const float* value)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformMat3(transformedName.c_str(), value);
-	}
+	getShader()->setUniformMat3(getUniformName(name).c_str(), value);
 }
 
 void OnYuu::OpenGLMetaShader::setUniformMat4(const char* name, const float* value, int count)
 {
-	if (glVisitor.getUsedRandomizedNames().count(name) > 0) {
-		std::string transformedName = glVisitor.getRandomizedNames().at(name).c_str();
-		getShader()->setUniformMat4(transformedName.c_str(), value, count);
+	getShader()->setUniformMat4(getUniformName(name).c_str(), value, count);
+}
+
+std::string OnYuu::OpenGLMetaShader::getUniformName(const std::string& originalName)
+{
+#ifdef DEBUG
+	std::cout << "Used Randomized Names:" << std::endl;
+	for (const auto& name : glVisitor.getUsedRandomizedNames()) {
+		std::cout << " - " << name << std::endl;
 	}
+
+#endif // DEBUG
+
+	if (glVisitor.getRandomizedNames().count(originalName) > 0) {
+		return glVisitor.getRandomizedNames().at(originalName);
+	}
+	return originalName;
 }

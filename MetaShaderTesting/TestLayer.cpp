@@ -44,23 +44,26 @@ void MetaShaderTestLayer::onAttach()
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
 	//shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
 
-	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(metaShader->getShader()));
-	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(metaShader->getShader()));
+	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(metaShader));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(metaShader));
 
 
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
 	auto texture2 = AssetManager::instance().addTexture("ai", Texture::createTexture("Asset/Texture/ai.png"));
 
 	mat->set("color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	mat->set("tex", texture);
 
-	mat2->set("color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	mat2->set("color", glm::vec4(1.0f, .0f, 1.0f, 1.0f));
+	mat2->set("tex", texture2);
 
-	renderMesh.material = mat2;
+
+	renderMesh.material = mat;
 	renderMesh.mesh = AssetManager::instance().getMeshPtr("sphere");
 	renderMesh2.mesh = AssetManager::instance().getMeshPtr("cube");
 	renderMesh2.material = mat2;
 	renderMesh3.mesh = AssetManager::instance().getMeshPtr("cylinder");
-	renderMesh3.material = mat2;
+	renderMesh3.material = mat;
 
 }
 

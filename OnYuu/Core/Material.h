@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include "Shader.h"
 #include "Texture.h"
+#include "MetaShader.h"
 namespace OnYuu {
 // Material: incapsula le proprietà necessarie per il rendering (uniforms,
 // shader utilizzato, ecc.). È un livello di astrazione sopra lo `Shader` e
@@ -18,6 +19,7 @@ public:
 		glm::mat3, glm::mat4, std::shared_ptr<Texture>>;
 
 	Material(std::shared_ptr<Shader> shader);
+	Material(std::shared_ptr<MetaShader> metaShader);
 	Material(const Material&) = default;
 	Material(Material&&) noexcept = default;
 	Material& operator=(const Material&) = default;
@@ -53,6 +55,7 @@ public:
 
 private:
 	std::shared_ptr<Shader> _shader;
+	std::shared_ptr<MetaShader> _metaShader;
 	// Mappa dei uniform da applicare allo shader
 	std::unordered_map<std::string, UniformValue> uniforms_;
 	// Traccia quali uniform sono già stati impostati (per evitare set ridondanti)

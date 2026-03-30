@@ -4,6 +4,12 @@ Material::Material(std::shared_ptr<Shader> shader)
 	: _shader(shader)
 {
 }
+Material::Material(std::shared_ptr<MetaShader> metaShader)
+	: _metaShader(metaShader), _shader(metaShader->getShader())
+{
+}
+
+
 void Material::set(const std::string& name, const UniformValue& value)
 {
 	uniforms_[name] = value;
@@ -36,29 +42,61 @@ void Material::apply()
 		std::visit([&](auto&& arg) {
 			using T = std::decay_t<decltype(arg)>;
 				if constexpr (std::is_same_v<T, int>) {
-					_shader->setUniformInt(name.c_str(), arg);
+					if(_metaShader) {
+						_metaShader->setUniformInt(name.c_str(), arg);
+					}
+					else
+						_shader->setUniformInt(name.c_str(), arg);
 				}
 				else if constexpr (std::is_same_v<T, float>) {
-					_shader->setUniformFloat(name.c_str(), arg);
+					if(_metaShader) {
+						_metaShader->setUniformFloat(name.c_str(), arg);
+					}
+					else
+						_shader->setUniformFloat(name.c_str(), arg);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec2>) {
-					_shader->setUniformVec2(name.c_str(), &arg[0]);
+					if(_metaShader) {
+						_metaShader->setUniformVec2(name.c_str(), &arg[0]);
+					}
+					else
+						_shader->setUniformVec2(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec3>) {
+					if(_metaShader) {
+						_metaShader->setUniformVec3(name.c_str(), &arg[0]);
+					}
+					else
 					_shader->setUniformVec3(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec4>) {
+					if(_metaShader) {
+						_metaShader->setUniformVec4(name.c_str(), &arg[0]);
+					}
+					else
 					_shader->setUniformVec4(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::mat3>) {
+					if(_metaShader) {
+						_metaShader->setUniformMat3(name.c_str(), &arg[0][0]);
+					}
+					else
 					_shader->setUniformMat3(name.c_str(), &arg[0][0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::mat4>) {
+					if(_metaShader) {
+						_metaShader->setUniformMat4(name.c_str(), &arg[0][0]);
+					}
+					else
 					_shader->setUniformMat4(name.c_str(), &arg[0][0]);
 				}
 				else if constexpr (std::is_same_v<T, std::shared_ptr<Texture>>) {
 					if (arg) {
 						arg->bind(slot);
+						if(_metaShader) {
+							_metaShader->setUniformInt(name.c_str(), slot);
+						}
+						else
 						_shader->setUniformInt(name.c_str(), slot);
 						textures_.push_back(arg);
 						slot++;

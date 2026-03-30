@@ -22,6 +22,7 @@ namespace OnYuu {
 		virtual void setUniformVec3(const char* name, const float* value) = 0;
 		virtual void setUniformVec4(const char* name, const float* value) = 0;
 		virtual void setUniformMat3(const char* name, const float* value) = 0;
+		virtual std::string getUniformName(const std::string& originalName) = 0;
 		virtual void setUniformMat4(const char* name, const float* value, int count) = 0;
 		bool hasErrors() const { return sem.hasErrors(); }
 		static std::shared_ptr<MetaShader> create(const std::string& filename);
