@@ -17,6 +17,9 @@ namespace OnYuu {
 		// Non chiamare funzioni OpenGL qui: il contesto potrebbe non essere pronto.
 		// Inizializziamo il VAO in modo lazy durante draw().
 		vao = 0;
+		cameraUBO = UniformBuffer::create(2, sizeof(CameraInfo));
+		lightsUBO = UniformBuffer::create(1, sizeof(LightInfo));
+
 	}
 	void OpenGLBatchRender::submit()
 	{
@@ -30,8 +33,29 @@ namespace OnYuu {
 		glClearColor(0.1, 0.2, 0.7, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Pulisce il buffer colore
 		for (RenderScene& scene : renderScenes) {
+			BindGlobalVariables(scene);
 			drawScene(scene);
 		}
+	}
+
+	void OpenGLBatchRender::BindGlobalVariables(OnYuu::BatchRender::RenderScene& scene)
+	{
+		CameraInfo camInfo;
+		camInfo.position = glm::vec4(scene.activeCamera->getPosition(), 1.0f);
+		camInfo.view = scene.activeCamera->getViewMatrix();
+		camInfo.projection = scene.activeCamera->getProjectionMatrix();
+		cameraUBO->bind();
+		cameraUBO->updateData(&camInfo, sizeof(CameraInfo), 0);
+		LightInfo lightInfo;
+		lightInfo.count = static_cast<int>(scene.sceneLight.size());
+		for (size_t i = 0; i < scene.sceneLight.size() && i < 128; ++i) {
+			const auto& light = scene.sceneLight[i];
+			lightInfo.lights[i].position = glm::vec4(light.position, 1.0f);
+			lightInfo.lights[i].intensity = light.light.intensity;
+			lightInfo.lights[i].color = light.light.color;
+		}
+		lightsUBO->bind();
+		lightsUBO->updateData(&lightInfo, sizeof(LightInfo), 0);
 	}
 
 	void OpenGLBatchRender::drawSkybox(RenderScene& scene)
@@ -72,6 +96,7 @@ namespace OnYuu {
 	}
 	void OpenGLBatchRender::drawScene(RenderScene& scene)
 	{
+	
 		auto batches = scene.batches;
 		for (const auto& pair : batches) {
 			const BatchCouple& key = pair.first;
@@ -84,7 +109,7 @@ namespace OnYuu {
 			}
 			for (RenderData rd : pair.second) {
 				if (key.first) {
-					key.first->set("u_modelMatrix", rd.model);
+					key.first->set("u_model", rd.model);
 					key.first->apply();
 				}
 

@@ -52,7 +52,8 @@ private:
 
 public:
     OpenGLVisitor(const SemanticVisitor* analyzer = nullptr);
-
+	std::unordered_set <std::string> getUsedRandomizedNames() const { return usedRandomizedNames; }
+	std::unordered_map<std::string, std::string> getRandomizedNames() const { return randomizedNames; }
     void visit(VarDeclStmt* stmt) override;
     void visit(BlockStmt* stmt) override;
     void visit(IfStmt* stmt) override;
@@ -89,4 +90,7 @@ public:
 
     void printFragmentShader() const;
     void printVertexShader() const;
+
+	std::string getFragmentShaderCode() const { return fragmentShaderCode_; }
+	std::string getVertexShaderCode() const { return vertexShaderCode_; }
 };

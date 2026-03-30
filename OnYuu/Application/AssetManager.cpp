@@ -83,7 +83,16 @@ namespace OnYuu {
         return getCubeMapPtr(name).get();
     }
 
-
+    std::shared_ptr<Shader> AssetManager::addShader(const std::string& name, std::shared_ptr<Shader> shader)
+    {
+        shaders_[name] = std::move(shader);
+        return shaders_[name];
+	}
+    std::shared_ptr<Shader> AssetManager::getShaderPtr(const std::string& name) const
+    {
+        auto it = shaders_.find(name);
+        return it != shaders_.end() ? it->second : nullptr;
+	}
     void AssetManager::shutdown() {
         for (auto& [name, texture] : textures_) {
             if (texture) {

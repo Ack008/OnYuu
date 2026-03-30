@@ -33,7 +33,8 @@ void VulkanAppLayer::onImGuiRender()
 
 void VulkanAppLayer::onAttach()
 {
-	
+	// Testing meta shader
+	std::shared_ptr<MetaShader> metaShader = MetaShader::create("Asset/Meta-shader/firstShader.meta");
 
 	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
 	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);

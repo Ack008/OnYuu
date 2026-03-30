@@ -95,7 +95,7 @@ namespace OnYuu {
 		//Generiamo un identificativo per il vertex shader
 		GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
 		//Associamo all'identificativo il codice del vertex shader
-		glShaderSource(vertexShaderId, 1, (const char**)&VertexShader, NULL);
+		glShaderSource(vertexShaderId, 1, (const char**)&vertexfilename, NULL);
 		//Compiliamo il Vertex SHader
 		glCompileShader(vertexShaderId);
 
@@ -114,7 +114,7 @@ namespace OnYuu {
 
 		//Generiamo un identificativo per il FRAGMENT shader
 		GLuint fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource(fragmentShaderId, 1, (const char**)&FragmentShader, NULL);
+		glShaderSource(fragmentShaderId, 1, (const char**)&fragmentfilename, NULL);
 		//Compiliamo il FRAGMENT SHader
 		glCompileShader(fragmentShaderId);
 

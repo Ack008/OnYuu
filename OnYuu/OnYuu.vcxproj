@@ -77,10 +77,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions); ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4;$(SolutionDir)MetaShader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,10 +95,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions); ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4;$(SolutionDir)MetaShader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,10 +111,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions); ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4;$(SolutionDir)MetaShader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,10 +129,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions); ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include;$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories)$(SolutionDir)Dependencies;$(SolutionDir)Dependencies\include;$(SolutionDir)Dependencies/ImGui;$(SolutionDir)$(SolutionName);%(AdditionalIncludeDirectories);$(VULKAN_SDK)Include;$(VULKAN_SDK)\Include;$(SolutionDir)Antlr4;$(SolutionDir)MetaShader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,8 +147,10 @@
     <ClCompile Include="Application\MeshImporter.cpp" />
     <ClCompile Include="Application\Project.cpp" />
     <ClCompile Include="Core\CubeMap.cpp" />
+    <ClCompile Include="Core\MetaShader.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
@@ -216,6 +218,7 @@
     <ClInclude Include="Application\MeshImporter.h" />
     <ClInclude Include="Application\Project.h" />
     <ClInclude Include="Core\CubeMap.h" />
+    <ClInclude Include="Core\MetaShader.h" />
     <ClInclude Include="Core\Model\Components\Lights.h" />
     <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
     <ClInclude Include="Core\Model\Ray.h" />
@@ -225,6 +228,7 @@
     <ClInclude Include="Application\AssetManager.h" />
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />

@@ -45,6 +45,7 @@
 #include "Core/RenderingTypeEnum.h"
 #include "Core/Model/Components/MeshComponent.h"
 #include "Material.h"
+#include "MetaShader.h"
 #include "Shader.h"
 #include "Render/Buffer.h"
 #include "Render/RenderCommand.h"

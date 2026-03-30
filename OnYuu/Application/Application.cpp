@@ -16,15 +16,15 @@ namespace OnYuu {
 
 		imGuiLayer = new ImGuiLayer();
 		imGuiLayer->onAttach();
-		//globalDataUBO = UniformBuffer::create();
-		//globalDataUBO->setData(nullptr, sizeof(GlobalData), BufferUsage::DYNAMIC);
+		globalDataUBO = UniformBuffer::create();
+		globalDataUBO->setData(nullptr, sizeof(GlobalData), BufferUsage::DYNAMIC);
 	}
 
 	void Application::Run()
 	{
 		while (!window->shouldClose()) {
 			window->beginFrame();
-			//sendGlobalShaderData();
+			sendGlobalShaderData();
 
 			//Updating layers
 			for (Layer* layer : layers) {

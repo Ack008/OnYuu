@@ -16,12 +16,30 @@ namespace OnYuu {
 		virtual void submit() override;
 		virtual void Shutdown() override;
 		virtual void BeginFrame() override;
+		void BindGlobalVariables(OnYuu::BatchRender::RenderScene& scene);
 		OpenGLBatchRender();
 		~OpenGLBatchRender();
 	private:
 		void drawSkybox(RenderScene& scene);
 		void drawScene(RenderScene& scene);
 	private:
+		struct CameraInfo {
+			glm::mat4 view;
+			glm::mat4 projection;
+			glm::vec4 position;
+		};
+		struct Light {
+			glm::vec4 position;
+			float intensity;
+			glm::vec4 color;
+		};
+		struct LightInfo {
+			int count;
+			Light lights[128];
+		};
+		std::shared_ptr<UniformBuffer> cameraUBO;
+		std::shared_ptr<UniformBuffer> lightsUBO;
+
 		struct VertexBuffer {
 			GLuint vbo;
 			size_t usedSize = 0;

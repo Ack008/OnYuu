@@ -138,6 +138,8 @@
     <ClCompile Include="Platform\Vulkan\VulkanDescriptorManager.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanPipelineManager.cpp" />
     <ClCompile Include="Application\Project.cpp" />
+    <ClCompile Include="Core\MetaShader.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -223,6 +225,8 @@
     <ClInclude Include="Platform\Vulkan\VulkanDescriptorManager.h" />
     <ClInclude Include="Platform\Vulkan\VulkanPipelineManager.h" />
     <ClInclude Include="Application\Project.h" />
+    <ClInclude Include="Core\MetaShader.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">
