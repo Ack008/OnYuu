@@ -168,6 +168,7 @@
     <ClInclude Include="SemanticVisitor.h" />
     <ClInclude Include="shaderInfo.h" />
     <ClInclude Include="Variable.h" />
+    <ClInclude Include="VulkanVisitor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLSLLexer.cpp" />
@@ -183,6 +184,7 @@
     <ClCompile Include="GLSLPreParserVisitor.cpp" />
     <ClCompile Include="OpenGLVisitor.cpp" />
     <ClCompile Include="SemanticVisitor.cpp" />
+    <ClCompile Include="VulkanVisitor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

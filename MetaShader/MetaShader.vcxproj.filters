@@ -83,6 +83,9 @@
     <ClInclude Include="Variable.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="VulkanVisitor.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLSLLexer.cpp">
@@ -122,6 +125,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="SemanticVisitor.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanVisitor.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
