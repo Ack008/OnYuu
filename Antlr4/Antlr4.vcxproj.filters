@@ -1,0 +1,942 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="File di origine">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="File di intestazione">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="File di risorse">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="atn\ActionTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\AmbiguityInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ArrayPredictionContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATN.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNConfig.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNConfigSet.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNDeserializationOptions.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNDeserializer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNSimulator.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ATNStateType.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\AtomTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ContextSensitivityInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\DecisionEventInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\DecisionInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\DecisionState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\EpsilonTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ErrorInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerActionExecutor.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerATNConfig.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerATNSimulator.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerChannelAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerCustomAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerIndexedCustomAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerModeAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerMoreAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerPopModeAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerPushModeAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerSkipAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LexerTypeAction.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LL1Analyzer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\LookaheadEventInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\NotSetTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\OrderedATNConfigSet.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ParseInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ParserATNSimulator.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PrecedencePredicateTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredicateEvalInfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredicateTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredictionContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredictionContextCache.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredictionContextMergeCache.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\PredictionMode.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\ProfilingATNSimulator.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\RangeTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\RuleTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\SemanticContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\SetTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\SingletonPredictionContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\StarLoopbackState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\Transition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\TransitionType.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="atn\WildcardTransition.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="dfa\DFA.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="dfa\DFASerializer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="dfa\DFAState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="dfa\LexerDFASerializer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="internal\Synchronization.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\InterpreterDataReader.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\Interval.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\IntervalSet.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\MurmurHash.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\Predicate.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="support\Any.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="support\Arrays.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="support\CPPUtils.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="support\StringUtils.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="support\Utf8.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\Chunk.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\ParseTreeMatch.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\ParseTreePattern.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\ParseTreePatternMatcher.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\RuleTagToken.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\TagChunk.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\TextChunk.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\pattern\TokenTagToken.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPath.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathLexer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathLexerErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathRuleAnywhereElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathRuleElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathTokenAnywhereElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathTokenElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathWildcardAnywhereElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\xpath\XPathWildcardElement.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\ErrorNodeImpl.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\IterativeParseTreeWalker.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\ParseTree.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\ParseTreeListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\ParseTreeVisitor.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\ParseTreeWalker.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\TerminalNodeImpl.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="tree\Trees.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ANTLRErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ANTLRErrorStrategy.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ANTLRFileStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ANTLRInputStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="BailErrorStrategy.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferedTokenStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="CharStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonToken.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonTokenFactory.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonTokenStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="DefaultErrorStrategy.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="DiagnosticErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Exceptions.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="FailedPredicateException.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="InputMismatchException.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="InterpreterRuleContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="IntStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Lexer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="LexerInterpreter.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="LexerNoViableAltException.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ListTokenSource.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="NoViableAltException.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ParserInterpreter.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ParserRuleContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="ProxyErrorListener.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="RecognitionException.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Recognizer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="RuleContext.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="RuleContextWithAltNum.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="RuntimeMetaData.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Token.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenSource.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenStreamRewriter.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="UnbufferedCharStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="UnbufferedTokenStream.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Vocabulary.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="WritableToken.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="atn\ActionTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\AmbiguityInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ArrayPredictionContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATN.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNConfig.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNConfigSet.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNDeserializationOptions.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNDeserializer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNSimulator.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNStateType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ATNType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\AtomTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\BasicBlockStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\BasicState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\BlockEndState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\BlockStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ContextSensitivityInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\DecisionEventInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\DecisionInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\DecisionState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\EpsilonTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ErrorInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\HashUtils.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerActionExecutor.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerActionType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerATNConfig.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerATNSimulator.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerChannelAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerCustomAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerIndexedCustomAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerModeAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerMoreAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerPopModeAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerPushModeAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerSkipAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LexerTypeAction.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LL1Analyzer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LookaheadEventInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\LoopEndState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\NotSetTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\OrderedATNConfigSet.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ParseInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ParserATNSimulator.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ParserATNSimulatorOptions.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PlusBlockStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PlusLoopbackState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PrecedencePredicateTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredicateEvalInfo.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredicateTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionContextCache.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionContextMergeCache.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionContextMergeCacheOptions.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionContextType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\PredictionMode.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\ProfilingATNSimulator.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\RangeTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\RuleStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\RuleStopState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\RuleTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\SemanticContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\SemanticContextType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\SerializedATNView.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\SetTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\SingletonPredictionContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\StarBlockStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\StarLoopbackState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\StarLoopEntryState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\TokensStartState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\Transition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\TransitionType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="atn\WildcardTransition.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="dfa\DFA.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="dfa\DFASerializer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="dfa\DFAState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="dfa\LexerDFASerializer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="internal\Synchronization.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\InterpreterDataReader.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\Interval.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\IntervalSet.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\MurmurHash.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\Predicate.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Any.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Arrays.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\BitSet.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Casts.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\CPPUtils.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Declarations.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\StringUtils.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Unicode.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="support\Utf8.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\Chunk.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\ParseTreeMatch.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\ParseTreePattern.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\ParseTreePatternMatcher.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\RuleTagToken.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\TagChunk.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\TextChunk.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\pattern\TokenTagToken.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPath.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathLexer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathLexerErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathRuleAnywhereElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathRuleElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathTokenAnywhereElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathTokenElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathWildcardAnywhereElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\xpath\XPathWildcardElement.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\AbstractParseTreeVisitor.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ErrorNode.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ErrorNodeImpl.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\IterativeParseTreeWalker.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTree.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTreeListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTreeProperty.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTreeType.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTreeVisitor.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\ParseTreeWalker.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\TerminalNode.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\TerminalNodeImpl.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="tree\Trees.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="antlr4-common.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="antlr4-runtime.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ANTLRErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ANTLRErrorStrategy.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ANTLRFileStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ANTLRInputStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="BailErrorStrategy.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferedTokenStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="CharStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonToken.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonTokenFactory.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonTokenStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="DefaultErrorStrategy.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="DiagnosticErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Exceptions.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="FailedPredicateException.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="FlatHashMap.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="FlatHashSet.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="InputMismatchException.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="InterpreterRuleContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="IntStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Lexer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="LexerInterpreter.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="LexerNoViableAltException.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ListTokenSource.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="NoViableAltException.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ParserInterpreter.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ParserRuleContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="ProxyErrorListener.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="RecognitionException.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Recognizer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="RuleContext.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="RuleContextWithAltNum.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="RuntimeMetaData.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenFactory.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenSource.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenStreamRewriter.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="UnbufferedCharStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="UnbufferedTokenStream.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Version.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Vocabulary.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="WritableToken.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
