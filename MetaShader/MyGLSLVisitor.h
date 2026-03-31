@@ -13,38 +13,40 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         if (!ctx) return;
 
         auto collectFields = [&](GLSLParser::Struct_declaration_listContext* listCtx,
-                                 StructInfo& outInfo) {
-            if (!listCtx) return;
+            StructInfo& outInfo) {
+                if (!listCtx) return;
 
-            for (auto* decl : listCtx->struct_declaration()) {
-                if (!decl || !decl->type_specifier() || !decl->struct_declarator_list()) {
-                    continue;
-                }
-
-                const std::string fieldType = decl->type_specifier()->getText();
-                for (auto* var : decl->struct_declarator_list()->struct_declarator()) {
-                    if (!var || !var->IDENTIFIER()) continue;
-
-                    int arraySize = -1;
-                    if (auto* arr = var->array_specifier()) {
-                        if (!arr->dimension().empty()) {
-                            auto* ce = arr->dimension(0)->constant_expression();
-                            if (ce) {
-                                try {
-                                    arraySize = std::stoi(ce->getText());
-                                } catch (...) {
-                                    arraySize = -1;
-                                }
-                            }
-                        } else {
-                            arraySize = 0;
-                        }
+                for (auto* decl : listCtx->struct_declaration()) {
+                    if (!decl || !decl->type_specifier() || !decl->struct_declarator_list()) {
+                        continue;
                     }
 
-                    outInfo.fields.push_back({fieldType, var->IDENTIFIER()->getText(), "", arraySize});
+                    const std::string fieldType = decl->type_specifier()->getText();
+                    for (auto* var : decl->struct_declarator_list()->struct_declarator()) {
+                        if (!var || !var->IDENTIFIER()) continue;
+
+                        int arraySize = -1;
+                        if (auto* arr = var->array_specifier()) {
+                            if (!arr->dimension().empty()) {
+                                auto* ce = arr->dimension(0)->constant_expression();
+                                if (ce) {
+                                    try {
+                                        arraySize = std::stoi(ce->getText());
+                                    }
+                                    catch (...) {
+                                        arraySize = -1;
+                                    }
+                                }
+                            }
+                            else {
+                                arraySize = 0;
+                            }
+                        }
+
+                        outInfo.fields.push_back({ fieldType, var->IDENTIFIER()->getText(), "", arraySize });
+                    }
                 }
-            }
-        };
+            };
 
         GLSLParser::Struct_specifierContext* structCtx = nullptr;
         if (auto* idl = ctx->init_declarator_list()) {
@@ -78,9 +80,9 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         StructInfo structInfo;
         collectFields(ctx->struct_declaration_list(), structInfo);
         info.structs[blockOrStructName] = std::move(structInfo);
-    }   
+    }
 
-    
+
     // Intercetta dichiarazioni globali
     std::any visitDeclaration(GLSLParser::DeclarationContext* ctx) override {
         structDeclaration(ctx);
@@ -93,7 +95,7 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         auto* proto = ctx->function_prototype();
         FunctionInfo fn;
         fn.returnType = proto->fully_specified_type()->getText();
-        fn.name       = proto->IDENTIFIER()->getText();
+        fn.name = proto->IDENTIFIER()->getText();
 
         if (auto* params = proto->function_parameters()) {
             for (auto* pd : params->parameter_declaration()) {
@@ -101,7 +103,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
                 if (pd->parameter_declarator()) {
                     p.type = pd->parameter_declarator()->type_specifier()->getText();
                     p.name = pd->parameter_declarator()->IDENTIFIER()->getText();
-                } else {
+                }
+                else {
                     p.type = pd->parameter_type_specifier()->getText();
                 }
                 if (pd->type_qualifier()) {
@@ -112,81 +115,85 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         }
         std::shared_ptr<BlockStmt> body = std::make_shared<BlockStmt>(); // Placeholder, da costruire visitando il function body
         body->stmts = {}; // da riempire visitando il function body
-        if(auto statementList = ctx->compound_statement_no_new_scope()->statement_list()) {
+        if (auto statementList = ctx->compound_statement_no_new_scope()->statement_list()) {
             for (auto* stmt : statementList->statement()) {
                 body->stmts.push_back(dispatchStatement(stmt));
             }
         }
         fn.body = body;
         info.functions.push_back(std::move(fn));
-        return {}; 
+        return {};
     }
 
-    StatementPtr dispatchStatement(GLSLParser::StatementContext* ctx) 
+    StatementPtr dispatchStatement(GLSLParser::StatementContext* ctx)
     {
-        if(ctx->simple_statement()) {
+        if (ctx->simple_statement()) {
             return dispatchSimpleStatement(ctx->simple_statement());
         }
-        else if(auto stmt = ctx->compound_statement()) {
+        else if (auto stmt = ctx->compound_statement()) {
             return dispatchCompoundStatement(stmt);
         }
-        
-        return std::make_shared<BlockStmt>(); 
+
+        return std::make_shared<BlockStmt>();
     }
 
-    StatementPtr dispatchSimpleStatement(GLSLParser::Simple_statementContext* ctx) 
+    StatementPtr dispatchSimpleStatement(GLSLParser::Simple_statementContext* ctx)
     {
-        if(ctx->expression_statement()) {
+        if (ctx->expression_statement()) {
             std::shared_ptr<ExprStmt> stmt = std::make_shared<ExprStmt>();
             if (auto* exprCtx = ctx->expression_statement()->expression()) {
                 stmt->expr = dispatchExpression(exprCtx);
             }
             return stmt;
         }
-        else if(auto stmt = ctx->selection_statement()) {
+        else if (auto stmt = ctx->selection_statement()) {
             std::shared_ptr<IfStmt> ifStmt = std::make_shared<IfStmt>();
             ifStmt->condition = dispatchExpression(stmt->expression());
             ifStmt->thenBranch = dispatchStatement(stmt->selection_rest_statement()->statement(0));
-            if(stmt->selection_rest_statement()->statement().size() > 1) {
+            if (stmt->selection_rest_statement()->statement().size() > 1) {
                 ifStmt->elseBranch = dispatchStatement(stmt->selection_rest_statement()->statement(1));
             }
             return ifStmt;
-        }else if(auto stmt = ctx->switch_statement()) {
+        }
+        else if (auto stmt = ctx->switch_statement()) {
             return dispatchSwitchStatement(stmt);
         }
         else if (auto* caseLabel = ctx->case_label()) {
             return dispatchCaseLabel(caseLabel);
         }
-        else if(auto stmt = ctx->iteration_statement()) {
+        else if (auto stmt = ctx->iteration_statement()) {
             return dispatchIterationStatement(stmt);
         }
-        else if(auto stmt = ctx->jump_statement()) {
+        else if (auto stmt = ctx->jump_statement()) {
             std::shared_ptr<JumpStmt> jumpStmt = std::make_shared<JumpStmt>();
             if (stmt->CONTINUE()) {
                 jumpStmt->kind = JumpStmt::Kind::Continue;
-            } else if (stmt->BREAK()) {
+            }
+            else if (stmt->BREAK()) {
                 jumpStmt->kind = JumpStmt::Kind::Break;
-            } else if (stmt->RETURN()) {
+            }
+            else if (stmt->RETURN()) {
                 jumpStmt->kind = JumpStmt::Kind::Return;
                 if (stmt->expression()) {
                     jumpStmt->value = dispatchExpression(stmt->expression());
                 }
-            } else if (stmt->DISCARD()) {
+            }
+            else if (stmt->DISCARD()) {
                 jumpStmt->kind = JumpStmt::Kind::Discard;
             }
             return jumpStmt;
         }
-        else if( auto stmt = ctx->declaration_statement()) {
+        else if (auto stmt = ctx->declaration_statement()) {
             return dispatchDeclarationStatement(stmt);
         }
         else {
             std::cout << "Tipo di semplice statement non gestito: " << ctx->getText() << std::endl;
         }
-        
+
         return std::make_shared<BlockStmt>();
 
     }
-    
+
     StatementPtr dispatchStatementNoNewScope(GLSLParser::Statement_no_new_scopeContext* ctx) {
         if (!ctx) return std::make_shared<BlockStmt>();
         if (auto* simple = ctx->simple_statement()) {
@@ -229,7 +236,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         std::shared_ptr<CaseLabel> caseStmt = std::make_shared<CaseLabel>();
         if (ctx->DEFAULT()) {
             caseStmt->label = "default:";
-        } else {
+        }
+        else {
             std::string exprText = ctx->expression() ? ctx->expression()->getText() : "";
             caseStmt->label = "case " + exprText + ":";
         }
@@ -269,16 +277,18 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
                     if (ce) {
                         try {
                             varStmt->var.arraySize = std::stoi(ce->getText());
-                        } catch (...) {
+                        }
+                        catch (...) {
                             varStmt->var.arraySize = -1;
                         }
                     }
-                } else {
+                }
+                else {
                     varStmt->var.arraySize = 0;  // Array senza dimensione (es. int arr[];)
                 }
             }
             block->stmts.push_back(varStmt);
-        };
+            };
 
         appendVarDecl(sd->typeless_declaration());
         for (auto* td : idl->typeless_declaration()) {
@@ -343,7 +353,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
                         initStmt->expr = dispatchExpression(exprCtx);
                     }
                     fs->init = initStmt;
-                } else if (initCtx->declaration_statement()) {
+                }
+                else if (initCtx->declaration_statement()) {
                     fs->init = dispatchDeclarationStatement(initCtx->declaration_statement());
                 }
             }
@@ -422,7 +433,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
             const std::string literal = ctx->INTCONSTANT() ? ctx->INTCONSTANT()->getText() : ctx->UINTCONSTANT()->getText();
             try {
                 expr->value = std::stoll(literal, nullptr, 0);
-            } catch (...) {
+            }
+            catch (...) {
                 expr->value = 0;
             }
             expr->isUnsigned = ctx->UINTCONSTANT() != nullptr;
@@ -433,7 +445,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
             const std::string literal = ctx->FLOATCONSTANT() ? ctx->FLOATCONSTANT()->getText() : ctx->DOUBLECONSTANT()->getText();
             try {
                 expr->value = std::stod(literal);
-            } catch (...) {
+            }
+            catch (...) {
                 expr->value = 0.0;
             }
             expr->isDouble = ctx->DOUBLECONSTANT() != nullptr;
@@ -450,6 +463,9 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
 
     std::vector<ExpressionPtr> dispatchFunctionArgs(GLSLParser::Function_call_parametersContext* params) {
         std::vector<ExpressionPtr> args;
+        if (!params) {
+            return args;
+        }
         for (auto* arg : params->assignment_expression()) {
             args.push_back(dispatchAssigmentExpression(arg));
         }
@@ -478,10 +494,12 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
             call->args = dispatchFunctionArgs(ctx->function_call_parameters());
             if (auto* var = dynamic_cast<VariableExpr*>(calleeExpr.get())) {
                 call->callee = var->name;
-            } else if (auto* member = dynamic_cast<MemberExpr*>(calleeExpr.get())) {
+            }
+            else if (auto* member = dynamic_cast<MemberExpr*>(calleeExpr.get())) {
                 call->callee = member->field;
                 call->calleeExpr = member->object;
-            } else {
+            }
+            else {
                 call->calleeExpr = calleeExpr;
             }
             return call;
@@ -571,8 +589,8 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
 
         return dispatchBinaryExpression(ctx->binary_expression());
     }
-    
-    ExpressionPtr dispatchAssigmentExpression(GLSLParser::Assignment_expressionContext* ctx) 
+
+    ExpressionPtr dispatchAssigmentExpression(GLSLParser::Assignment_expressionContext* ctx)
     {
         if (!ctx) {
             return std::make_shared<VariableExpr>();
@@ -595,19 +613,19 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         return fallback;
     }
 
-    ExpressionPtr dispatchExpression(GLSLParser::ExpressionContext* ctx) 
+    ExpressionPtr dispatchExpression(GLSLParser::ExpressionContext* ctx)
     {
         if (!ctx) {
             return std::make_shared<VariableExpr>();
         }
 
-        if(auto subExpr = ctx->expression()) {
+        if (auto subExpr = ctx->expression()) {
             std::shared_ptr<CommaExpr> commaExpr = std::make_shared<CommaExpr>();
             commaExpr->left = dispatchExpression(subExpr);
             commaExpr->right = dispatchAssigmentExpression(ctx->assignment_expression());
             return commaExpr;
         }
-        if(auto subExpr = ctx->assignment_expression()) {
+        if (auto subExpr = ctx->assignment_expression()) {
             return dispatchAssigmentExpression(subExpr);
         }
         std::shared_ptr<VariableExpr> fallback = std::make_shared<VariableExpr>();
@@ -639,7 +657,7 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         return block;
     }
 
-    StatementPtr dispatchCompoundStatement(GLSLParser::Compound_statementContext* ctx) 
+    StatementPtr dispatchCompoundStatement(GLSLParser::Compound_statementContext* ctx)
     {
         std::vector<StatementPtr> statements;
         if (auto* statementList = ctx->statement_list()) {
@@ -652,35 +670,37 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
         return block;
     }
 
-    uint32_t evaluateArraySize(GLSLParser::Typeless_declarationContext *td) {
+    uint32_t evaluateArraySize(GLSLParser::Typeless_declarationContext* td) {
         if (td->array_specifier()) {
             if (!td->array_specifier()->dimension().empty()) {
                 auto* ce = td->array_specifier()->dimension(0)->constant_expression();
                 if (ce) {
                     try {
                         return std::stoul(ce->getText());
-                    } catch (...) {
+                    }
+                    catch (...) {
                         return -1;
                     }
                 }
-            } else {
+            }
+            else {
                 return 0;  // Array senza dimensione (es. int arr[];)
             }
         }
         return -1;
     }
 
-    void variablesDeclaration(GLSLParser::DeclarationContext *ctx)
+    void variablesDeclaration(GLSLParser::DeclarationContext* ctx)
     {
-        if (auto *idl = ctx->init_declarator_list())
+        if (auto* idl = ctx->init_declarator_list())
         {
-            auto *sd = idl->single_declaration();
-            auto *fst = sd->fully_specified_type();
+            auto* sd = idl->single_declaration();
+            auto* fst = sd->fully_specified_type();
             bool isIn = false, isOut = false;
             bool isUniform = false;
             if (fst->type_qualifier())
             {
-                for (auto *sq : fst->type_qualifier()->single_type_qualifier())
+                for (auto* sq : fst->type_qualifier()->single_type_qualifier())
                 {
                     if (sq->storage_qualifier() && sq->storage_qualifier()->UNIFORM())
                     {
@@ -701,21 +721,21 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
                     {
                         auto* firstDecl = sd->typeless_declaration();
                         int arraySize = evaluateArraySize(firstDecl);
-                        info.uniforms.push_back({typeName,
+                        info.uniforms.push_back({ typeName,
                             firstDecl->IDENTIFIER()->getText(),
                             isSampler,
                             arraySize,
-                            firstDecl->initializer() ? firstDecl->initializer()->getText() : ""});
+                            firstDecl->initializer() ? firstDecl->initializer()->getText() : "" });
                     }
                     // Eventuali ulteriori nella lista (COMMA typeless_declaration)
-                    for (auto *td : idl->typeless_declaration())
+                    for (auto* td : idl->typeless_declaration())
                     {
                         int arraySize = evaluateArraySize(td);
-                        info.uniforms.push_back({typeName,
+                        info.uniforms.push_back({ typeName,
                             td->IDENTIFIER()->getText(),
                             isSampler,
                             arraySize,
-                            td->initializer() ? td->initializer()->getText() : ""});
+                            td->initializer() ? td->initializer()->getText() : "" });
                     }
                 }
                 if (isIn || isOut)
@@ -743,24 +763,24 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
                     }
 
                     return declaration;
-                };
-               
+                    };
+
                 if (auto* ftsd = sd->typeless_declaration())
                 {
                     VariableDeclaration declaration = makeGlobalVarDecl(ftsd);
                     std::cout << "Dichiarazione globale: " << typeName << " " << declaration.name
-                              << (declaration.arraySize != -1 ? "[" + std::to_string(declaration.arraySize) + "]" : "")
-                              << (!declaration.initializer.empty() ? " = " + declaration.initializer : "")
-                              << std::endl;
+                        << (declaration.arraySize != -1 ? "[" + std::to_string(declaration.arraySize) + "]" : "")
+                        << (!declaration.initializer.empty() ? " = " + declaration.initializer : "")
+                        << std::endl;
                     info.globalVariables.push_back(std::move(declaration));
                 }
-                for (auto *td : idl->typeless_declaration())
+                for (auto* td : idl->typeless_declaration())
                 {
                     VariableDeclaration declaration = makeGlobalVarDecl(td);
                     std::cout << "Dichiarazione globale: " << typeName << " " << declaration.name
-                              << (declaration.arraySize != -1 ? "[" + std::to_string(declaration.arraySize) + "]" : "")
-                              << (!declaration.initializer.empty() ? " = " + declaration.initializer : "")
-                              << std::endl;
+                        << (declaration.arraySize != -1 ? "[" + std::to_string(declaration.arraySize) + "]" : "")
+                        << (!declaration.initializer.empty() ? " = " + declaration.initializer : "")
+                        << std::endl;
                     info.globalVariables.push_back(std::move(declaration));
                 }
             }
@@ -769,12 +789,12 @@ class MyGLSLVisitor : public GLSLParserBaseVisitor {
 
 private:
     void collectInOut(GLSLParser::DeclarationContext* ctx,
-                      GLSLParser::Type_qualifierContext* tq) {
+        GLSLParser::Type_qualifierContext* tq) {
         bool isIn = false, isOut = false;
         int location = -1;
         for (auto* stq : tq->single_type_qualifier()) {
             if (stq->storage_qualifier()) {
-                if (stq->storage_qualifier()->IN())  isIn  = true;
+                if (stq->storage_qualifier()->IN())  isIn = true;
                 if (stq->storage_qualifier()->OUT()) isOut = true;
             }
             if (stq->layout_qualifier()) {
@@ -787,10 +807,10 @@ private:
         auto* sd = ctx->init_declarator_list()->single_declaration();
         std::string typeName = sd->fully_specified_type()->type_specifier()->getText();
         if (isIn) {
-            info.inputs.push_back({typeName, sd->typeless_declaration()->IDENTIFIER()->getText(), location});
+            info.inputs.push_back({ typeName, sd->typeless_declaration()->IDENTIFIER()->getText(), location });
         }
         if (isOut) {
-            info.outputs.push_back({typeName, sd->typeless_declaration()->IDENTIFIER()->getText(), location});
+            info.outputs.push_back({ typeName, sd->typeless_declaration()->IDENTIFIER()->getText(), location });
         }
 
         // ... aggiungi a info.inputs / info.outputs
@@ -840,8 +860,8 @@ public:
             std::cout << ")\n";
             std::cout << " \n" << f.body->toString() << "\n";
         }
-        
+
     }
 
-    
+
 };

@@ -73,8 +73,8 @@ namespace OnYuu {
         CubeMap* getCubeMap(const std::string& name) const;
 
 
-		std::shared_ptr<Shader> addShader(const std::string& name, std::shared_ptr<Shader> shader);
-		std::shared_ptr<Shader> getShaderPtr(const std::string& name) const;
+		std::shared_ptr<MetaShader> addShader(const std::string& name, std::shared_ptr<MetaShader> shader);
+		std::shared_ptr<MetaShader> getShaderPtr(const std::string& name) const;
         // ottieni la mappa delle mesh
         const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
             return meshes_;
@@ -91,7 +91,7 @@ namespace OnYuu {
         std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
         std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
         std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
-		std::unordered_map<std::string, std::shared_ptr<Shader>> shaders_;
+		std::unordered_map<std::string, std::shared_ptr<MetaShader>> shaders_;
         std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
     private:
         // Disabilita copy e assign per il singleton

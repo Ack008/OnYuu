@@ -8,31 +8,38 @@ namespace OnYuu {
     // IndirectDrawBuffer Implementation
     // ============================================================================
 
-    IndirectDrawBuffer::IndirectDrawBuffer(VmaAllocator allocator, uint32_t maxDraws)
+    IndirectDrawBuffer::IndirectDrawBuffer(VmaAllocator allocator, uint32_t framesInFlight, uint32_t maxDraws)
         : allocator(allocator)
+        , framesInFlight(framesInFlight)
         , maxDrawCommands(maxDraws)
     {
         bufferSize = sizeof(VkDrawIndexedIndirectCommand) * maxDrawCommands;
 
-        // Crea buffer GPU (HOST_VISIBLE per update veloci)
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = bufferSize;
-        bufferInfo.usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT |
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // STORAGE per GPU culling futuro
+        indirectBuffers.resize(framesInFlight, VK_NULL_HANDLE);
+        indirectAllocations.resize(framesInFlight, VK_NULL_HANDLE);
+        indirectAllocInfos.resize(framesInFlight, {});
 
-        VmaAllocationCreateInfo allocInfo{};
-        allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-        allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-            VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        for (uint32_t i = 0; i < framesInFlight; i++) {
+            // Crea buffer GPU (HOST_VISIBLE per update veloci)
+            VkBufferCreateInfo bufferInfo{};
+            bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+            bufferInfo.size = bufferSize;
+            bufferInfo.usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT |
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT; // STORAGE per GPU culling futuro
 
-        vmaCreateBuffer(allocator, &bufferInfo, &allocInfo,
-            &indirectBuffer, &indirectAllocation, &indirectAllocInfo);
+            VmaAllocationCreateInfo allocInfo{};
+            allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+            allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+            vmaCreateBuffer(allocator, &bufferInfo, &allocInfo,
+                &indirectBuffers[i], &indirectAllocations[i], &indirectAllocInfos[i]);
+        }
 
         cpuCommands.reserve(maxDrawCommands);
 
         std::cout << "IndirectDrawBuffer created: max " << maxDraws
-            << " draws (" << bufferSize << " bytes)\n";
+            << " draws (" << bufferSize << " bytes) x " << framesInFlight << " frames\n";
     }
 
     IndirectDrawBuffer::~IndirectDrawBuffer() {
@@ -50,12 +57,12 @@ namespace OnYuu {
         needsUpdate = true;
     }
 
-    void IndirectDrawBuffer::finalize() {
+    void IndirectDrawBuffer::finalize(uint32_t currentFrame) {
         if (!needsUpdate || cpuCommands.empty()) return;
 
         // Copia CPU commands -> GPU buffer
         size_t copySize = sizeof(VkDrawIndexedIndirectCommand) * currentDrawCount;
-        memcpy(indirectAllocInfo.pMappedData, cpuCommands.data(), copySize);
+        memcpy(indirectAllocInfos[currentFrame].pMappedData, cpuCommands.data(), copySize);
 
         needsUpdate = false;
 
@@ -70,13 +77,13 @@ namespace OnYuu {
         needsUpdate = false;
     }
 
-    void IndirectDrawBuffer::executeMultiDrawIndirect(VkCommandBuffer cmd) {
+    void IndirectDrawBuffer::executeMultiDrawIndirect(VkCommandBuffer cmd, uint32_t currentFrame) {
         if (currentDrawCount == 0) return;
 
         // ⚡ UNA SOLA DRAW CALL per tutte le mesh!
         vkCmdDrawIndexedIndirect(
             cmd,
-            indirectBuffer,
+            indirectBuffers[currentFrame],
             0, // offset nel buffer
             currentDrawCount,
             sizeof(VkDrawIndexedIndirectCommand)
@@ -89,9 +96,11 @@ namespace OnYuu {
     }
 
     void IndirectDrawBuffer::shutdown() {
-        if (indirectBuffer != VK_NULL_HANDLE) {
-            vmaDestroyBuffer(allocator, indirectBuffer, indirectAllocation);
-            indirectBuffer = VK_NULL_HANDLE;
+        for (uint32_t i = 0; i < framesInFlight; i++) {
+            if (indirectBuffers[i] != VK_NULL_HANDLE) {
+                vmaDestroyBuffer(allocator, indirectBuffers[i], indirectAllocations[i]);
+                indirectBuffers[i] = VK_NULL_HANDLE;
+            }
         }
     }
 
@@ -99,8 +108,8 @@ namespace OnYuu {
     // IndirectDrawManager Implementation
     // ============================================================================
 
-    IndirectDrawManager::IndirectDrawManager(VmaAllocator allocator)
-        : allocator(allocator) {
+    IndirectDrawManager::IndirectDrawManager(VmaAllocator allocator, uint32_t framesInFlight)
+        : allocator(allocator), framesInFlight(framesInFlight) {
     }
 
     IndirectDrawManager::~IndirectDrawManager() {
@@ -116,7 +125,7 @@ namespace OnYuu {
         }
 
         // Crea nuovo buffer per questo materiale
-        auto buffer = std::make_shared<IndirectDrawBuffer>(allocator, 10000);
+        auto buffer = std::make_shared<IndirectDrawBuffer>(allocator, framesInFlight, 10000);
         buffers[material] = buffer;
 
         return buffer;
@@ -128,9 +137,9 @@ namespace OnYuu {
         }
     }
 
-    void IndirectDrawManager::finalizeAll() {
+    void IndirectDrawManager::finalizeAll(uint32_t currentFrame) {
         for (auto& [mat, buffer] : buffers) {
-            buffer->finalize();
+            buffer->finalize(currentFrame);
         }
     }
 

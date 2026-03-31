@@ -21,22 +21,22 @@ namespace OnYuu {
     // Indirect draw buffer per un materiale
     class IndirectDrawBuffer {
     public:
-        IndirectDrawBuffer(VmaAllocator allocator, uint32_t maxDraws = 10000);
+        IndirectDrawBuffer(VmaAllocator allocator, uint32_t framesInFlight, uint32_t maxDraws = 10000);
         ~IndirectDrawBuffer();
 
         // Aggiungi un draw command
         void addDrawCommand(const VkDrawIndexedIndirectCommand& cmd);
 
         // Finalizza e upload su GPU
-        void finalize();
+        void finalize(uint32_t currentFrame);
 
         // Reset per il prossimo frame
         void reset();
 
         // Esegui il multi draw indirect
-        void executeMultiDrawIndirect(VkCommandBuffer cmd);
+        void executeMultiDrawIndirect(VkCommandBuffer cmd, uint32_t currentFrame);
 
-        VkBuffer getBuffer() const { return indirectBuffer; }
+        // VkBuffer getBuffer(uint32_t currentFrame) const { return indirectBuffers[currentFrame]; }
         uint32_t getDrawCount() const { return currentDrawCount; }
         bool isEmpty() const { return currentDrawCount == 0; }
 
@@ -44,13 +44,14 @@ namespace OnYuu {
 
     private:
         VmaAllocator allocator;
+        uint32_t framesInFlight;
 
         // Buffer GPU per i comandi indirect
-        VkBuffer indirectBuffer = VK_NULL_HANDLE;
-        VmaAllocation indirectAllocation = VK_NULL_HANDLE;
-        VmaAllocationInfo indirectAllocInfo = {};
+        std::vector<VkBuffer> indirectBuffers;
+        std::vector<VmaAllocation> indirectAllocations;
+        std::vector<VmaAllocationInfo> indirectAllocInfos;
 
-        // Capacità e stato corrente
+        // Capacita e stato corrente
         uint32_t maxDrawCommands = 0;
         uint32_t currentDrawCount = 0;
         VkDeviceSize bufferSize = 0;
@@ -64,7 +65,7 @@ namespace OnYuu {
     // Manager per tutti gli indirect buffers (uno per materiale)
     class IndirectDrawManager {
     public:
-        IndirectDrawManager(VmaAllocator allocator);
+        IndirectDrawManager(VmaAllocator allocator, uint32_t framesInFlight);
         ~IndirectDrawManager();
 
         // Ottieni o crea buffer per un materiale
@@ -76,13 +77,14 @@ namespace OnYuu {
         void resetAll();
 
         // Finalizza tutti i buffer (upload su GPU)
-        void finalizeAll();
+        void finalizeAll(uint32_t currentFrame);
 
         void shutdown();
         std::unordered_map<std::shared_ptr<Material>,
 			std::shared_ptr<IndirectDrawBuffer>> getBuffers() const { return buffers; }
     private:
         VmaAllocator allocator;
+        uint32_t framesInFlight;
         std::unordered_map<std::shared_ptr<Material>,
             std::shared_ptr<IndirectDrawBuffer>> buffers;
     };

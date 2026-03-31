@@ -115,7 +115,7 @@ namespace OnYuu {
 
         // STEP 14: Geometry pool e indirect draw
         geometryPool_ = std::make_shared<GeometryPool>(allocator_, this, 128 * 1024 * 1024);
-        indirectDrawManager_ = std::make_shared<IndirectDrawManager>(allocator_);
+        indirectDrawManager_ = std::make_shared<IndirectDrawManager>(allocator_, MAX_FRAMES_IN_FLIGHT);
         LOG( << "✓ Geometry pool and indirect draw manager initialized\n");
 
         LOG( << "=== VulkanRender Initialization Complete ===\n\n");
@@ -698,7 +698,7 @@ namespace OnYuu {
             if (!indirectBuffer->isEmpty()) {
                 LOG( << "         - Executing indirect draw ("
                     << indirectBuffer->getDrawCount() << " draws)\n");
-                indirectBuffer->executeMultiDrawIndirect(cmd);
+                indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
             }
             else {
                 LOG( << "         - Indirect buffer is empty\n");
@@ -872,7 +872,7 @@ namespace OnYuu {
         }
 
         // Finalize all indirect buffers
-        indirectDrawManager_->finalizeAll();
+        indirectDrawManager_->finalizeAll(currentFrame_);
 
         // Upload model matrices
         if (!allModelMatrices.empty()) {

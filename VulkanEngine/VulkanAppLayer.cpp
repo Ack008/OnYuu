@@ -39,7 +39,7 @@ void VulkanAppLayer::onAttach()
 	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
 	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
-	shader2 = Shader::create("Asset/VkShader/generated-ver.o", "Asset/VkShader/generated-frag.o");
+	//shader2 = Shader::create("Asset/VkShader/generated-ver.o", "Asset/VkShader/generated-frag.o");
 
 	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(metaShader));
 	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(metaShader));
@@ -49,10 +49,13 @@ void VulkanAppLayer::onAttach()
 	auto texture2 = AssetManager::instance().addTexture("ai", Texture::createTexture("Asset/Texture/ai.png"));
 
 	mat->set("tex", texture2);
+	mat->set("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
 	mat2->set("tex", texture);
+	mat2->set("color", glm::vec4(.0f, 0.0f, 1.0f, 1.0f));
 
-	renderMesh.material = mat2;
+
+	renderMesh.material = mat;
 	renderMesh.mesh = AssetManager::instance().getMeshPtr("sphere");
 	renderMesh2.mesh = AssetManager::instance().getMeshPtr("cube");
 	renderMesh2.material = mat2;

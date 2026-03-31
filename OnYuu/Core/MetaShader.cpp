@@ -17,8 +17,13 @@ namespace OnYuu {
 			antlr4::CommonTokenStream tokens(&lexer);
 			// 5. Crea il parser
 			GLSLParser parser(&tokens);
+			
 			// 6. Esegui il parsing a partire dalla regola iniziale
 			auto tree = parser.translation_unit();
+			if (parser.getNumberOfSyntaxErrors() > 0) {
+				std::cerr << "Errori di sintassi trovati: " << parser.getNumberOfSyntaxErrors() << std::endl;
+				throw std::runtime_error("Parsing fallito a causa di errori di sintassi.");
+			}
 			// 7. Crea un visitor e visita l'albero di parsing
 			MyGLSLVisitor visitor;
 			visitor.visit(tree);

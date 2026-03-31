@@ -57,8 +57,6 @@ namespace OnYuu {
 
 	void Scene::update(float dt)
 	{
-		//caricare le luci
-		loadLights();
 		//instantiating prefabs
 		instantiatePrefabs();
 		// carica la camera attiva
@@ -112,7 +110,6 @@ namespace OnYuu {
 			activeCamera = editorCamera;
 		}
 
-		loadActiveCamera();
 		Render::getInstance()->BeginScene(activeCamera);
 		auto skyboxView = reg->view<SkyBoxComponent>();
 		for (auto [entity, skybox] : skyboxView.each()) {
@@ -120,7 +117,10 @@ namespace OnYuu {
 			Render::getInstance()->setSkyBox(&skybox);
 			break;
 		}
-
+		auto lightView = reg->view<LightComponent, Trasform>();
+		for (auto [entity, lightComp, transform] : lightView.each()) {
+			Render::getInstance()->addLight(lightComp, transform.position);
+		}
 
 		calculateCollisions(dt);
 		sendToRender();
