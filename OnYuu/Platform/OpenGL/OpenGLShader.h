@@ -9,7 +9,7 @@ namespace OnYuu {
         public Shader
     {
     public:
-        OpenGLShader(const char* vertexfilename, const char* fragmentfilename);
+        OpenGLShader(const char* vertexfilename, const char* fragmentfilename, bool isSource = false);
         // Ereditato tramite Shader
         void useShader() override;
         ~OpenGLShader();
@@ -25,7 +25,7 @@ namespace OnYuu {
         virtual bool isBatchingSupported() const override { return false; }
     private:
         char* readShaderSource(const char* shaderFile);
-        GLuint createProgram(const char* vertexfilename, const char* fragmentfilename);
+        GLuint createProgram(const char* vertexfilename, const char* fragmentfilename, bool isSource);
         GLint getUniformLocation(const std::string& name);
     private:
         unsigned int shader;

@@ -12,7 +12,7 @@ namespace OnYuu {
 	class VulkanShader : public Shader
 	{
 	public:
-		VulkanShader(const char* vertexfilename, const char* fragmentfilename);
+		VulkanShader(const char* vertexfilename, const char* fragmentfilename, bool isSource);
 		virtual ~VulkanShader() override;
 		virtual void useShader() override;
 		virtual void setUniformMat4(const char* name, const float* value) override;

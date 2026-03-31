@@ -140,6 +140,7 @@
     <ClCompile Include="Application\Project.cpp" />
     <ClCompile Include="Core\MetaShader.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanMetaShader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -227,6 +228,7 @@
     <ClInclude Include="Application\Project.h" />
     <ClInclude Include="Core\MetaShader.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanMetaShader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

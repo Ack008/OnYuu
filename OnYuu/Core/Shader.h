@@ -29,7 +29,7 @@ namespace OnYuu {
 		virtual void shutdown() {};
 
 		// Factory per creare uno shader dalla sorgente (file vert/frag).
-		static std::shared_ptr<Shader> create(const char* vertexfilename, const char* fragmentfilename);
+		static std::shared_ptr<Shader> create(const char* vertexfilename, const char* fragmentfilename, bool isSource = false);
 
 	};
 

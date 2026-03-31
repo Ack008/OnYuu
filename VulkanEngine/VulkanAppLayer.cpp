@@ -39,22 +39,18 @@ void VulkanAppLayer::onAttach()
 	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
 	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
-	shader2 = Shader::create("Asset/vulkan-shader/texture-ssbo-vert.o", "Asset/vulkan-shader/texture-ssbo-frag.o");
+	shader2 = Shader::create("Asset/VkShader/generated-ver.o", "Asset/VkShader/generated-frag.o");
 
-	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(shader2));
-	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(shader2));
+	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(metaShader));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(metaShader));
 
 
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
 	auto texture2 = AssetManager::instance().addTexture("ai", Texture::createTexture("Asset/Texture/ai.png"));
 
-	mat->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	mat->set("diffuse",glm::vec3(1,0,1));
-	mat->set("diffuseMap", texture2);
+	mat->set("tex", texture2);
 
-	mat2->set("specular", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	mat2->set("diffuse", glm::vec3(1, 0, 0));
-	mat2->set("diffuseMap", texture);
+	mat2->set("tex", texture);
 
 	renderMesh.material = mat2;
 	renderMesh.mesh = AssetManager::instance().getMeshPtr("sphere");

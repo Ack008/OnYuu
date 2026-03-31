@@ -159,6 +159,7 @@
     <ClCompile Include="Platform\Vulkan\VulkanDescriptorManager.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanDevice.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanMeshGPU.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanMetaShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanPipelineManager.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
@@ -237,6 +238,7 @@
     <ClInclude Include="Platform\Vulkan\VulkanDescriptorManager.h" />
     <ClInclude Include="Platform\Vulkan\VulkanDevice.h" />
     <ClInclude Include="Platform\Vulkan\VulkanMeshGPU.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanMetaShader.h" />
     <ClInclude Include="Platform\Vulkan\VulkanPipelineManager.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />

@@ -1,5 +1,6 @@
 #include "MetaShader.h"
 #include "Platform/OpenGL/OpenGLMetaShader.h"
+#include "Platform/Vulkan/VulkanMetaShader.h"
 #include "Platform/API.h"
 #include "Render/Renderer.h"
 namespace OnYuu {
@@ -25,7 +26,7 @@ namespace OnYuu {
 			glslVisitor = std::move(visitor);
 			// Analisi semantica
 			SemanticVisitor sem;
-			sem.analyze(visitor.getShaderInfo());
+			sem.analyze(glslVisitor.getShaderInfo());
 			sem.printDiagnostics();
 			code = shaderCode;
 			this->sem = std::move(sem);
@@ -51,6 +52,8 @@ namespace OnYuu {
 		{
 		case API::OpenGL:
 			return std::make_shared<OpenGLMetaShader>(filename);
+		case API::Vulkan:
+			return std::make_shared<VulkanMetaShader>(filename);
 		default:
 			break;
 		}

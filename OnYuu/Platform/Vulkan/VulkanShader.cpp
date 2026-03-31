@@ -6,8 +6,28 @@
 #include "spirv_cross/spirv_cross.hpp"
 #include "spirv_cross/spirv_glsl.hpp"
 #include <iostream>
+#include <shaderc/shaderc.hpp>
 namespace OnYuu {
+	std::vector<char> compileToSPIRV_char(const std::string& source, shaderc_shader_kind kind) {
+		shaderc::Compiler compiler;
+		shaderc::CompileOptions options;
+		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
 
+		auto result = compiler.CompileGlslToSpv(source, kind, "shader.glsl", options);
+
+		if (result.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			std::cerr << "ERRORE DI COMPILAZIONE SHADERC:\n" << result.GetErrorMessage() << std::endl;
+			throw std::runtime_error(result.GetErrorMessage());
+
+		}
+
+		// Reinterpreta i uint32_t come bytes
+		const char* begin = reinterpret_cast<const char*>(result.cbegin());
+		const char* end = reinterpret_cast<const char*>(result.cend());
+
+		return { begin, end };
+	}
 	std::vector<char> VulkanShader::readFile(const char* filename)
 	{
 		std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -44,11 +64,21 @@ namespace OnYuu {
 
 	}
 
-	VulkanShader::VulkanShader(const char* vertexfilename, const char* fragmentfilename)
+	VulkanShader::VulkanShader(const char* vertexfilename, const char* fragmentfilename, bool isSource)
 	{
+		std::vector<char> vertShaderCode;
+		std::vector<char> fragShaderCode;
 		// Caricamento del codice SPIR-V dai file
-		std::vector<char> vertShaderCode = readFile(vertexfilename);
-		std::vector<char> fragShaderCode = readFile(fragmentfilename);
+		if (isSource)
+		{
+			vertShaderCode = compileToSPIRV_char(vertexfilename, shaderc_vertex_shader);
+			fragShaderCode = compileToSPIRV_char(fragmentfilename, shaderc_fragment_shader);
+		}
+		else {
+			vertShaderCode = readFile(vertexfilename);
+			fragShaderCode = readFile(fragmentfilename);
+
+		}
 		// Creazione dei moduli shader
 		vertexShaderModule = createShaderModule(vertShaderCode);
 		fragmentShaderModule = createShaderModule(fragShaderCode);

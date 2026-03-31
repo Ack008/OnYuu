@@ -6,7 +6,7 @@ OnYuu::OpenGLMetaShader::OpenGLMetaShader(const std::string& filename)
 	glVisitor.produceShaders(getGLSLVisitor().getShaderInfo());
 	std::cout << "Vertex Shader Code:\n" << glVisitor.getVertexShaderCode() << std::endl;
 	std::cout << "Fragment Shader Code:\n" << glVisitor.getFragmentShaderCode() << std::endl;
-	setShader(Shader::create(glVisitor.getVertexShaderCode().c_str(), glVisitor.getFragmentShaderCode().c_str()));
+	setShader(Shader::create(glVisitor.getVertexShaderCode().c_str(), glVisitor.getFragmentShaderCode().c_str(),true));
 }
 
 void OnYuu::OpenGLMetaShader::setUniformMat4(const char* name, const float* value)

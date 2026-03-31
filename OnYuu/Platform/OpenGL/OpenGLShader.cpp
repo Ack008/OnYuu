@@ -4,9 +4,9 @@
 #pragma warning(disable:4996)
 namespace OnYuu {
 
-	OpenGLShader::OpenGLShader(const char* vertexfilename, const char* fragmentfilename)
+	OpenGLShader::OpenGLShader(const char* vertexfilename, const char* fragmentfilename, bool isSource )
 	{
-		shader = createProgram(vertexfilename, fragmentfilename);
+		shader = createProgram(vertexfilename, fragmentfilename, isSource);
 		GLuint blockIndex = glGetUniformBlockIndex(shader, "GlobalData");
 		if (blockIndex != GL_INVALID_INDEX) {
 			glUniformBlockBinding(shader, blockIndex, 0);
@@ -79,7 +79,7 @@ namespace OnYuu {
 		return buf;
 	}
 
-	GLuint OpenGLShader::createProgram(const char* vertexfilename, const char* fragmentfilename)
+	GLuint OpenGLShader::createProgram(const char* vertexfilename, const char* fragmentfilename, bool isSource)
 	{
 
 		int success;
@@ -88,14 +88,14 @@ namespace OnYuu {
 
 		// Creiamo gli eseguibili degli shader
 		//Leggiamo il codice del Vertex Shader
-		GLchar* VertexShader = readShaderSource(vertexfilename);
+		GLchar* VertexShader = isSource ? (char*)vertexfilename : readShaderSource(vertexfilename);
 		//Visualizzo sulla console il CODICE VERTEX SHADER
 		//std::cout << VertexShader;
 
 		//Generiamo un identificativo per il vertex shader
 		GLuint vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
 		//Associamo all'identificativo il codice del vertex shader
-		glShaderSource(vertexShaderId, 1, (const char**)&vertexfilename, NULL);
+		glShaderSource(vertexShaderId, 1, (const char**)&VertexShader, NULL);
 		//Compiliamo il Vertex SHader
 		glCompileShader(vertexShaderId);
 
@@ -108,7 +108,7 @@ namespace OnYuu {
 
 
 		//Leggiamo il codice del Fragment Shader
-		const GLchar* FragmentShader = readShaderSource(fragmentfilename);
+		const GLchar* FragmentShader = isSource ? (char*)fragmentfilename : readShaderSource(fragmentfilename);
 		//Visualizzo sulla console il CODICE FRAGMENT SHADER
 		//std::cout << FragmentShader;
 
