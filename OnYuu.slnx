@@ -6,7 +6,7 @@
   <Project Path="Antlr4/Antlr4.vcxproj" Id="c68434a9-588e-42b4-b39f-b20031516647" />
   <Project Path="ImGui/ImGui.vcxproj" Id="ce9a6cc7-74b4-44f6-8c1d-f446e47a1013" />
   <Project Path="MetaShader/MetaShader.vcxproj" Id="22d786ca-e807-40c5-8a67-f967db6d8e5a" />
-  <Project Path="MetaShaderTesting/MetaShaderTesting.vcxproj" Id="cd420c9e-1f7f-4495-8d17-de122134462c" />
+  <Project Path="OnYuEditor/OnYuEditor.vcxproj" Id="80299735-91c8-4683-b34d-db43cd758d03" />
   <Project Path="OnYuu/OnYuu.vcxproj" Id="f96a063a-d4e6-40dd-98fb-46b076414288" />
   <Project Path="VulkanEngine/VulkanEngine.vcxproj" Id="da147cb8-6280-4b2c-b3f7-7078b84f8b2f" />
 </Solution>
