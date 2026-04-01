@@ -27,10 +27,10 @@ private:
     bool currentFunctionHasReturnValue_ = false;
 
     void addBuiltinFunction(const std::string& name,
-                            const std::vector<std::string>& params,
-                            const std::string& returnType);
+        const std::vector<std::string>& params,
+        const std::string& returnType);
     void addBuiltInStruct(const std::string& name,
-                          const std::vector<std::pair<std::string, std::string>>& fields);
+        const std::vector<std::pair<std::string, std::string>>& fields);
     void addBuiltFunctionsInSymbolTable();
     void initBuiltinFunctionSignatures();
     void initConstructorSignatures();
@@ -45,8 +45,9 @@ private:
 
     bool checkConstructorArgs(const std::string& ctorName, const std::vector<std::string>& argTypes) const;
     bool checkFunctionArgs(const std::string& functionName,
-                           const std::vector<std::string>& argTypes,
-                           std::string* inferredReturnType = nullptr) const;
+        const std::vector<std::string>& argTypes,
+        std::string* inferredReturnType = nullptr) const;
+    int compatibilityScore(const std::string& actual, const std::string& expected) const;
     static std::string joinTypes(const std::vector<std::string>& types);
     bool isReservedFunctionName(const std::string& name) const;
     bool isUniformLValue(const Expression* expression) const;
@@ -67,7 +68,7 @@ public:
 
     bool isFunctionDeclared(const std::string& name) const;
     std::string getFunctionReturnType(const std::string& name,
-                                      const std::vector<std::string>& argTypes) const;
+        const std::vector<std::string>& argTypes) const;
     std::vector<std::string> getAllFunctionNames() const;
     std::unordered_map<std::string, std::vector<std::pair<std::vector<std::string>, std::string>>> getFunctionSignatures() const;
     bool isBuiltinFunction(const std::string& name) const;

@@ -4,6 +4,20 @@
 #include <iostream>
 #include <utility>
 
+namespace {
+    bool hasExactSignature(
+        const std::vector<std::pair<std::vector<std::string>, std::string>>& overloads,
+        const std::vector<std::string>& paramTypes,
+        std::string returnType) {
+        for (const auto& overload : overloads) {
+            if (overload.first == paramTypes) {
+                return true;
+            }
+        }
+        return false;
+    }
+} // namespace
+
 void SemanticVisitor::addBuiltinFunction(const std::string& name,
     const std::vector<std::string>& params,
     const std::string& returnType) {
@@ -121,18 +135,40 @@ void SemanticVisitor::initConstructorSignatures() {
         {"vec2"}
     };
     constructorSigs_["vec3"] = {
+        {"int"},
+        {"int", "int", "int"},
         {"float"},
         {"float", "float", "float"},
+        {"int", "float", "float"},
+        {"float", "int", "float"},
+        {"float", "float", "int"},
+        {"int", "int", "float"},
+        {"int", "float", "int"},
+        {"float", "int", "int"},
+        {"vec2", "int"},
         {"vec2", "float"},
         {"float", "vec2"},
+        {"int", "vec2"},
         {"vec3"}
     };
     constructorSigs_["vec4"] = {
+        {"int"},
+        {"int", "int", "int", "int"},
         {"float"},
         {"float", "float", "float", "float"},
+        {"int", "float", "float", "float"},
+        {"float", "int", "float", "float"},
+        {"float", "float", "int", "float"},
+        {"float", "float", "float", "int"},
+        {"int", "int", "int", "float"},
+        {"int", "int", "float", "int"},
+        {"int", "float", "int", "int"},
+        {"float", "int", "int", "int"},
         {"vec2", "vec2"},
         {"vec3", "float"},
         {"float", "vec3"},
+        {"int", "vec3"},
+        {"vec3", "int"},
         {"vec4"}
     };
     constructorSigs_["int"] = { {"int"}, {"float"}, {"bool"} };
@@ -222,10 +258,7 @@ bool SemanticVisitor::isCompatible(const std::string& actual, const std::string&
         return true;
     }
 
-    if (actualBase == expectedBase) return true;
-    if (expectedBase == "float" && actualBase == "int") return true;
-    if (expectedBase == "int" && actualBase == "float") return true;
-    return false;
+    return actualBase == expectedBase;
 }
 
 std::string SemanticVisitor::typeOf(Expression* expression) const {
@@ -263,25 +296,65 @@ bool SemanticVisitor::checkFunctionArgs(const std::string& functionName,
     auto found = functionSigs_.find(functionName);
     if (found == functionSigs_.end()) return false;
 
+    int bestScore = -1;
+    int bestMatchCount = 0;
+    std::string bestReturnType;
+
     for (const auto& signature : found->second) {
         const auto& params = signature.first;
         const auto& returnType = signature.second;
         if (params.size() != argTypes.size()) continue;
 
-        bool ok = true;
+        int signatureScore = 0;
         for (size_t index = 0; index < params.size(); ++index) {
-            if (!isCompatible(argTypes[index], params[index])) {
-                ok = false;
+            const int score = compatibilityScore(argTypes[index], params[index]);
+            if (score < 0) {
+                signatureScore = -1;
                 break;
             }
+            signatureScore += score;
         }
 
-        if (ok) {
-            if (inferredReturnType) *inferredReturnType = returnType;
-            return true;
+        if (signatureScore < 0) continue;
+
+        if (bestScore < 0 || signatureScore < bestScore) {
+            bestScore = signatureScore;
+            bestMatchCount = 1;
+            bestReturnType = returnType;
+        }
+        else if (signatureScore == bestScore) {
+            ++bestMatchCount;
         }
     }
-    return false;
+
+    if (bestScore < 0 || bestMatchCount != 1) return false;
+    if (inferredReturnType) *inferredReturnType = bestReturnType;
+    return true;
+}
+
+int SemanticVisitor::compatibilityScore(const std::string& actual,
+    const std::string& expected) const {
+    if (actual == "unknown" || expected == "unknown") return 0;
+
+    std::string actualBase;
+    std::string expectedBase;
+    int actualArraySize = -1;
+    int expectedArraySize = -1;
+    const bool actualIsArray = parseArrayType(actual, actualBase, actualArraySize);
+    const bool expectedIsArray = parseArrayType(expected, expectedBase, expectedArraySize);
+
+    if (actualIsArray != expectedIsArray) return -1;
+    if (actualIsArray && expectedIsArray) {
+        if (actualBase != expectedBase) return -1;
+        if (actualArraySize >= 0 && expectedArraySize >= 0 && actualArraySize != expectedArraySize) {
+            return -1;
+        }
+        return 0;
+    }
+
+    if (actualBase == expectedBase) return 0;
+
+    return -1;
 }
 
 std::string SemanticVisitor::joinTypes(const std::vector<std::string>& types) {
@@ -411,16 +484,29 @@ void SemanticVisitor::analyze(const ShaderInfo& shader) {
     }
 
     for (auto& fn : shader.functions) {
-        if (!scopes.declare({ fn.name, semantic::SymbolKind::Function, {fn.returnType} })) {
-            error("Symbol already declared: " + fn.name);
-            continue;
-        }
         std::vector<std::string> params;
         params.reserve(fn.params.size());
         for (const auto& parameter : fn.params) {
             params.push_back(parameter.type);
         }
-        functionSigs_[fn.name].push_back({ std::move(params), fn.returnType });
+
+        auto& overloads = functionSigs_[fn.name];
+        if (hasExactSignature(overloads, params, fn.returnType)) {
+            error("Function already declared with same signature: " + fn.name + "(" + joinTypes(params) + ")");
+            continue;
+        }
+
+        overloads.push_back({ params, fn.returnType });
+
+        const auto* existing = scopes.resolve(fn.name);
+        if (!existing) {
+            scopes.declare({ fn.name, semantic::SymbolKind::Function, {fn.returnType} });
+            continue;
+        }
+
+        if (existing->kind != semantic::SymbolKind::Function) {
+            error("Nome funzione in conflitto con simbolo non funzione: '" + fn.name + "'");
+        }
     }
 
     for (auto& fn : shader.functions) {
@@ -451,23 +537,9 @@ bool SemanticVisitor::isFunctionDeclared(const std::string& name) const {
 
 std::string SemanticVisitor::getFunctionReturnType(const std::string& name,
     const std::vector<std::string>& argTypes) const {
-    auto found = functionSigs_.find(name);
-    if (found == functionSigs_.end()) return "unknown";
-
-    for (const auto& sig : found->second) {
-        if (sig.first.size() != argTypes.size()) continue;
-        bool match = true;
-        for (size_t i = 0; i < sig.first.size(); i++) {
-            if (!isCompatible(argTypes[i], sig.first[i])) {
-                match = false;
-                break;
-            }
-        }
-        if (match) {
-            return sig.second;
-        }
-    }
-    return "unknown";
+    std::string returnType;
+    if (!checkFunctionArgs(name, argTypes, &returnType)) return "unknown";
+    return returnType.empty() ? "unknown" : returnType;
 }
 
 std::vector<std::string> SemanticVisitor::getAllFunctionNames() const {
@@ -700,80 +772,73 @@ void SemanticVisitor::visit(BinaryExpr* e) {
     if (e->right) e->right->accept(this);
     const std::string leftType = e->left ? typeOf(e->left.get()) : "unknown";
     const std::string rightType = e->right ? typeOf(e->right.get()) : "unknown";
-    if (leftType == rightType) {
-        setType(e, leftType);
-        return;
+    const std::string& op = e->op;
+
+    auto isIntLike = [](const std::string& t) {
+        return t == "int" || t == "uint";
+        };
+
+    if (op == "+" || op == "-") {
+        if (leftType == rightType) {
+            setType(e, leftType);
+            return;
+        }
     }
-    char op = e->op[0];
-    switch (op) {
-    case '+':
-    case '-':
-        if (isCompatible(leftType, rightType) || isCompatible(rightType, leftType)) {
-            setType(e, isCompatible(leftType, rightType) ? rightType : leftType);
+    else if (op == "*" || op == "/") {
+        if (leftType == rightType) {
+            setType(e, leftType);
             return;
         }
-        break;
-    case '*':
-    case '/':
-        if (isCompatible(leftType, rightType) || isCompatible(rightType, leftType)) {
-            setType(e, isCompatible(leftType, rightType) ? rightType : leftType);
-            return;
-        }
-        if ((leftType == "float" && rightType == "int") || (leftType == "int" && rightType == "float")) {
-            setType(e, "float");
-            return;
-        }
-        else if ((leftType == "vec2" && rightType == "float") || (leftType == "float" && rightType == "vec2")) {
+        if ((leftType == "vec2" && rightType == "float") || (leftType == "float" && rightType == "vec2")) {
             setType(e, "vec2");
             return;
         }
-        else if ((leftType == "vec3" && rightType == "float") || (leftType == "float" && rightType == "vec3")) {
+        if ((leftType == "vec3" && rightType == "float") || (leftType == "float" && rightType == "vec3")) {
             setType(e, "vec3");
             return;
         }
-        else if ((leftType == "vec4" && rightType == "float") || (leftType == "float" && rightType == "vec4")) {
+        if ((leftType == "vec4" && rightType == "float") || (leftType == "float" && rightType == "vec4")) {
             setType(e, "vec4");
             return;
         }
-        else if ((leftType == "vec2" && rightType == "int") || (leftType == "int" && rightType == "vec2")) {
-            setType(e, "vec2");
-            return;
-        }
-        else if ((leftType == "vec3" && rightType == "int") || (leftType == "int" && rightType == "vec3")) {
-            setType(e, "vec3");
-            return;
-        }
-        else if ((leftType == "vec4" && rightType == "int") || (leftType == "int" && rightType == "vec4")) {
-            setType(e, "vec4");
-            return;
-        }
-        else if ((leftType == "mat4" && rightType == "float") || (leftType == "float" && rightType == "mat4")) {
+        if ((leftType == "mat4" && rightType == "float") || (leftType == "float" && rightType == "mat4")) {
             setType(e, "mat4");
             return;
         }
-        else if ((leftType == "mat4" && rightType == "int") || (leftType == "int" && rightType == "mat4")) {
-            setType(e, "mat4");
-            return;
-        }
-        else if ((leftType == "mat4" && rightType == "vec4") || (leftType == "vec4" && rightType == "mat4")) {
+        if (leftType == "mat4" && rightType == "vec4") {
             setType(e, "vec4");
             return;
         }
-        break;
-    case '=':
-    case '>':
-    case '<':
-        if ((leftType == "float" && rightType == "int") || (leftType == "int" && rightType == "float") ||
-            (leftType == "bool" && rightType == "bool")) {
+    }
+    else if (op == "%") {
+        if (leftType == rightType && isIntLike(leftType)) {
+            setType(e, leftType);
+            return;
+        }
+    }
+    else if (op == "==" || op == "!=") {
+        if (leftType == rightType && leftType != "unknown") {
             setType(e, "bool");
             return;
         }
-        else {
-            setType(e, "unknown");
+    }
+    else if (op == "<" || op == ">" || op == "<=" || op == ">=") {
+        if (leftType == rightType && (leftType == "int" || leftType == "float")) {
+            setType(e, "bool");
+            return;
         }
-        break;
-    default:
-        break;
+    }
+    else if (op == "&&" || op == "||" || op == "^^") {
+        if (leftType == "bool" && rightType == "bool") {
+            setType(e, "bool");
+            return;
+        }
+    }
+    else if (op == "&" || op == "|" || op == "^" || op == "<<" || op == ">>") {
+        if (leftType == rightType && isIntLike(leftType)) {
+            setType(e, leftType);
+            return;
+        }
     }
 
     if (leftType != "unknown" && rightType != "unknown") {
