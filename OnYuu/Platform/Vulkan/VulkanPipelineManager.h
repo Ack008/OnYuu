@@ -46,9 +46,14 @@ namespace OnYuu {
             // Push constants
             std::vector<VkPushConstantRange> pushConstants;
 
-            // Render pass
+            // Render pass (legacy)
             VkRenderPass renderPass = VK_NULL_HANDLE;
             uint32_t subpass = 0;
+
+            // Dynamic Rendering config
+            std::vector<VkFormat> colorAttachmentFormats;
+            VkFormat depthAttachmentFormat = VK_FORMAT_UNDEFINED;
+            VkFormat stencilAttachmentFormat = VK_FORMAT_UNDEFINED;
 
             // Helper per inizializzare valori di default
             static PipelineConfig defaultConfig();

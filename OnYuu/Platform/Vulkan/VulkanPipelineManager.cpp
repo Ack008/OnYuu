@@ -119,6 +119,18 @@ namespace OnYuu {
         // Crea pipeline
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+
+        // Dynamic rendering
+        VkPipelineRenderingCreateInfo renderingCreateInfo{};
+        if (!config.colorAttachmentFormats.empty() || config.depthAttachmentFormat != VK_FORMAT_UNDEFINED) {
+            renderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+            renderingCreateInfo.colorAttachmentCount = static_cast<uint32_t>(config.colorAttachmentFormats.size());
+            renderingCreateInfo.pColorAttachmentFormats = config.colorAttachmentFormats.data();
+            renderingCreateInfo.depthAttachmentFormat = config.depthAttachmentFormat;
+            renderingCreateInfo.stencilAttachmentFormat = config.stencilAttachmentFormat;
+            pipelineInfo.pNext = &renderingCreateInfo;
+        }
+
         pipelineInfo.stageCount = static_cast<uint32_t>(config.shaderStages.size());
         pipelineInfo.pStages = config.shaderStages.data();
         pipelineInfo.pVertexInputState = &config.vertexInput;

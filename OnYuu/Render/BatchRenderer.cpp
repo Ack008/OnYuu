@@ -50,7 +50,7 @@ namespace OnYuu {
         }
     }
 
-    void BatchRender::BeginScene(Camera* camera)
+    void BatchRender::BeginScene(Camera* camera, std::shared_ptr<Texture> target)
     {
         if (sceneStarted)
         {
@@ -58,6 +58,7 @@ namespace OnYuu {
         }
         RenderScene scene;
         scene.activeCamera = camera;
+        scene.target = target;
         renderScenes.push_back(scene);
         sceneStarted = true;
     }

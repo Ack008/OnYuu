@@ -35,7 +35,7 @@ namespace OnYuu {
         virtual void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
         virtual void addLight(LightComponent light, glm::vec3 position) override;
         virtual void setSkyBox(SkyBoxComponent* skybox) override;
-        virtual void BeginScene(Camera* camera) override;
+        virtual void BeginScene(Camera* camera, std::shared_ptr<Texture> target = nullptr) override;
         virtual void EndScene() override;
         virtual void submit() override;
     protected:
@@ -50,6 +50,7 @@ namespace OnYuu {
             SkyBoxComponent* skybox = nullptr;
             Background2DRender* background2D = nullptr;
             std::unordered_map<BatchCouple, std::vector<RenderData>, BatchCoupleHash> batches;
+            std::shared_ptr<Texture> target;
         };
         std::vector<RenderScene> renderScenes;
     private:

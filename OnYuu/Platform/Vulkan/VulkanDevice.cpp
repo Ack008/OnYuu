@@ -43,7 +43,7 @@ namespace OnYuu {
 
         auto physDeviceRet = selector
             .set_surface(surface)
-            .set_minimum_version(1, 2)
+            .set_minimum_version(1, 3)
             .add_required_extensions(config.requiredExtensions)
             .select();
 
@@ -86,13 +86,20 @@ namespace OnYuu {
         deviceFeatures2.features.drawIndirectFirstInstance = VK_TRUE;
         deviceFeatures2.pNext = &vulkan12Features;
 
-        // Crea logical device
-        vkb::DeviceBuilder deviceBuilder{ physicalDevice };
+		// ✅ Usa VkPhysicalDeviceVulkan13Features per Vulkan 1.3
+		VkPhysicalDeviceVulkan13Features vulkan13Features{};
+		vulkan13Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+		vulkan13Features.dynamicRendering = VK_TRUE;
+		vulkan13Features.pNext = nullptr;
 
-        auto deviceRet = deviceBuilder
-            .add_pNext(&deviceFeatures2)
+		// Crea logical device
+		vkb::DeviceBuilder deviceBuilder{ physicalDevice };
+
+		auto deviceRet = deviceBuilder
+			.add_pNext(&deviceFeatures2)
 			.add_pNext(&vulkan12Features)
-            .build();
+			.add_pNext(&vulkan13Features)
+			.build();
 
         if (!deviceRet) {
             std::cerr << "VulkanDevice: Failed to create device: "

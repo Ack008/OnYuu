@@ -136,7 +136,7 @@ namespace OnYuu {
             .set_app_name("OnYuu Engine")
             .request_validation_layers(true)
             .use_default_debug_messenger()
-            .require_api_version(1, 2, 0)
+            .require_api_version(1, 3, 0)
             .build();
 
         if (!instRet) {
@@ -475,9 +475,11 @@ namespace OnYuu {
         }
         LOG( << "  Command buffer recording started\n");
 
-        // Step 6: Begin render pass
-        LOG( << "  6. Beginning render pass...\n");
-        beginRenderPass(cmd);
+		// Step 6: Begin render pass
+		LOG( << "  6. Beginning render pass...\n");
+		//beginRenderPass(cmd);
+		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_);
+
         LOG( << "  Render pass begun (clearing to color)\n");
 
         // Step 7: Render scenes
@@ -508,7 +510,8 @@ namespace OnYuu {
 
         // Step 1: End render pass
         LOG(<< "  1. Ending render pass...\n");
-        endRenderPass(cmd);
+        //endRenderPass(cmd);
+        endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
         LOG(<< "     ✓ Render pass ended\n");
 
         // Step 2: End command buffer
@@ -575,6 +578,97 @@ namespace OnYuu {
         LOG(<< "=== Submit Complete ===\n\n");
     }
 
+	void VulkanRender::beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat)
+	{
+		LOG( << "     [beginRendering] Starting...\n");
+
+		VkImageMemoryBarrier colorBarrier{};
+		colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		colorBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		colorBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		colorBarrier.image = colorImage;
+		colorBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		colorBarrier.subresourceRange.baseMipLevel = 0;
+		colorBarrier.subresourceRange.levelCount = 1;
+		colorBarrier.subresourceRange.baseArrayLayer = 0;
+		colorBarrier.subresourceRange.layerCount = 1;
+		colorBarrier.srcAccessMask = 0;
+		colorBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		VkImageMemoryBarrier depthBarrier{};
+		depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		depthBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		depthBarrier.image = depthImage;
+		depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		if (depthFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || depthFormat == VK_FORMAT_D24_UNORM_S8_UINT) {
+			depthBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+		depthBarrier.subresourceRange.baseMipLevel = 0;
+		depthBarrier.subresourceRange.levelCount = 1;
+		depthBarrier.subresourceRange.baseArrayLayer = 0;
+		depthBarrier.subresourceRange.layerCount = 1;
+		depthBarrier.srcAccessMask = 0;
+		depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		VkImageMemoryBarrier barriers[] = { colorBarrier, depthBarrier };
+		vkCmdPipelineBarrier(cmd,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+			0, 0, nullptr, 0, nullptr, 2, barriers);
+
+		VkClearValue clearColor = { {0.0f, 0.5f, 1.0f, 1.0f} };
+		VkClearValue clearDepth = {}; clearDepth.depthStencil = { 1.0f, 0 };
+
+		VkRenderingAttachmentInfo colorAttachment{};
+		colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		colorAttachment.imageView = colorView;
+		colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.clearValue = clearColor;
+
+		VkRenderingAttachmentInfo depthAttachmentInfo{};
+		depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+		depthAttachmentInfo.imageView = depthView;
+		depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachmentInfo.clearValue = clearDepth;
+
+		VkRenderingInfo renderingInfo{};
+		renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+		renderingInfo.renderArea.offset = { 0, 0 };
+		renderingInfo.renderArea.extent = extent;
+		renderingInfo.layerCount = 1;
+		renderingInfo.colorAttachmentCount = 1;
+		renderingInfo.pColorAttachments = &colorAttachment;
+		renderingInfo.pDepthAttachment = &depthAttachmentInfo;
+
+		vkCmdBeginRendering(cmd, &renderingInfo);
+
+		// Set dynamic viewport and scissor
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = extent;
+		vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+		LOG( << "     [beginRendering] Viewport & scissor set\n");
+	}
+
     void VulkanRender::beginRenderPass(VkCommandBuffer cmd) {
         LOG( << "     [beginRenderPass] Starting...\n");
 
@@ -623,6 +717,35 @@ namespace OnYuu {
         vkCmdEndRenderPass(cmd);
     }
 
+    void VulkanRender::endRendering(VkCommandBuffer cmd, VkImage colorImage)
+    {
+        vkCmdEndRendering(cmd);
+
+        // Transition swapchain image a PRESENT_SRC_KHR per lo schermo
+        VkImageMemoryBarrier colorBarrier{};
+        colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        colorBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        colorBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        colorBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        colorBarrier.image = colorImage;
+        colorBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        colorBarrier.subresourceRange.baseMipLevel = 0;
+        colorBarrier.subresourceRange.levelCount = 1;
+        colorBarrier.subresourceRange.baseArrayLayer = 0;
+        colorBarrier.subresourceRange.layerCount = 1;
+        colorBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        colorBarrier.dstAccessMask = 0;
+
+        vkCmdPipelineBarrier(cmd,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            0,
+            0, nullptr,
+            0, nullptr,
+            1, &colorBarrier);
+    }
+
     void VulkanRender::renderScene(VkCommandBuffer cmd, int sceneIndex) {
         if (sceneIndex < 0 || sceneIndex >= static_cast<int>(renderScenes.size())) {
             LOG( << "       [renderScene] Invalid scene index: " << sceneIndex << "\n");
@@ -654,7 +777,12 @@ namespace OnYuu {
             }
 
             // Get pipeline
-            PipelineKey pipelineKey{ material->getShader(), renderingType };
+            PipelineKey pipelineKey{ 
+                material->getShader(), 
+                renderingType,
+                swapchain_->getFormat(),
+                depthFormat_
+            };
             VkPipeline pipeline = getOrCreatePipeline(pipelineKey, material);
 
             if (pipeline == VK_NULL_HANDLE) {
@@ -866,6 +994,7 @@ namespace OnYuu {
                 cmd.firstIndex = drawInfo.firstIndex;
                 cmd.vertexOffset = drawInfo.vertexOffset;
                 cmd.firstInstance = firstInstance;
+                
 
                 indirectBuffer->addDrawCommand(cmd);
             }
@@ -1042,7 +1171,10 @@ namespace OnYuu {
         pushConstant.size = sizeof(glm::mat4);
         config.pushConstants = { pushConstant };
 
-        config.renderPass = renderPass_;
+        // Dynamic rendering config instead of renderPass
+        config.renderPass = VK_NULL_HANDLE;
+        config.colorAttachmentFormats = { key.colorFormat };
+        config.depthAttachmentFormat = key.depthFormat;
 
         VkPipeline pipeline = pipelineManager_->createGraphicsPipeline(config);
 

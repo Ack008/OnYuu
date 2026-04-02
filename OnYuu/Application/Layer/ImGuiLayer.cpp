@@ -55,14 +55,23 @@ namespace OnYuu {
 			init_info.MinImageCount = vulkanRender->getInit().swapchain.image_count;
 			init_info.ImageCount = vulkanRender->getInit().swapchain.image_count;
 			init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-			init_info.PipelineInfoMain.RenderPass = vulkanRender->getRenderPass();
+
+			init_info.UseDynamicRendering = true;
+			init_info.PipelineInfoMain.RenderPass = VK_NULL_HANDLE;
 			init_info.PipelineInfoMain.PipelineRenderingCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
 			init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
-			VkFormat format = vulkanRender->getInit().swapchain.image_format;
+			static VkFormat format; // ImGui needs this pointer to be stable if we recreate pipeline
+			format = vulkanRender->getInit().swapchain.image_format;
 			init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &format;
-
-
+			init_info.PipelineInfoMain.PipelineRenderingCreateInfo.depthAttachmentFormat = vulkanRender->getDepthFormat();
+			if (vulkanRender->getDepthFormat() == VK_FORMAT_D32_SFLOAT_S8_UINT || vulkanRender->getDepthFormat() == VK_FORMAT_D24_UNORM_S8_UINT)
+				init_info.PipelineInfoMain.PipelineRenderingCreateInfo.stencilAttachmentFormat = vulkanRender->getDepthFormat();
 			init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+			init_info.PipelineInfoForViewports.PipelineRenderingCreateInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO };
+			init_info.PipelineInfoForViewports.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+			init_info.PipelineInfoForViewports.PipelineRenderingCreateInfo.pColorAttachmentFormats = &format;
+			init_info.PipelineInfoForViewports.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 
 			ImGui_ImplVulkan_Init(&init_info);

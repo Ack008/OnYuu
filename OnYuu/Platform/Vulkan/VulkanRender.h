@@ -61,6 +61,7 @@ namespace OnYuu {
         }
 
         VkQueue getGraphicQueue() const { return device_->getGraphicsQueue(); }
+        VkFormat getDepthFormat() const { return depthFormat_; }
 
         uint32_t getCurrentFrame() const { return currentFrame_; }
         void removeCachedMesh(const std::shared_ptr<Mesh>& mesh);
@@ -162,10 +163,14 @@ namespace OnYuu {
         struct PipelineKey {
             std::shared_ptr<class Shader> shader;
             RenderingTypeEnum renderingType;
+            VkFormat colorFormat;
+            VkFormat depthFormat;
 
             bool operator==(const PipelineKey& other) const {
                 return shader.get() == other.shader.get() &&
-                    renderingType == other.renderingType;
+                    renderingType == other.renderingType &&
+                    colorFormat == other.colorFormat &&
+                    depthFormat == other.depthFormat;
             }
         };
 
@@ -173,7 +178,15 @@ namespace OnYuu {
             size_t operator()(const PipelineKey& k) const {
                 size_t h1 = std::hash<void*>{}(k.shader.get());
                 size_t h2 = std::hash<int>{}(static_cast<int>(k.renderingType));
-                return h1 ^ (h2 << 1);
+                size_t h3 = std::hash<int>{}(static_cast<int>(k.colorFormat));
+                size_t h4 = std::hash<int>{}(static_cast<int>(k.depthFormat));
+
+                // Combine hashes
+                size_t hash = h1;
+                hash ^= h2 + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+                hash ^= h3 + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+                hash ^= h4 + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+                return hash;
             }
         };
 
@@ -237,8 +250,10 @@ namespace OnYuu {
         void updateSceneDescriptors(int sceneIndex);
         void updateMaterialDescriptors(std::shared_ptr<class Material> material);
 
-        void beginRenderPass(VkCommandBuffer cmd);
-        void endRenderPass(VkCommandBuffer cmd);
+		void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat);
+		void beginRenderPass(VkCommandBuffer cmd);
+		void endRenderPass(VkCommandBuffer cmd);
+		void endRendering(VkCommandBuffer cmd, VkImage colorImage);
         void renderScene(VkCommandBuffer cmd, int sceneIndex);
 
         // Pipeline management
