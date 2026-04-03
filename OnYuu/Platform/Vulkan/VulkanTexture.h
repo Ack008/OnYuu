@@ -11,6 +11,7 @@ namespace OnYuu {
 		~VulkanTexture();
 		virtual void bind(uint32_t slot = 0) override;
 		VkImageView getImageView() const { return textureImageView; }
+		VkImage getImage() const { return textureImage; }
 		VkSampler getSampler() const { return textureSampler; }
 		virtual void shutdown() override;
 	private:

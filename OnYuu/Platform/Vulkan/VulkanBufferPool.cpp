@@ -216,13 +216,13 @@ namespace OnYuu {
     {
         // Implementazione opzionale: complessa, richiede tracking delle regioni allocate
         // e copia dei dati per compattare. Non implementata in questa versione.
-		std::cout << "Defragmentation not implemented.\n";
+		LOG( << "Defragmentation not implemented.\n");
 
     }
 
     void GeometryPool::growVertexBuffer(VkDeviceSize newSize) {
-        std::cout << "Growing vertex buffer from " << vertexBufferSize
-            << " to " << newSize << " bytes\n";
+        LOG( << "Growing vertex buffer from " << vertexBufferSize
+            << " to " << newSize << " bytes\n");
 
         VkBuffer oldBuffer = vertexBuffer;
         VmaAllocation oldAllocation = vertexAllocation;
@@ -255,8 +255,8 @@ namespace OnYuu {
 
     void GeometryPool::growIndexBuffer(VkDeviceSize newSize) {
         // Implementazione identica a growVertexBuffer, ma per index buffer
-        std::cout << "Growing index buffer from " << indexBufferSize
-            << " to " << newSize << " bytes\n";
+        LOG( << "Growing index buffer from " << indexBufferSize
+            << " to " << newSize << " bytes\n");
 
         VkBuffer oldBuffer = indexBuffer;
         VmaAllocation oldAllocation = indexAllocation;
@@ -306,8 +306,8 @@ namespace OnYuu {
         info.refCount = 1;
         info.markedForDeletion = false;
 
-        std::cout << "[GeometryPool] Registered new mesh (total cached: "
-            << meshUsageTracker_.size() << ")\n";
+        LOG( << "[GeometryPool] Registered new mesh (total cached: "
+            << meshUsageTracker_.size() << ")\n");
     }
 
 
@@ -333,7 +333,7 @@ namespace OnYuu {
 
         std::vector<std::shared_ptr<Mesh>> toDelete;
 
-        std::cout << "[GC] Scanning " << meshUsageTracker_.size() << " cached meshes...\n";
+        LOG( << "[GC] Scanning " << meshUsageTracker_.size() << " cached meshes...\n");
 
         for (auto it = meshUsageTracker_.begin(); it != meshUsageTracker_.end();) {
             const auto& mesh = it->first;
@@ -343,9 +343,9 @@ namespace OnYuu {
 
             // ✅ Elimina mesh NON usate da N frame
             if (framesSinceLastUse > framesToKeep && !info.markedForDeletion) {
-                std::cout << "[GC] Marking mesh for deletion (unused for "
+                LOG( << "[GC] Marking mesh for deletion (unused for "
                     << framesSinceLastUse << " frames, last used: "
-                    << info.lastUsedFrame << ")\n";
+                    << info.lastUsedFrame << ")\n");
 
                 info.markedForDeletion = true;
                 toDelete.push_back(mesh);
@@ -356,17 +356,17 @@ namespace OnYuu {
 
         // Elimina mesh marchiate
         if (!toDelete.empty()) {
-            std::cout << "[GC] Deleting " << toDelete.size() << " meshes...\n";
+            LOG( "[GC] Deleting " << toDelete.size() << " meshes...\n");
 
             for (const auto& mesh : toDelete) {
                 renderer->removeCachedMesh(mesh); // Libera risorse GPU
                 meshUsageTracker_.erase(mesh);
             }
 
-            std::cout << "[GC] Remaining cached meshes: " << meshUsageTracker_.size() << "\n";
+            LOG( "[GC] Remaining cached meshes: " << meshUsageTracker_.size() << "\n");
         }
         else {
-            std::cout << "[GC] No meshes to delete\n";
+            LOG( "[GC] No meshes to delete\n");
         }
     }
 
@@ -432,8 +432,8 @@ namespace OnYuu {
 
         
 
-        std::cout << "Uploaded mesh to pool: Vertex offset=" << vertexRegion.offset
-            << " Index offset=" << indexRegion.offset << "\n";
+        LOG( << "Uploaded mesh to pool: Vertex offset=" << vertexRegion.offset
+            << " Index offset=" << indexRegion.offset << "\n");
     }
 
     void PooledMeshGPU::drawInstanced(VkCommandBuffer cmd, uint32_t instanceCount,

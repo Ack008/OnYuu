@@ -162,6 +162,7 @@
     <ClCompile Include="Platform\Vulkan\VulkanMetaShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanPipelineManager.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRender.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanRenderTarget.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanSwapchain.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanSyncManager.cpp" />
@@ -241,6 +242,7 @@
     <ClInclude Include="Platform\Vulkan\VulkanMetaShader.h" />
     <ClInclude Include="Platform\Vulkan\VulkanPipelineManager.h" />
     <ClInclude Include="Platform\Vulkan\VulkanRender.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanRenderTarget.h" />
     <ClInclude Include="Platform\Vulkan\VulkanShader.h" />
     <ClInclude Include="Platform\Vulkan\VulkanSwapchain.h" />
     <ClInclude Include="Platform\Vulkan\VulkanSyncManager.h" />
@@ -279,6 +281,7 @@
     <ClInclude Include="Core\Model\Scene.h" />
     <ClInclude Include="Core\Shader.h" />
     <ClInclude Include="Core\Model\Components\Transform.h" />
+    <ClInclude Include="Render\RenderTarget.h" />
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
     <ClInclude Include="vendor\spir-v-cross\GLSL.std.450.h" />

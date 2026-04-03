@@ -9,6 +9,7 @@
 #include "Core/Model/Components/Lights.h "
 #include "Core/Model/Components/Camera.h"
 #include "Platform/API.h"
+#include "RenderTarget.h"
 using namespace OnYuu;
 namespace OnYuu {
 
@@ -58,7 +59,7 @@ namespace OnYuu {
 		// Accesso globale all'istanza concreta del renderer. Usa il factory method
 		// `create()` per costruire l'implementazione corretta in base all'API.
 		static std::shared_ptr<Render> getInstance();
-		virtual void BeginScene(Camera* camera, std::shared_ptr<Texture> target = nullptr) {}
+		virtual void BeginScene(Camera* camera, std::shared_ptr<RenderTarget> target = nullptr) {}
 		virtual void EndScene() {}
 		virtual void submit() {}
 		virtual void Shutdown() = 0;

@@ -14,9 +14,6 @@ void VulkanAppLayer::onUpdate(float deltaTime)
 		Render::getInstance()->addMeshRender(&renderMesh, glm::mat4(1.0f));
 	}
 	Render::getInstance()->addMeshRender(&renderMesh2, model1);
-	glm::mat4 model3(1.0f);
-	model3 = glm::translate(model3, glm::vec3(-2.0f, 0.0f, 0.0f));
-	Render::getInstance()->addMeshRender(&renderMesh3, model3);
 	Render::getInstance()->EndScene();
 }
 

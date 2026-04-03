@@ -49,7 +49,6 @@ namespace OnYuu {
         VulkanDescriptorManager* getDescriptorManager() const { return descriptorManager_.get(); }
         VulkanPipelineManager* getPipelineManager() const { return pipelineManager_.get(); }
 
-
         VmaAllocator getAllocator() const { return allocator_; }
         VkRenderPass getRenderPass() const { return renderPass_; }
 
@@ -126,10 +125,14 @@ namespace OnYuu {
         // ========================================================================
         // FRAME MANAGEMENT
         // ========================================================================
-        static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+        static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
         uint32_t currentFrame_ = 0;
         uint32_t imageIndex_ = 0;
 		uint32_t frameNumber = 0;
+        std::vector<VkSemaphore> imageAvailableSemaphores;
+        std::vector<VkSemaphore> renderFinishedSemaphores;
+        std::vector<VkFence> inFlightFences;
+        std::vector<VkFence> imagesInFlight;
 
         // ========================================================================
         // DESCRIPTOR SET LAYOUTS (condivisi tra frame)
@@ -147,6 +150,8 @@ namespace OnYuu {
             std::vector<std::shared_ptr<class VulkanStorageBuffer>> modelMatrixSsbos;
         };
         std::unordered_map<int, SceneResources> sceneResources_;
+        std::unordered_map<std::shared_ptr<RenderTarget>, std::vector<int>> sceneTarget;
+		std::vector<int> swapChainRenderedScenes;
 
         // ========================================================================
         // PER-MATERIAL RESOURCES
@@ -253,7 +258,7 @@ namespace OnYuu {
 		void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat);
 		void beginRenderPass(VkCommandBuffer cmd);
 		void endRenderPass(VkCommandBuffer cmd);
-		void endRendering(VkCommandBuffer cmd, VkImage colorImage);
+		void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
         void renderScene(VkCommandBuffer cmd, int sceneIndex);
 
         // Pipeline management

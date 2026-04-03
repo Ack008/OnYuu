@@ -2,8 +2,10 @@
 #include "Application/Application.h"
 #include "Core/View/View.h"
 #include "Platform/Vulkan/VulkanShader.h"
+#include "Platform/Vulkan/VulkanRenderTarget.h"
 #include "Platform/Vulkan/VulkanBuffer.h"
 #include "Platform/Vulkan/VulkanTexture.h"
+#include "Platform/Vulkan/VulkanRenderTarget.h"
 #include "Platform/Vulkan/VulkanBufferPool.h"
 #include "IndirectDrawSystem.h"
 #include <iostream>
@@ -106,6 +108,32 @@ namespace OnYuu {
             throw std::runtime_error("Failed to initialize sync manager");
         }
         LOG( << "✓ Sync manager initialized (" << MAX_FRAMES_IN_FLIGHT << " frames)\n");
+
+        imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        renderFinishedSemaphores.resize(swapchain_->getImageCount());
+        inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            if (vkCreateSemaphore(device_->getDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i]) != VK_SUCCESS ||
+                vkCreateFence(device_->getDevice(), &fenceInfo, nullptr, &inFlightFences[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create synchronization objects for a frame!");
+            }
+        }
+
+		for (size_t i = 0; i < swapchain_->getImageCount(); i++) {
+            if (vkCreateSemaphore(device_->getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create render finished semaphore for a swapchain image!");
+            }
+        }
+
+        imagesInFlight.resize(swapchain_->getImageCount(), VK_NULL_HANDLE);
 
        
 
@@ -410,17 +438,11 @@ namespace OnYuu {
         frameNumber++;
 
         LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
-
-        const auto& sync = syncManager_->getFrameSync(currentFrame_);
-
-        // Step 1: Wait for previous frame
-        LOG( << "  1. Waiting for fence...\n");
-        syncManager_->waitForFence(currentFrame_);
-        LOG( << "     ✓ Fence signaled\n");
-
+        vkWaitForFences(device_->getDevice(), 1, &inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
+      
         // Step 2: Acquire image
         LOG( << "  2. Acquiring swapchain image...\n");
-        VkResult result = swapchain_->acquireNextImage(sync.imageAvailable, &imageIndex_);
+        VkResult result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -439,11 +461,33 @@ namespace OnYuu {
 
             swapchain_->recreate(surface_, renderPass_, depthImageView_);
 
-            result = swapchain_->acquireNextImage(sync.imageAvailable, &imageIndex_);
+            for (auto semaphore : renderFinishedSemaphores) {
+                if (semaphore != VK_NULL_HANDLE) {
+                    vkDestroySemaphore(device_->getDevice(), semaphore, nullptr);
+                }
+            }
+            renderFinishedSemaphores.clear();
+            renderFinishedSemaphores.resize(swapchain_->getImageCount());
+
+            VkSemaphoreCreateInfo semaphoreInfo{};
+            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+            for (size_t i = 0; i < renderFinishedSemaphores.size(); ++i) {
+                if (vkCreateSemaphore(device_->getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+                    throw std::runtime_error("failed to create render finished semaphore for a swapchain image!");
+                }
+            }
+
+            imagesInFlight.assign(renderFinishedSemaphores.size(), VK_NULL_HANDLE);
+
+         
+
+            result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
             if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
                 std::cerr << "Failed to acquire image after recreate! Result: " << result << "\n";
+
                 syncManager_->resetFence(currentFrame_);
+                vkResetFences(device_->getDevice(), 1, &inFlightFences[currentFrame_]);
                 return;
             }
         }
@@ -452,12 +496,17 @@ namespace OnYuu {
             return;
         }
 
-        LOG( << "Acquired image " << imageIndex_ << "\n");
+        if (imagesInFlight[imageIndex_] != VK_NULL_HANDLE) {
+            vkWaitForFences(device_->getDevice(), 1, &imagesInFlight[imageIndex_], VK_TRUE, UINT64_MAX);
+        }
 
-        // Step 3: Reset fence
-        LOG( << "  3. Resetting fence...\n");
-        syncManager_->resetFence(currentFrame_);
-        LOG( << " Fence reset\n");
+        imagesInFlight[imageIndex_] = inFlightFences[currentFrame_];
+        vkResetFences(device_->getDevice(), 1, &inFlightFences[currentFrame_]);
+
+
+       
+
+
 
         // Step 4: Update descriptors
         LOG( << "  4. Updating descriptor sets...\n");
@@ -478,9 +527,31 @@ namespace OnYuu {
 		// Step 6: Begin render pass
 		LOG( << "  6. Beginning render pass...\n");
 		//beginRenderPass(cmd);
+        for (size_t i = 0; i < renderScenes.size(); ++i) {
+            if (renderScenes[i].target) {
+                sceneTarget[renderScenes[i].target].push_back(i);
+            }
+            else {
+				swapChainRenderedScenes.push_back(i);
+            }
+        }
+		for (const auto& [target, indices] : sceneTarget) {
+            LOG( << "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
+			beginRendering(cmd, static_cast<VulkanRenderTarget*>(target.get())->getColorImage(), static_cast<VulkanRenderTarget*>(target.get())->getColorImageView(), static_cast<VulkanRenderTarget*>(target.get())->getDepthImage(), static_cast<VulkanRenderTarget*>(target.get())->getDepthImageView(), static_cast<VulkanRenderTarget*>(target.get())->getExtent(), static_cast<VulkanRenderTarget*>(target.get())->getDepthFormat());
+            for (int index : indices) {
+                LOG( << "       Rendering scene " << index << " to target...\n");
+                renderScene(cmd, index);
+                LOG( << "         ✓ Scene rendered to target\n");
+			}
+            endRendering(cmd, static_cast<VulkanRenderTarget*>(target.get())->getColorImage(), false);
+        }
 		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_);
 
-        LOG( << "  Render pass begun (clearing to color)\n");
+        for (int index : swapChainRenderedScenes) {
+            LOG( << "       Rendering scene " << index << " to swapchain...\n");
+            renderScene(cmd, index);
+            LOG( << "         ✓ Scene rendered to swapchain\n");
+		}
 
         // Step 7: Render scenes
         if (renderScenes.empty()) {
@@ -488,10 +559,7 @@ namespace OnYuu {
         }
         else {
             LOG( << "  7. Rendering " << renderScenes.size() << " scene(s)...\n");
-            for (size_t i = 0; i < renderScenes.size(); ++i) {
-                LOG( << "     - Rendering scene " << i << "...\n");
-                renderScene(cmd, static_cast<int>(i));
-            }
+            //renderScene(cmd, static_cast<int>(i));
             LOG( << "     ✓ All scenes rendered\n");
         }
 
@@ -513,7 +581,8 @@ namespace OnYuu {
         //endRenderPass(cmd);
         endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
         LOG(<< "     ✓ Render pass ended\n");
-
+        sceneTarget.clear();
+        swapChainRenderedScenes.clear();
         // Step 2: End command buffer
         LOG(<< "  2. Ending command buffer...\n");
         if (!commandManager_->end(currentFrame_)) {
@@ -525,14 +594,11 @@ namespace OnYuu {
         const auto& frameSync = syncManager_->getFrameSync(currentFrame_);
         const auto& imageSync = syncManager_->getImageSync(imageIndex_);
 
-        // Step 3: Wait per il fence dell'immagine (se in uso da un frame precedente)
-        LOG(<< "  3. Waiting for image fence...\n");
-        syncManager_->waitForImageFence(imageIndex_);
-
-        // Step 4: Submit to graphics queue
-        LOG(<< "  4. Submitting to graphics queue...\n");
-        VkSemaphore waitSemaphores[] = { frameSync.imageAvailable };
-        VkSemaphore signalSemaphores[] = { imageSync.renderFinished }; // ✅ USA IMMAGINE!
+        // Step 3: Submit to graphics queue
+        LOG(<< "  3. Submitting to graphics queue...\n");
+        VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame_] };
+        VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[imageIndex_] };
+        // ✅ USE IMAGE SYNC!
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
         VkSubmitInfo submitInfo{};
@@ -546,7 +612,7 @@ namespace OnYuu {
         submitInfo.pSignalSemaphores = signalSemaphores;
 
         // Segnala sia frame fence che image fence
-        VkResult submitResult = vkQueueSubmit(device_->getGraphicsQueue(), 1, &submitInfo, frameSync.inFlight);
+        VkResult submitResult = vkQueueSubmit(device_->getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame_]);
         if (submitResult != VK_SUCCESS) {
             std::cerr << "     ✗ Failed to submit draw command buffer! Result: " << submitResult << "\n";
             return;
@@ -555,7 +621,7 @@ namespace OnYuu {
 
         // Step 5: Present
         LOG(<< "  5. Presenting image " << imageIndex_ << "...\n");
-        VkResult result = swapchain_->present(device_->getPresentQueue(), imageIndex_, imageSync.renderFinished);
+        VkResult result = swapchain_->present(device_->getPresentQueue(), imageIndex_, renderFinishedSemaphores[imageIndex_]);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             LOG(<< "     ! Swapchain out of date/suboptimal, will recreate next frame\n");
@@ -717,7 +783,7 @@ namespace OnYuu {
         vkCmdEndRenderPass(cmd);
     }
 
-    void VulkanRender::endRendering(VkCommandBuffer cmd, VkImage colorImage)
+    void VulkanRender::endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain)
     {
         vkCmdEndRendering(cmd);
 
@@ -725,7 +791,7 @@ namespace OnYuu {
         VkImageMemoryBarrier colorBarrier{};
         colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         colorBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        colorBarrier.newLayout = isSwapchain ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         colorBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         colorBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
         colorBarrier.image = colorImage;
@@ -1383,6 +1449,16 @@ namespace OnYuu {
             syncManager_->shutdown();
             syncManager_.reset();
         }
+
+     for (size_t i = 0; i < renderFinishedSemaphores.size(); i++) {
+            vkDestroySemaphore(device_->getDevice(), renderFinishedSemaphores[i], nullptr);
+        }
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroySemaphore(device_->getDevice(), imageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(device_->getDevice(), inFlightFences[i], nullptr);
+        }
+        imagesInFlight.clear();
 
         LOG( << "  Shutting down command manager...\n");
         if (commandManager_) {
