@@ -117,16 +117,17 @@ namespace OnYuu {
     }
 
     std::shared_ptr<IndirectDrawBuffer> IndirectDrawManager::getOrCreateBuffer(
+        int sceneIndex,
         std::shared_ptr<Material> material
     ) {
-        auto it = buffers.find(material);
+        SceneMaterialKey key{ sceneIndex, material };
+        auto it = buffers.find(key);
         if (it != buffers.end()) {
             return it->second;
         }
 
-        // Crea nuovo buffer per questo materiale
         auto buffer = std::make_shared<IndirectDrawBuffer>(allocator, framesInFlight, 10000);
-        buffers[material] = buffer;
+        buffers.emplace(key, buffer);
 
         return buffer;
     }

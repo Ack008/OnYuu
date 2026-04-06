@@ -144,9 +144,23 @@ namespace OnYuu {
         // STEP 14: Geometry pool e indirect draw
         geometryPool_ = std::make_shared<GeometryPool>(allocator_, this, 128 * 1024 * 1024);
         indirectDrawManager_ = std::make_shared<IndirectDrawManager>(allocator_, MAX_FRAMES_IN_FLIGHT);
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            LOG(<< "Frame " << i << " - Image Available Semaphore: " << imageAvailableSemaphores[i]
+                << ", In Flight Fence: " << inFlightFences[i] << "\n");
+        }
+        for (size_t i = 0; i < swapchain_->getImageCount(); i++) {
+            LOG(<< "Swapchain Image " << i << " - Render Finished Semaphore: " << renderFinishedSemaphores[i] << "\n");
+        }
+        for (size_t i = 0; i < imagesInFlight.size(); i++) {
+            LOG(<< "Swapchain Image " << i << " - In Flight Fence: " << imagesInFlight[i] << "\n");
+        }
         LOG( << "✓ Geometry pool and indirect draw manager initialized\n");
 
         LOG( << "=== VulkanRender Initialization Complete ===\n\n");
+
+
+       
+
     }
 
     VulkanRender::~VulkanRender() {
@@ -537,15 +551,19 @@ namespace OnYuu {
         }
 		for (const auto& [target, indices] : sceneTarget) {
             LOG( << "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
-			beginRendering(cmd, static_cast<VulkanRenderTarget*>(target.get())->getColorImage(), static_cast<VulkanRenderTarget*>(target.get())->getColorImageView(), static_cast<VulkanRenderTarget*>(target.get())->getDepthImage(), static_cast<VulkanRenderTarget*>(target.get())->getDepthImageView(), static_cast<VulkanRenderTarget*>(target.get())->getExtent(), static_cast<VulkanRenderTarget*>(target.get())->getDepthFormat());
+			auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
+			const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
+			beginRendering(cmd, vulkanTarget->getColorImage(currentFrame_), vulkanTarget->getColorImageView(currentFrame_), vulkanTarget->getDepthImage(currentFrame_), vulkanTarget->getDepthImageView(currentFrame_), vulkanTarget->getExtent(), vulkanTarget->getDepthFormat(), false, targetOldLayout);
+			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             for (int index : indices) {
                 LOG( << "       Rendering scene " << index << " to target...\n");
                 renderScene(cmd, index);
                 LOG( << "         ✓ Scene rendered to target\n");
 			}
-            endRendering(cmd, static_cast<VulkanRenderTarget*>(target.get())->getColorImage(), false);
+            endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
+			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
-		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_);
+		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_, true, VK_IMAGE_LAYOUT_UNDEFINED);
 
         for (int index : swapChainRenderedScenes) {
             LOG( << "       Rendering scene " << index << " to swapchain...\n");
@@ -644,13 +662,13 @@ namespace OnYuu {
         LOG(<< "=== Submit Complete ===\n\n");
     }
 
-	void VulkanRender::beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat)
+	void VulkanRender::beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat, bool isSwapchain, VkImageLayout colorOldLayout)
 	{
 		LOG( << "     [beginRendering] Starting...\n");
 
 		VkImageMemoryBarrier colorBarrier{};
 		colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		colorBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorBarrier.oldLayout = colorOldLayout;
 		colorBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		colorBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 		colorBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -660,7 +678,7 @@ namespace OnYuu {
 		colorBarrier.subresourceRange.levelCount = 1;
 		colorBarrier.subresourceRange.baseArrayLayer = 0;
 		colorBarrier.subresourceRange.layerCount = 1;
-		colorBarrier.srcAccessMask = 0;
+		colorBarrier.srcAccessMask = (colorOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) ? VK_ACCESS_SHADER_READ_BIT : 0;
 		colorBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
 		VkImageMemoryBarrier depthBarrier{};
@@ -683,7 +701,7 @@ namespace OnYuu {
 
 		VkImageMemoryBarrier barriers[] = { colorBarrier, depthBarrier };
 		vkCmdPipelineBarrier(cmd,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			(colorOldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) ? VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 			0, 0, nullptr, 0, nullptr, 2, barriers);
 
@@ -787,7 +805,6 @@ namespace OnYuu {
     {
         vkCmdEndRendering(cmd);
 
-        // Transition swapchain image a PRESENT_SRC_KHR per lo schermo
         VkImageMemoryBarrier colorBarrier{};
         colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
         colorBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -801,11 +818,11 @@ namespace OnYuu {
         colorBarrier.subresourceRange.baseArrayLayer = 0;
         colorBarrier.subresourceRange.layerCount = 1;
         colorBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        colorBarrier.dstAccessMask = 0;
+        colorBarrier.dstAccessMask = isSwapchain ? 0 : VK_ACCESS_SHADER_READ_BIT;
 
         vkCmdPipelineBarrier(cmd,
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+            isSwapchain ? VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT : VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
             0,
             0, nullptr,
             0, nullptr,
@@ -888,7 +905,7 @@ namespace OnYuu {
             vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Draw
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(material);
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material);
             if (!indirectBuffer->isEmpty()) {
                 LOG( << "         - Executing indirect draw ("
                     << indirectBuffer->getDrawCount() << " draws)\n");
@@ -899,7 +916,7 @@ namespace OnYuu {
             }
         }
 
-        indirectDrawManager_->resetAll();
+        // commands are reset once per frame in updateAllDescriptorSets()
     }
 
     // ============================================================================
@@ -909,6 +926,8 @@ namespace OnYuu {
     void VulkanRender::updateAllDescriptorSets() {
         LOG( << "     [updateAllDescriptorSets] Updating for "
             << renderScenes.size() << " scenes\n");
+
+        indirectDrawManager_->resetAll();
 
         for (size_t i = 0; i < renderScenes.size(); ++i) {
             updateSceneDescriptors(static_cast<int>(i));
@@ -1016,7 +1035,7 @@ namespace OnYuu {
                 meshInstances[renderData.renderMesh->mesh].push_back(renderData.model);
             }
 
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(material);
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material);
 
             // For each mesh, create indirect command
             for (const auto& [meshPtr, matrices] : meshInstances) {

@@ -175,6 +175,7 @@
     <ClCompile Include="Core\Model\Components\Collider.cpp" />
     <ClCompile Include="Core\Model\Component.cpp" />
     <ClCompile Include="Core\Model\GameObject.cpp" />
+    <ClCompile Include="Render\RenderTarget.cpp" />
     <ClCompile Include="vendor\glad.c" />
     <ClCompile Include="Core\HermitInterpolationMesh.cpp" />
     <ClCompile Include="Application\Layer\ImGuiLayer.cpp" />

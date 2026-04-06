@@ -255,7 +255,7 @@ namespace OnYuu {
         void updateSceneDescriptors(int sceneIndex);
         void updateMaterialDescriptors(std::shared_ptr<class Material> material);
 
-		void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat);
+		void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat, bool isSwapchain = true, VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED);
 		void beginRenderPass(VkCommandBuffer cmd);
 		void endRenderPass(VkCommandBuffer cmd);
 		void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);

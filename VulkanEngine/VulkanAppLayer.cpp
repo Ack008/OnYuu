@@ -7,13 +7,21 @@ void VulkanAppLayer::onUpdate(float deltaTime)
 	Render::getInstance()->BeginScene(camera.get());
 	glm::mat4 model1(1.0f);
 	model1 = glm::translate(model1, traslate);
-	if (Input::isKeyPressed(KeyCode::Space))
-	{
-		glm::mat4 model2(1.0f);
-		model2 = glm::translate(model2, glm::vec3(-2.0f, 0.0f, 0.0f));
-		Render::getInstance()->addMeshRender(&renderMesh, glm::mat4(1.0f));
-	}
 	Render::getInstance()->addMeshRender(&renderMesh2, model1);
+	
+	Render::getInstance()->EndScene();
+
+
+
+	Render::getInstance()->BeginScene(camera.get(), renderTarget);
+	glm::mat4 model2(1.0f);
+	model2 = glm::translate(model2, glm::vec3(-2.0f, 0.0f, 0.0f));
+	Render::getInstance()->addMeshRender(&renderMesh, model2);
+	if (Input::isKeyPressed(KeyCode::Space)) {
+		glm::mat4 model3(1.0f);
+		model3 = glm::translate(model3, glm::vec3(2.0f, 0.0f, 0.0f));
+		Render::getInstance()->addMeshRender(&renderMesh3, model3);
+	}
 	Render::getInstance()->EndScene();
 }
 
@@ -25,11 +33,13 @@ void VulkanAppLayer::onImGuiRender()
 {
 	ImGui::Begin("Vulkan App Layer");
 	ImGui::DragFloat3("translate mesh", &traslate.x, 0.2, -10.0f, 10.0f);
+	ImGui::Image((void*)renderTarget->getColorAttachment(), ImVec2(400, 225));
 	ImGui::End();
 }
 
 void VulkanAppLayer::onAttach()
 {
+	renderTarget = RenderTarget::create(1600, 900);
 	// Testing meta shader
 	std::shared_ptr<MetaShader> metaShader = MetaShader::create("Asset/Meta-shader/firstShader.meta");
 

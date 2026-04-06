@@ -142,6 +142,7 @@
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanMetaShader.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanRenderTarget.cpp" />
+    <ClCompile Include="Render\RenderTarget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
