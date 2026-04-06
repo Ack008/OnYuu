@@ -552,6 +552,8 @@ namespace OnYuu {
 		for (const auto& [target, indices] : sceneTarget) {
             LOG( << "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
 			auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
+            activeColorFormat_ = vulkanTarget->getColorFormat();
+            activeDepthFormat_ = vulkanTarget->getDepthFormat();
 			const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
 			beginRendering(cmd, vulkanTarget->getColorImage(currentFrame_), vulkanTarget->getColorImageView(currentFrame_), vulkanTarget->getDepthImage(currentFrame_), vulkanTarget->getDepthImageView(currentFrame_), vulkanTarget->getExtent(), vulkanTarget->getDepthFormat(), false, targetOldLayout);
 			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
@@ -563,6 +565,8 @@ namespace OnYuu {
             endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
 			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
+        activeColorFormat_ = swapchain_->getFormat();
+        activeDepthFormat_ = depthFormat_;
 		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_, true, VK_IMAGE_LAYOUT_UNDEFINED);
 
         for (int index : swapChainRenderedScenes) {
@@ -863,8 +867,8 @@ namespace OnYuu {
             PipelineKey pipelineKey{ 
                 material->getShader(), 
                 renderingType,
-                swapchain_->getFormat(),
-                depthFormat_
+                activeColorFormat_,
+                activeDepthFormat_
             };
             VkPipeline pipeline = getOrCreatePipeline(pipelineKey, material);
 

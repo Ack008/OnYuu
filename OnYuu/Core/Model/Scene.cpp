@@ -11,124 +11,25 @@ namespace OnYuu {
 		return { id,this };
 	}
 
-	void Scene::loadLights()
-	{
-		auto view = reg->view<LightComponent, Trasform>();
 
-		LightUBO uboData;
-		uboData.numLights = 0;
-
-		for (auto [entity, lightComp, transform] : view.each()) {
-			if (uboData.numLights >= 16) break;
-
-			LightData& l = uboData.lights[(int)uboData.numLights];
-
-			l.position = glm::vec4(transform.position, 1.0f);
-			l.color = glm::vec4(lightComp.color.r, lightComp.color.g, lightComp.color.b, 1.0f);
-			l.intensity = lightComp.intensity;
-			l.pad[0] = l.pad[1] = l.pad[2] = 0.0f;
-
-			uboData.numLights++;
-		}
-
-		lightsUBO->bind();
-		lightsUBO->resize(sizeof(LightUBO));
-		lightsUBO->updateData(&uboData, sizeof(LightUBO), 0);
-
-	}
-
-	void Scene::loadActiveCamera()
-	{
-		CameraUBO camData;
-		if (activeCamera) {
-			camData.view = activeCamera->getViewMatrix();
-			camData.projection = activeCamera->getProjectionMatrix();
-			camData.position = glm::vec4(activeCamera->getPosition(), 1.0f);
-		}
-		else {
-			camData.view = editorCamera->getViewMatrix();
-			camData.projection = editorCamera->getProjectionMatrix();
-			camData.position = glm::vec4(editorCamera->getPosition(), 1.0f);
-		}
-		cameraUBO->bind();
-		cameraUBO->resize(sizeof(CameraUBO));
-		cameraUBO->updateData(&camData, sizeof(CameraUBO), 0);
-	}
+	
 
 	void Scene::update(float dt)
 	{
 		//instantiating prefabs
 		instantiatePrefabs();
-		// carica la camera attiva
+		if (!toDestroy.empty()) {
+			destroyEntities();
+			toDestroy.clear();
+		}
 		//scripts
 		auto scriptsView = reg->view<ScriptingSystem>();
 		for (auto [entity, script] : scriptsView.each()) {
 			script.update(dt);
 		}
-		//rendering skybox
-
-		//rendering background
-		auto backgroundView = reg->view<Background2DRender>();
-		Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
-		Render::getInstance()->BeginScene(editorCamera);
-		for (auto [entity, background] : backgroundView.each()) {
-			RenderMeshComponent backgroundMeshComp;
-			backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
-			backgroundMeshComp.material = background.material;
-			Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
-			break;
-		}
-		Render::getInstance()->EndScene();
-		//rendering scene cameras
-		bool cameraFound = false;
-		auto cameraView = reg->view<Orthographic>();
-		for (auto [entity, camera] : cameraView.each()) {
-			if (camera.getActive()) {
-				Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
-				Render::getInstance()->setCamera(&camera);
-				activeCamera = &camera;
-				cameraFound = true;
-			}
-			break; // Use the first found camera
-		}
-		if (!cameraFound)
-		{
-			auto cameraViewPer = reg->view<Perspective>();
-			for (auto [entity, camera] : cameraViewPer.each()) {
-				if (camera.getActive()) {
-					Render::getInstance()->setCameraMatrix(camera.getVPMatrix());
-					Render::getInstance()->setCamera(&camera);
-					activeCamera = &camera;
-					cameraFound = true;
-				}
-				break; // Use the first found camera
-			}
-		}
-		if (!cameraFound) {
-			Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
-			Render::getInstance()->setCamera(editorCamera);
-			activeCamera = editorCamera;
-		}
-
-		Render::getInstance()->BeginScene(activeCamera);
-		auto skyboxView = reg->view<SkyBoxComponent>();
-		for (auto [entity, skybox] : skyboxView.each()) {
-			Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
-			Render::getInstance()->setSkyBox(&skybox);
-			break;
-		}
-		auto lightView = reg->view<LightComponent, Trasform>();
-		for (auto [entity, lightComp, transform] : lightView.each()) {
-			Render::getInstance()->addLight(lightComp, transform.position);
-		}
-
 		calculateCollisions(dt);
-		sendToRender();
-		Render::getInstance()->EndScene();
-		if (!toDestroy.empty()) {
-			destroyEntities();
-			toDestroy.clear();
-		}
+
+		
 	}
 	void Scene::instantiatePrefabs()
 	{
@@ -183,10 +84,71 @@ namespace OnYuu {
 		}
 	}
 
+	void Scene::render(Camera* renderCamera, std::shared_ptr<RenderTarget> renderTarget)
+	{
+		//rendering background
+		auto backgroundView = reg->view<Background2DRender>();
+		Render::getInstance()->BeginScene(editorCamera, renderTarget);
+		for (auto [entity, background] : backgroundView.each()) {
+			RenderMeshComponent backgroundMeshComp;
+			backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
+			backgroundMeshComp.material = background.material;
+			Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
+			break;
+		}
+		Render::getInstance()->EndScene();
+		if (!renderCamera) {
+			//rendering scene cameras
+			bool cameraFound = false;
+			auto cameraView = reg->view<Orthographic>();
+			for (auto [entity, camera] : cameraView.each()) {
+				if (camera.getActive()) {
+					activeCamera = &camera;
+					cameraFound = true;
+				}
+				break; // Use the first found camera
+			}
+			if (!cameraFound)
+			{
+				auto cameraViewPer = reg->view<Perspective>();
+				for (auto [entity, camera] : cameraViewPer.each()) {
+					if (camera.getActive()) {
+						activeCamera = &camera;
+						cameraFound = true;
+					}
+					break; // Use the first found camera
+				}
+			}
+			if (!cameraFound) {
+				Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+				Render::getInstance()->setCamera(editorCamera);
+				activeCamera = editorCamera;
+			}
+		}
+		else {
+			activeCamera = renderCamera;
+		}
+
+		//rendering skybox
+		Render::getInstance()->BeginScene(activeCamera, renderTarget);
+		auto skyboxView = reg->view<SkyBoxComponent>();
+		for (auto [entity, skybox] : skyboxView.each()) {
+			Render::getInstance()->setCameraMatrix(editorCamera->getVPMatrix());
+			Render::getInstance()->setSkyBox(&skybox);
+			break;
+		}
+		auto lightView = reg->view<LightComponent, Trasform>();
+		for (auto [entity, lightComp, transform] : lightView.each()) {
+			Render::getInstance()->addLight(lightComp, transform.position);
+		}
+
+		sendToRender();
+		Render::getInstance()->EndScene();
+	
+	}
+
 	void Scene::start()
 	{
-		lightsUBO = UniformBuffer::create(1);
-		cameraUBO = UniformBuffer::create(2);
 		initializeMaterials();
 		initializeScene();
 

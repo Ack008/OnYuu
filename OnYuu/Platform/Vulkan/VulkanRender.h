@@ -118,6 +118,8 @@ namespace OnYuu {
         VkImageView depthImageView_ = VK_NULL_HANDLE;
         VmaAllocation depthAllocation_ = VK_NULL_HANDLE;
         VkFormat depthFormat_ = VK_FORMAT_UNDEFINED;
+        VkFormat activeColorFormat_ = VK_FORMAT_UNDEFINED;
+        VkFormat activeDepthFormat_ = VK_FORMAT_UNDEFINED;
 
         // Window
         GLFWwindow* window_ = nullptr;

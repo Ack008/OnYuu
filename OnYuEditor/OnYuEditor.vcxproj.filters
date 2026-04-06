@@ -15,15 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="EditorApp.cpp">
+    <ClCompile Include="src\EditorApp.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="EditorLayer.cpp">
+    <ClCompile Include="src\EditorLayer.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Panels\SceneHierarchyPanel.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EditorLayer.h">
+    <ClInclude Include="src\EditorLayer.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Panels\SceneHierarchyPanel.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>

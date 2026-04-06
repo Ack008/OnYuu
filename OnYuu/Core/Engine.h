@@ -70,8 +70,6 @@
 //Math
 #include "math.h"
 
-
-
 // Small helper macro
 #ifndef ENGINE_UNUSED
 #  define ENGINE_UNUSED(x) (void)(x)

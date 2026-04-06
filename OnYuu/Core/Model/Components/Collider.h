@@ -76,6 +76,8 @@ namespace OnYuu {
 		CircleCollider(float radius) : radius(radius) {}
 		virtual ~CircleCollider() = default;
 
+		virtual void update(float dt) override;
+		virtual void start() override;
 		virtual bool hasCollided(Collider* other) override;
 		virtual bool collideWith(BoxCollider* other) override;
 		virtual bool collideWith(CircleCollider* other) override;

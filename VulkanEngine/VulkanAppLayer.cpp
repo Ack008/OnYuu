@@ -2,6 +2,7 @@
 #include "Render/Renderer.h"
 #include <ImGui/imgui.h>
 glm::vec3 traslate = glm::vec3(0,0.f,0.f);
+glm::vec3 traslate2 = glm::vec3(2, 0.f, 0.f);
 void VulkanAppLayer::onUpdate(float deltaTime)
 {
 	Render::getInstance()->BeginScene(camera.get());
@@ -15,7 +16,7 @@ void VulkanAppLayer::onUpdate(float deltaTime)
 
 	Render::getInstance()->BeginScene(camera.get(), renderTarget);
 	glm::mat4 model2(1.0f);
-	model2 = glm::translate(model2, glm::vec3(-2.0f, 0.0f, 0.0f));
+	model2 = glm::translate(model2, traslate2);
 	Render::getInstance()->addMeshRender(&renderMesh, model2);
 	if (Input::isKeyPressed(KeyCode::Space)) {
 		glm::mat4 model3(1.0f);
@@ -32,8 +33,12 @@ void VulkanAppLayer::onEvent()
 void VulkanAppLayer::onImGuiRender()
 {
 	ImGui::Begin("Vulkan App Layer");
+	ImVec2 avail = ImGui::GetContentRegionAvail(); // spazio interno disponibile
+	ImGui::Image((ImTextureID)renderTarget->getColorAttachment(), avail);
+	ImGui::End();
+	ImGui::Begin("Controlli");
 	ImGui::DragFloat3("translate mesh", &traslate.x, 0.2, -10.0f, 10.0f);
-	ImGui::Image((void*)renderTarget->getColorAttachment(), ImVec2(400, 225));
+	ImGui::DragFloat3("translate mesh2", &traslate2.x, 0.2, -10.0f, 10.0f);
 	ImGui::End();
 }
 

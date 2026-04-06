@@ -3,7 +3,7 @@
 class VulkanApp : public Application {
 public:
 	VulkanApp() 
-		:Application(Vulkan)
+		:Application(OpenGL)
 	{
 		pushLayer(new VulkanAppLayer());
 	}

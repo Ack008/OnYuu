@@ -151,6 +151,7 @@
     <ClCompile Include="Core\Texture.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLRenderTarget.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
     <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
@@ -232,6 +233,7 @@
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLRenderTarget.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
     <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />

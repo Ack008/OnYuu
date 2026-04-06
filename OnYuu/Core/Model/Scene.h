@@ -7,6 +7,7 @@
 #include "Core/Model/Components/Camera.h"
 #include "Core/Model/Components/Lights.h"
 #include "Render/Buffer.h"
+#include "Render/RenderTarget.h"
 namespace OnYuu {
 // Classe che rappresenta la scena del motore di gioco.
 // Responsabilità principali:
@@ -27,22 +28,24 @@ public:
     // Aggiorna la scena (chiamato ogni frame). 'dt' è il delta time in secondi.
     void update(float dt);
 
+	// Renderizza la scena (chiamato ogni frame dopo update).
+	void render(Camera *renderCamera = nullptr, std::shared_ptr<RenderTarget> renderTarget = nullptr);
     // Chiamato all'avvio della scena per inizializzare componenti e sistemi.
     void start();
 
     // Metodo puro virtuale: le scene concrete devono implementare la gestione
     // del ridimensionamento della viewport / camera.
-    virtual void OnResize(uint32_t width, uint32_t height) = 0;
+    virtual void OnResize(uint32_t width, uint32_t height) {};
 
     // Aggiunge un GameObject alla lista di quelli da distruggere a fine frame.
     void addToDestroy(GameObject* obj) { toDestroy.push_back(obj); };
     // Istanzia i prefab segnati per l'instanziazione.
     void instantiatePrefabs();
     // Imposta ed inizializza i materiali specifici della scena.
-    virtual void initializeMaterials() = 0;
+    virtual void initializeMaterials() {};
 
     //Imposta la scena ed i suoi oggetti
-    virtual void initializeScene() = 0;
+    virtual void initializeScene() {};
 	// Ottieni tutte le entità 
     std::vector< GameObject > getGameObjects();
 private:
@@ -54,10 +57,8 @@ private:
 
     // Distrugge gli enti segnati con addToDestroy.
     void destroyEntities();
-    //Carica le luci nella UBO
-    void loadLights();
-	//Carica la camera attiva nella UBO
-	void loadActiveCamera();
+
+
 private:
     // Registro di entità utilizzato per componenti e sistemi (entt).
     // È allocato dinamicamente qui: la classe è responsabile della sua vita.
@@ -74,28 +75,11 @@ private:
     Camera* editorCamera = nullptr;
 	// Active camera della scena (può essere nullptr se non impostata).
 	Camera* activeCamera = nullptr;
-    std::shared_ptr<UniformBuffer> lightsUBO;
-	std::shared_ptr<UniformBuffer> cameraUBO;
     // Le seguenti classi hanno accesso ai membri privati della Scene.
     friend class GameObject;
     friend class Layer;
     friend class DebugLayer;
-    //shader struct per le luci
-    struct LightData {
-        glm::vec4 position;    // 16 bytes
-        float intensity;       // 4 bytes
-        float pad[3];          // 12 bytes → totale 48 bytes allineato a 16
-        glm::vec4 color;       // 16 bytes
-    };
-    struct LightUBO {
-        float numLights;
-        float padA[3];
-        LightData lights[16];
-    };
-    struct CameraUBO {
-        glm::mat4 view;
-        glm::mat4 projection;
-        glm::vec4 position; // w unused
-	};
+	friend class SceneHierarchyPanel;
+   
 };
 } // namespace OnYuu

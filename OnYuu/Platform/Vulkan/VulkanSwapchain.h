@@ -19,7 +19,7 @@ namespace OnYuu {
 
         struct Config {
             VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
-            VkFormat preferredFormat = VK_FORMAT_R8G8B8A8_UNORM;
+            VkFormat preferredFormat = VK_FORMAT_B8G8R8A8_UNORM;
             VkColorSpaceKHR preferredColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
             uint32_t minImageCount = 3;
         };

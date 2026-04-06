@@ -2,6 +2,8 @@
 
 void EditorLayer::onUpdate(float deltaTime)
 {
+	m_scene->update(deltaTime);
+	m_scene->render(m_editorCamera.get(), m_renderTarget);
 }
 
 void EditorLayer::onEvent()
@@ -41,17 +43,24 @@ void EditorLayer::onImGuiRender()
     // - Note that the id here is different from the one used by DockSpaceOverViewport(), so docking state won't get transfered between "Basic" and "Advanced" demos.
     // - If we made the ShowExampleAppDockSpaceBasic() calculate its own ID and pass it to DockSpaceOverViewport() the ID could easily match.
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-    //ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     ImGui::End();
 
-    ImGui::Begin("Hello, ImGui!");
-    
-    ImGui::End();
+
+	ImGui::Begin("Viewport");
+	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+	ImGui::Image((void*)m_renderTarget->getColorAttachment(), viewportPanelSize);
+	ImGui::End();
+    m_SceneHierarchyPanel.OnImGuiRender();
+
 }
 
 void EditorLayer::onAttach()
 {
+	m_scene = std::make_shared<Scene>();
+	m_editorCamera = std::make_shared<Orthographic>(-10,10,-10,10,0.1,100);
+	m_renderTarget = RenderTarget::create(2560, 1400);
+	m_SceneHierarchyPanel.SetContext(m_scene);
 }
 
 void EditorLayer::onDetach()

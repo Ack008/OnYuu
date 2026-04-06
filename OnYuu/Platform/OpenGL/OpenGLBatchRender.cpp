@@ -5,6 +5,7 @@
 #include "Render/BatchRenderer.h"
 #include "Application/Application.h"
 #include "Application/AssetManager.h"
+#include "Platform/OpenGL/OpenGLRenderTarget.h"
 #define INITIAL_BUFFER_SIZE_MULTIPLIER 5
 namespace OnYuu {
 
@@ -30,12 +31,34 @@ namespace OnYuu {
 
 	void OpenGLBatchRender::BeginFrame()
 	{
-		glClearColor(0.1, 0.2, 0.7, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Pulisce il buffer colore
 		for (RenderScene& scene : renderScenes) {
+			if (scene.target) {
+				auto glTarget = std::dynamic_pointer_cast<OpenGLRenderTarget>(scene.target);
+				if (glTarget) {
+					glTarget->bind();
+					glViewport(0, 0, static_cast<GLsizei>(glTarget->getWidth()), static_cast<GLsizei>(glTarget->getHeight()));
+				}
+				else {
+					glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				}
+			}
+			else {
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				uint32_t width = Application::getInstance()->getWindow()->getWidth();
+				uint32_t height = Application::getInstance()->getWindow()->getHeight();
+				glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
+			}
+
+			glClearColor(0.1f, 0.2f, 0.7f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			BindGlobalVariables(scene);
 			drawScene(scene);
 		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		uint32_t width = Application::getInstance()->getWindow()->getWidth();
+		uint32_t height = Application::getInstance()->getWindow()->getHeight();
+		glViewport(0, 0, static_cast<GLsizei>(width), static_cast<GLsizei>(height));
 	}
 
 	void OpenGLBatchRender::BindGlobalVariables(OnYuu::BatchRender::RenderScene& scene)

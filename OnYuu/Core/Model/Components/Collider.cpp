@@ -146,8 +146,22 @@ namespace OnYuu {
         return other->collideWith(this);
     }
 
+    // CircleCollider::update
+    // Metodo chiamato ogni frame per aggiornare lo stato del collider.
+    // Attualmente vuoto perché il collider basato su raggio non mantiene uno stato dinamico proprio.
+    void CircleCollider::update(float dt) {
+
+    }
+
+    // CircleCollider::start
+    // Inizializza il raggio del collider (attualmente non fa nulla in quanto
+    // il raggio viene passato al costruttore).
+    void CircleCollider::start() {
+
+    }
+
     // CircleCollider::collideWith(BoxCollider*)
-    // Placeholder: implementare collisione cerchio-box (invocare algoritmo con punto più vicino).
+    // Placeholder: implementare collisione cerchio-box (invocare algoritmo con punto pi? vicino).
     bool CircleCollider::collideWith(BoxCollider* other) {
         // TODO: implementare test circle-box
         return false; // Placeholder return value
