@@ -46,11 +46,7 @@ void EditorLayer::onImGuiRender()
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     ImGui::End();
 
-
-	ImGui::Begin("Viewport");
-	ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	ImGui::Image((void*)m_renderTarget->getColorAttachment(), viewportPanelSize);
-	ImGui::End();
+	m_ViewportPanel.onImGuiRender();
     m_SceneHierarchyPanel.OnImGuiRender();
 
 }
@@ -58,9 +54,12 @@ void EditorLayer::onImGuiRender()
 void EditorLayer::onAttach()
 {
 	m_scene = std::make_shared<Scene>();
-	m_editorCamera = std::make_shared<Perspective>(45.0f, 2560.0f / 1400.0f, 0.1f, 100.0f);
+	m_editorCamera = std::make_shared<Perspective>(45.0f, 2560.0f / 1400.0f, 0.1f, 100.0f); 
 	m_renderTarget = RenderTarget::create(2560, 1400);
-	m_SceneHierarchyPanel.SetContext(m_scene);
+    m_SceneHierarchyPanel.SetContext(m_scene);
+    m_ViewportPanel.setViewportTexture(m_renderTarget);
+	m_ViewportPanel.setSceneContext(m_scene);
+	
 }
 
 void EditorLayer::onDetach()

@@ -27,6 +27,7 @@ namespace OnYuu {
 		bool hasErrors() const { return sem.hasErrors(); }
 		static std::shared_ptr<MetaShader> create(const std::string& filename, bool isShaderSource = false);
 		void flushCostants() { if (shader_) shader_->flushCostants(); }
+		void shutdown() { if (shader_) shader_->shutdown(); }
 	protected:
 		SemanticVisitor& getSemanticVisitor() { return sem; }
 		MyGLSLVisitor& getGLSLVisitor() { return glslVisitor; }

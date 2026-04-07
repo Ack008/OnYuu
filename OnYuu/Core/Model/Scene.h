@@ -80,6 +80,7 @@ private:
     friend class Layer;
     friend class DebugLayer;
 	friend class SceneHierarchyPanel;
+	friend class ViewportPanel;
    
 };
 } // namespace OnYuu

@@ -99,10 +99,16 @@ namespace OnYuu {
                 texture->shutdown();
             }
         }
+        for (auto& [name, shader] : shaders_) {
+            if (shader) {
+                shader->shutdown();
+			}
+        }
         meshes_.clear();
         materials_.clear();
         textures_.clear();
         cubeMaps_.clear();
+
     }
     void AssetManager::loadDefaultAssets()
     {

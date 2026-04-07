@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Engine.h"
 #include "Panels/SceneHierarchyPanel.h"
+#include "Panels/ViewportPanel.h"
 
 class EditorLayer :
 	public Layer
@@ -17,6 +18,7 @@ private:
 	std::shared_ptr<Camera> m_editorCamera = nullptr;
 	std::shared_ptr<RenderTarget> m_renderTarget;
 	SceneHierarchyPanel m_SceneHierarchyPanel;
+	ViewportPanel m_ViewportPanel;
 	
 
 };
