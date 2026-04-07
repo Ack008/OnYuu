@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <cstring>
+#include <algorithm>
 
 /* The Microsoft C++ compiler is non-compliant with the C++ standard and needs
  * the following definition to disable a security warning on std::strncpy().
@@ -42,13 +43,21 @@ namespace OnYuu {
 			if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered())
 				m_SelectionContext = {};
 
-			if (ImGui::BeginPopupContextWindow(0, 1))
+			if (ImGui::BeginPopupContextWindow("SceneHierarchyContext", ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
 			{
 				if (ImGui::MenuItem("Create Empty Entity"))
 				{
 					m_Context->createEntity().getComponent<TagComponent>().tag = "New Entity";
 				}
-
+				if (ImGui::MenuItem("Create sphere"))
+				{
+					GameObject obj = m_Context->createEntity();
+					obj.getComponent<TagComponent>().tag = "New Sphere";
+					auto& renderMeshComponent = obj.addComponent<RenderMeshComponent>();
+					renderMeshComponent.mesh = AssetManager::instance().getMeshPtr("sphere");
+					renderMeshComponent.material = AssetManager::instance().getMaterialPtr("default");
+					renderMeshComponent.renderingType = RenderingTypeEnum::TRIANGLE;
+				}
 				ImGui::EndPopup();
 			}
 		}
@@ -110,7 +119,7 @@ namespace OnYuu {
 		ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
 		ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
 
-		float lineHeight = GImGui->Font->LegacySize + GImGui->Style.FramePadding.y * 2.0f;
+		float lineHeight = ImGui::GetFrameHeight();
 		ImVec2 buttonSize = { lineHeight + 3.0f, lineHeight };
 
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
@@ -169,31 +178,30 @@ namespace OnYuu {
 			ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
-			float lineHeight = GImGui->Font->LegacySize + GImGui->Style.FramePadding.y * 2.0f;
+			const float lineHeight = ImGui::GetFrameHeight();
+			const float buttonWidth = lineHeight * 1.5f;
 			ImGui::Separator();
 			bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
 			ImGui::PopStyleVar();
 
-			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
-			if (ImGui::Button("+", ImVec2{ lineHeight, lineHeight }))
-				ImGui::OpenPopup("ComponentSettings");
-
-			bool removeComponent = false;
-			if (ImGui::BeginPopup("ComponentSettings"))
+			ImGui::SetNextItemAllowOverlap();
+			if(ImGui::BeginPopupContextItem())
 			{
 				if (ImGui::MenuItem("Remove component"))
-					removeComponent = true;
+				{
+					entity.removeComponent<T>();
+					ImGui::CloseCurrentPopup();
+				}
 				ImGui::EndPopup();
 			}
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip("Component options");
 
 			if (open)
 			{
 				uiFunction(component);
 				ImGui::TreePop();
 			}
-
-			if (removeComponent)
-				entity.removeComponent<T>();
 		}
 	}
 
@@ -238,6 +246,7 @@ namespace OnYuu {
 
 			DisplayAddComponentEntry<RigidBody>("Rigidbody");
 			DisplayAddComponentEntry<BoxCollider>("Box Collider");
+			DisplayAddComponentEntry<RenderMeshComponent>("Mesh Renderer");
 
 			if (!m_SelectionContext.hasComponent<CircleCollider>())
 			{
@@ -273,39 +282,56 @@ namespace OnYuu {
 				if (ImGui::Checkbox("Active", &isActive))
 					component.setActive(isActive);
 			});
-
-		DrawComponent<ScriptingSystem>("Scripting System", entity, [](auto& component)
+		DrawComponent<RenderMeshComponent>("Mesh Renderer", entity, [](auto& component)
 			{
-				ImGui::Text("Scripts: %d", (int)component.scripts.size());
+				ImGui::Text("Mesh: %s", component.mesh ? "Loaded" : "None");
+				if (!component.mesh) {
+					ImGui::Button("Load Mesh");
+				}
+				else {
+					if (ImGui::BeginCombo("Rendering Type", component.renderingType == RenderingTypeEnum::TRIANGLE ? "Triangle" : "Line")) {
+						if (ImGui::Selectable("Triangle", component.renderingType == RenderingTypeEnum::TRIANGLE)) {
+							component.renderingType = RenderingTypeEnum::TRIANGLE;
+						}
+						if (ImGui::Selectable("Line", component.renderingType == RenderingTypeEnum::LINE)) {
+							component.renderingType = RenderingTypeEnum::LINE;
+						}
+						if (ImGui::Selectable("Triangle Fan", component.renderingType == RenderingTypeEnum::TRIANGLE_FAN)) {
+							component.renderingType = RenderingTypeEnum::TRIANGLE_FAN;
+						}
+						if (ImGui::Selectable("Triangle Strip", component.renderingType == RenderingTypeEnum::TRIANGLE_STRIP)) {
+							component.renderingType = RenderingTypeEnum::TRIANGLE_STRIP;
+						}
+						
+						ImGui::EndCombo();
+					}
+					std::string materialLabel = "Material: " + std::string(component.material ? "Loaded" : "None");
+					ImGui::Button(materialLabel.c_str());
+					if (ImGui::Button("UnLoad Mesh")) {
+						component.mesh = nullptr;
+						component.material = nullptr;
+					}
+				}
 			});
+		if (entity.hasComponent<ScriptingSystem>()) {
+			auto& scriptingSystem = entity.getComponent<ScriptingSystem>();
+			for (const auto& script : scriptingSystem.scripts) {
+				if (ImGui::TreeNodeEx((void*)script.get(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_SpanAvailWidth, "%s", typeid(*script).name())) {
+					if (ImGui::BeginPopupContextItem())
+					{
+						if (ImGui::MenuItem("Remove component"))
+						{
+							scriptingSystem.scripts.erase(std::remove(scriptingSystem.scripts.begin(), scriptingSystem.scripts.end(), script), scriptingSystem.scripts.end());
+							ImGui::CloseCurrentPopup();
+						}
+						ImGui::EndPopup();
+					}
+					ImGui::TreePop();
+				}
+			}
+		}
 
-		DrawComponent<RigidBody>("Rigidbody", entity, [](auto& component)
-			{
-				const char* bodyTypeString = "Unknown";
-				int bodyType = static_cast<int>(component.getBodyType());
-				if (bodyType == 0) bodyTypeString = "Static";
-				else if (bodyType == 1) bodyTypeString = "Dynamic";
-				else if (bodyType == 2) bodyTypeString = "Kinematic";
-				ImGui::Text("Body Type: %s", bodyTypeString);
-				glm::vec3 velocity = component.getVelocity();
-				if (ImGui::DragFloat3("Velocity", glm::value_ptr(velocity), 0.05f))
-					component.setVelocity(velocity);
-			});
 
-		DrawComponent<BoxCollider>("Box Collider", entity, [](auto& component)
-			{
-				glm::vec3 minPoint = component.getMinPoint();
-				glm::vec3 maxPoint = component.getMaxPoint();
-				if (ImGui::DragFloat3("Min", glm::value_ptr(minPoint), 0.05f))
-					component.setMinPoint(minPoint);
-				if (ImGui::DragFloat3("Max", glm::value_ptr(maxPoint), 0.05f))
-					component.setMaxPoint(maxPoint);
-			});
-
-		DrawComponent<CircleCollider>("Circle Collider", entity, [](auto&)
-			{
-				ImGui::Text("Circle collider settings are not exposed.");
-			});
 	}
 
 	template<typename T>
