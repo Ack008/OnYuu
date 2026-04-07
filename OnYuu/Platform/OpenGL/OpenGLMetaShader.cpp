@@ -1,6 +1,6 @@
 #include "OpenGLMetaShader.h"
-OnYuu::OpenGLMetaShader::OpenGLMetaShader(const std::string& filename)
-	: MetaShader(filename)
+OnYuu::OpenGLMetaShader::OpenGLMetaShader(const std::string& filename, bool isShaderSource)
+	: MetaShader(filename, isShaderSource)
 {
 	glVisitor = OpenGLVisitor(&getSemanticVisitor());
 	glVisitor.produceShaders(getGLSLVisitor().getShaderInfo());

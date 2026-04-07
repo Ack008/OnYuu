@@ -104,6 +104,7 @@ namespace OnYuu {
 		void loadQuad();
         void loadPlane();
 		void loadDefaultMaterials();
+		void loadDefaultShaders();
 
     };
 } // namespace OnYuu

@@ -62,5 +62,8 @@ private:
 	std::unordered_map<std::string, bool> alreadySet_;
 	// texture
 	std::vector<std::shared_ptr<Texture>> textures_;
+
+	friend class AssetManager; // Se AssetManager deve accedere a membri privati per gestire materiali
+	friend class SceneHierarchyPanel; // Se SceneHierarchyPanel deve accedere a membri privati per modificare materiali
 };
 }

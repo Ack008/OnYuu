@@ -58,7 +58,7 @@ void EditorLayer::onImGuiRender()
 void EditorLayer::onAttach()
 {
 	m_scene = std::make_shared<Scene>();
-	m_editorCamera = std::make_shared<Orthographic>(-10,10,-10,10,0.1,100);
+	m_editorCamera = std::make_shared<Perspective>(45.0f, 2560.0f / 1400.0f, 0.1f, 100.0f);
 	m_renderTarget = RenderTarget::create(2560, 1400);
 	m_SceneHierarchyPanel.SetContext(m_scene);
 }

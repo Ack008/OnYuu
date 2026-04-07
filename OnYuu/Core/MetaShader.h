@@ -11,7 +11,7 @@
 namespace OnYuu {
 	class MetaShader {
 	public:
-		MetaShader(const std::string& filename);
+		MetaShader(const std::string& src, bool isShaderSource = false);
 		void setShader(std::shared_ptr<Shader> shader) { shader_ = shader; }
 		std::shared_ptr<Shader> getShader() const { return shader_; }
 		void useShader() { if (shader_) shader_->useShader(); }
@@ -25,7 +25,7 @@ namespace OnYuu {
 		virtual std::string getUniformName(const std::string& originalName) = 0;
 		virtual void setUniformMat4(const char* name, const float* value, int count) = 0;
 		bool hasErrors() const { return sem.hasErrors(); }
-		static std::shared_ptr<MetaShader> create(const std::string& filename);
+		static std::shared_ptr<MetaShader> create(const std::string& filename, bool isShaderSource = false);
 		void flushCostants() { if (shader_) shader_->flushCostants(); }
 	protected:
 		SemanticVisitor& getSemanticVisitor() { return sem; }

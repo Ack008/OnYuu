@@ -4,11 +4,11 @@
 #include "Platform/API.h"
 #include "Render/Renderer.h"
 namespace OnYuu {
-	MetaShader::MetaShader(const std::string& filename)
+	MetaShader::MetaShader(const std::string& filename, bool isShaderSource)
 	{
 		try {
 			// 1. Leggi il file GLSL
-			std::string shaderCode = readFile(filename);
+			std::string shaderCode = isShaderSource ? filename : readFile(filename);
 			// 2. Crea uno stream di input ANTLR
 			antlr4::ANTLRInputStream input(shaderCode);
 			// 3. Crea il lexer
@@ -51,17 +51,17 @@ namespace OnYuu {
 		return content;
 	}
 
-	std::shared_ptr<MetaShader> OnYuu::MetaShader::create(const std::string& filename)
+	std::shared_ptr<MetaShader> OnYuu::MetaShader::create(const std::string& filename, bool isShaderSource)
 	{
 		switch (Render::getAPI())
 		{
 		case API::OpenGL:
-			return std::make_shared<OpenGLMetaShader>(filename);
+			return std::make_shared<OpenGLMetaShader>(filename, isShaderSource);
 		case API::Vulkan:
-			return std::make_shared<VulkanMetaShader>(filename);
+			return std::make_shared<VulkanMetaShader>(filename, isShaderSource);
 		default:
 			break;
 		}
-		return std::make_shared<OpenGLMetaShader>(filename);
+		return std::make_shared<OpenGLMetaShader>(filename, isShaderSource);
 	}
 }

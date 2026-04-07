@@ -118,9 +118,10 @@ namespace OnYuu {
 
     std::shared_ptr<IndirectDrawBuffer> IndirectDrawManager::getOrCreateBuffer(
         int sceneIndex,
-        std::shared_ptr<Material> material
+        std::shared_ptr<Material> material,
+        VkPrimitiveTopology topology
     ) {
-        SceneMaterialKey key{ sceneIndex, material };
+        SceneMaterialKey key{ sceneIndex, material, topology };
         auto it = buffers.find(key);
         if (it != buffers.end()) {
             return it->second;

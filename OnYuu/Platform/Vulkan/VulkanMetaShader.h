@@ -4,7 +4,7 @@
 namespace OnYuu {
 	class VulkanMetaShader : public OnYuu::MetaShader {
 	public:
-		VulkanMetaShader(const std::string& filename);
+		VulkanMetaShader(const std::string& filename, bool isShaderSource = false);
 		void setUniformMat4(const char* name, const float* value) override;
 		void setUniformInt(const char* name, int value) override;
 		void setUniformFloat(const char* name, float value) override;

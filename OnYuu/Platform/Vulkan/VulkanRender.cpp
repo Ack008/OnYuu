@@ -12,10 +12,24 @@
 #include <array>
 #include <unordered_set>
 
-
-
-
 namespace OnYuu {
+
+    namespace {
+        VkPrimitiveTopology toPrimitiveTopology(RenderingTypeEnum renderingType) {
+            switch (renderingType) {
+            case RenderingTypeEnum::TRIANGLE:
+                return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            case RenderingTypeEnum::TRIANGLE_FAN:
+                return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+            case RenderingTypeEnum::TRIANGLE_STRIP:
+                return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+            case RenderingTypeEnum::LINE:
+                return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+            default:
+                return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            }
+        }
+    }
 
     // ============================================================================
     // CONSTRUCTOR & DESTRUCTOR
@@ -909,7 +923,7 @@ namespace OnYuu {
             vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Draw
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material);
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
             if (!indirectBuffer->isEmpty()) {
                 LOG( << "         - Executing indirect draw ("
                     << indirectBuffer->getDrawCount() << " draws)\n");
@@ -1032,6 +1046,7 @@ namespace OnYuu {
 
         for (const auto& [key, batch] : scene.batches) {
             auto material = key.first;
+            auto renderingType = key.second;
 
             // Group by mesh
             std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> meshInstances;
@@ -1039,7 +1054,7 @@ namespace OnYuu {
                 meshInstances[renderData.renderMesh->mesh].push_back(renderData.model);
             }
 
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material);
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
 
             // For each mesh, create indirect command
             for (const auto& [meshPtr, matrices] : meshInstances) {
@@ -1233,22 +1248,7 @@ namespace OnYuu {
         config.vertexInput.pVertexAttributeDescriptions = attributeDescs.data();
 
         // Topology
-        switch (key.renderingType) {
-        case RenderingTypeEnum::TRIANGLE:
-            config.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-            break;
-        case RenderingTypeEnum::TRIANGLE_FAN:
-            config.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
-            break;
-        case RenderingTypeEnum::TRIANGLE_STRIP:
-            config.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-            break;
-        case RenderingTypeEnum::LINE:
-            config.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-            break;
-        default:
-            config.inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        }
+        config.inputAssembly.topology = toPrimitiveTopology(key.renderingType);
 
         // Descriptor layouts
         config.descriptorLayouts = { globalDescriptorLayout_, materialDescriptorLayout_ };

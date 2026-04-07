@@ -3,7 +3,7 @@
 class EditorApp : public Application {
 public:
 	EditorApp()
-		:Application(Vulkan)
+		:Application(OpenGL)
 	{
 		pushLayer(new EditorLayer());
 	}

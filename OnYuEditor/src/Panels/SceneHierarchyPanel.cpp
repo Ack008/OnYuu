@@ -7,6 +7,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <type_traits>
 
 /* The Microsoft C++ compiler is non-compliant with the C++ standard and needs
  * the following definition to disable a security warning on std::strncpy().
@@ -58,6 +59,25 @@ namespace OnYuu {
 					renderMeshComponent.material = AssetManager::instance().getMaterialPtr("default");
 					renderMeshComponent.renderingType = RenderingTypeEnum::TRIANGLE;
 				}
+				if (ImGui::MenuItem("Create cube"))
+				{
+					GameObject obj = m_Context->createEntity();
+					obj.getComponent<TagComponent>().tag = "New Cube";
+					auto& renderMeshComponent = obj.addComponent<RenderMeshComponent>();
+					renderMeshComponent.mesh = AssetManager::instance().getMeshPtr("cube");
+					renderMeshComponent.material = AssetManager::instance().getMaterialPtr("default");
+					renderMeshComponent.renderingType = RenderingTypeEnum::TRIANGLE;
+				}
+				if (ImGui::MenuItem("Create quad"))
+				{
+					GameObject obj = m_Context->createEntity();
+					obj.getComponent<TagComponent>().tag = "New Quad";
+					auto& renderMeshComponent = obj.addComponent<RenderMeshComponent>();
+					renderMeshComponent.mesh = AssetManager::instance().getMeshPtr("quad");
+					renderMeshComponent.material = AssetManager::instance().getMaterialPtr("default");
+					renderMeshComponent.renderingType = RenderingTypeEnum::TRIANGLE;
+				}
+				
 				ImGui::EndPopup();
 			}
 		}
@@ -141,7 +161,7 @@ namespace OnYuu {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
 		ImGui::PushFont(boldFont);
 		if (ImGui::Button("Y", buttonSize))
-			values.y = resetValue;
+		 values.y = resetValue;
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
@@ -155,7 +175,7 @@ namespace OnYuu {
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
 		ImGui::PushFont(boldFont);
 		if (ImGui::Button("Z", buttonSize))
-			values.z = resetValue;
+		 values.z = resetValue;
 		ImGui::PopFont();
 		ImGui::PopStyleColor(3);
 
@@ -284,14 +304,14 @@ namespace OnYuu {
 			});
 		DrawComponent<RenderMeshComponent>("Mesh Renderer", entity, [](auto& component)
 			{
-				ImGui::Text("Mesh: %s", component.mesh ? "Loaded" : "None");
+				ImGui::Text("Mesh: %s", component.mesh ? "sphere" : "None");
 				if (!component.mesh) {
 					ImGui::Button("Load Mesh");
 				}
 				else {
 					if (ImGui::BeginCombo("Rendering Type", component.renderingType == RenderingTypeEnum::TRIANGLE ? "Triangle" : "Line")) {
 						if (ImGui::Selectable("Triangle", component.renderingType == RenderingTypeEnum::TRIANGLE)) {
-							component.renderingType = RenderingTypeEnum::TRIANGLE;
+						 component.renderingType = RenderingTypeEnum::TRIANGLE;
 						}
 						if (ImGui::Selectable("Line", component.renderingType == RenderingTypeEnum::LINE)) {
 							component.renderingType = RenderingTypeEnum::LINE;
@@ -310,6 +330,45 @@ namespace OnYuu {
 					if (ImGui::Button("UnLoad Mesh")) {
 						component.mesh = nullptr;
 						component.material = nullptr;
+					}
+					if(component.material)
+					{
+
+						if (ImGui::BeginCombo("Material", "Values")) {
+							auto material = component.material;
+							auto& uniforms = material->getUniforms();
+							for (auto& uniform : uniforms) {
+								auto& name = uniform.first;
+								auto& value = uniform.second;
+
+								if (auto* pInt = std::get_if<int>(&value)) {
+									ImGui::DragInt(name.c_str(), pInt);
+								}
+								else if (auto* pFloat = std::get_if<float>(&value)) {
+									ImGui::DragFloat(name.c_str(), pFloat);
+								}
+								else if (auto* pVec2 = std::get_if<glm::vec2>(&value)) {
+									ImGui::DragFloat2(name.c_str(), glm::value_ptr(*pVec2));
+								}
+								else if (auto* pVec3 = std::get_if<glm::vec3>(&value)) {
+									ImGui::DragFloat3(name.c_str(), glm::value_ptr(*pVec3));
+								}
+								else if (auto* pVec4 = std::get_if<glm::vec4>(&value)) {
+									ImGui::DragFloat4(name.c_str(), glm::value_ptr(*pVec4));
+								}
+								else if (std::get_if<glm::mat3>(&value)) {
+									ImGui::Text("%s (mat3)", name.c_str());
+								}
+								else if (std::get_if<glm::mat4>(&value)) {
+									ImGui::Text("%s (mat4)", name.c_str());
+								}
+								else if (std::get_if<std::shared_ptr<Texture>>(&value)) {
+									ImGui::Button(name.c_str());
+								}
+							}
+
+							ImGui::EndCombo();
+						}
 					}
 				}
 			});

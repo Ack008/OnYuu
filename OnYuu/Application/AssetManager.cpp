@@ -111,6 +111,7 @@ namespace OnYuu {
 		loadCylinder();
 		loadQuad();
 		loadPlane();
+		loadDefaultShaders();
 		loadDefaultMaterials();
     }
     void AssetManager::loadCube()
@@ -351,5 +352,22 @@ namespace OnYuu {
     }
     void AssetManager::loadDefaultMaterials()
     {
+		addMaterial("default", std::make_shared<Material>(getShaderPtr("default")))->set("color",glm::vec4(1,0,1,1));
+    }
+    void AssetManager::loadDefaultShaders()
+    {
+        std::string defaultMetaShaderCode = R"(
+uniform vec4 color;
+void fragmentMain()
+{
+	COLOR = color ;
+}
+
+void vertexMain()
+{
+	POSITION = CAMERA_PROJ * CAMERA_VIEW * vec4(V_WORLD_POS,1);
+}
+        )";
+		addShader("default", MetaShader::create(defaultMetaShaderCode, true));
     }
 }

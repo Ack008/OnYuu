@@ -1,6 +1,6 @@
 #include "VulkanMetaShader.h"
-OnYuu::VulkanMetaShader::VulkanMetaShader(const std::string& filename)
-	: MetaShader(filename)
+OnYuu::VulkanMetaShader::VulkanMetaShader(const std::string& filename, bool isShaderSource)
+	: MetaShader(filename, isShaderSource)
 {
 	vKVisitor = VulkanVisitor(&getSemanticVisitor());
 	vKVisitor.produceShaders(getGLSLVisitor().getShaderInfo());
