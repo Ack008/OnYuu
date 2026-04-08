@@ -142,6 +142,8 @@ namespace OnYuu {
             for (auto entityID : m_Context->reg->view<entt::entity>())
             {
                 GameObject entity{ entityID, m_Context.get() };
+				if (entity.getComponent<TreeComponent>().father)
+                    continue;  
                 const auto& tag = entity.getComponent<TagComponent>().tag;
                 if (!filter.empty())
                 {
@@ -266,15 +268,36 @@ namespace OnYuu {
             { /* TODO */
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Create Empty Child"))
+            {
+                GameObject child = m_Context->createEntity();
+                child.getComponent<TagComponent>().tag = "New Child";
+                child.setFather(entity);
+            }
+            if (ImGui::MenuItem("Create sphere ")) {
+                GameObject child = m_Context->createEntity();
+				child.setFather(entity);
+                child.getComponent<TagComponent>().tag = "New Sphere";
+                auto& rmc = child.addComponent<RenderMeshComponent>();
+                rmc.mesh = AssetManager::instance().getMeshPtr("sphere");
+                rmc.material = AssetManager::instance().getMaterialPtr("default");
+				rmc.renderingType = RenderingTypeEnum::TRIANGLE;
+            }
             ImGui::PushStyleColor(ImGuiCol_Text, Theme::Danger);
             if (ImGui::MenuItem("\xef\x87\x97  Delete Entity"))
                 entityDeleted = true;
             ImGui::PopStyleColor();
+            
             ImGui::EndPopup();
         }
 
-        if (opened)
+        if (opened) {
+            for (auto child : entity.getComponent<TreeComponent>().obj)
+            {
+                DrawEntityNode(child);
+			}
             ImGui::TreePop();
+        }
 
         if (entityDeleted)
         {
@@ -588,6 +611,7 @@ namespace OnYuu {
         if (entity.hasComponent<ScriptingSystem>())
         {
             auto& ss = entity.getComponent<ScriptingSystem>();
+            std::shared_ptr<Component> scriptToRemove;
             for (const auto& script : ss.scripts)
             {
                 const char* typeName = typeid(*script).name();
@@ -616,15 +640,25 @@ namespace OnYuu {
                 {
                     ImGui::PushStyleColor(ImGuiCol_Text, Theme::Danger);
                     if (ImGui::MenuItem("\xef\x87\x97  Remove Script")) {
-                        ss.scripts.erase(
-                            std::remove(ss.scripts.begin(), ss.scripts.end(), script),
-                            ss.scripts.end());
+                        scriptToRemove = script;
                         ImGui::CloseCurrentPopup();
                     }
                     ImGui::PopStyleColor();
                     ImGui::EndPopup();
                 }
                 if (sOpen) ImGui::TreePop();
+            }
+
+            if (scriptToRemove)
+            {
+                if (dynamic_cast<BoxCollider*>(scriptToRemove.get()))
+                    scriptToRemove->obj->removeComponent<BoxCollider>();
+                else if (dynamic_cast<CircleCollider*>(scriptToRemove.get()))
+                    scriptToRemove->obj->removeComponent<CircleCollider>();
+                else
+                    ss.scripts.erase(
+                        std::remove(ss.scripts.begin(), ss.scripts.end(), scriptToRemove),
+                        ss.scripts.end());
             }
         }
     }

@@ -1,9 +1,13 @@
 #include "EditorLayer.h"
 
+namespace OnYuu {
+
 void EditorLayer::onUpdate(float deltaTime)
 {
 	m_scene->update(deltaTime);
-	m_scene->render(m_editorCamera.get(), m_renderTarget);
+	std::shared_ptr<Camera> activeCamera = m_editorCamera.getCamera();
+	m_scene->render(activeCamera.get(), m_renderTarget);
+	m_ViewportPanel.update(deltaTime);
 }
 
 void EditorLayer::onEvent()
@@ -54,14 +58,16 @@ void EditorLayer::onImGuiRender()
 void EditorLayer::onAttach()
 {
 	m_scene = std::make_shared<Scene>();
-	m_editorCamera = std::make_shared<Perspective>(45.0f, 2560.0f / 1400.0f, 0.1f, 100.0f); 
+	m_perspectiveCamera = std::make_shared<Perspective>(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
 	m_renderTarget = RenderTarget::create(2560, 1400);
     m_SceneHierarchyPanel.SetContext(m_scene);
-    m_ViewportPanel.setViewportTexture(m_renderTarget);
-	m_ViewportPanel.setSceneContext(m_scene);
+	m_ViewportPanel.setLayer(this);
+
 	
 }
 
 void EditorLayer::onDetach()
 {
+}
+
 }

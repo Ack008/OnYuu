@@ -81,6 +81,7 @@ namespace OnYuu {
 		virtual bool hasCollided(Collider* other) override;
 		virtual bool collideWith(BoxCollider* other) override;
 		virtual bool collideWith(CircleCollider* other) override;
+		virtual bool colliteWith(Ray ray) override;
 	private:
 		float radius;
 	};

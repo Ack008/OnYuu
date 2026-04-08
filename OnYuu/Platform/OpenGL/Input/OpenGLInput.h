@@ -65,6 +65,17 @@ namespace OnYuu {
 			}
 		}
 
+		void _lockMouse(bool lock) override {
+			GLFWwindow* window = (GLFWwindow*)Application::getInstance()->getWindow()->getNativeWindow();
+			if (!window) return;
+			if (lock) {
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			}
+			else {
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			}
+		}
+
 		// Rileva un evento di "rilascio" del tasto (transizione da premuto->rilasciato)
 		// Implementazione basata sul confronto con lo stato precedente memorizzato in `keyPreviouslyPressed`.
 		bool _isKeyPressedOnce(KeyCode key) override {

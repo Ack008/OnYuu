@@ -19,6 +19,10 @@ public:
 	void removeCollider(Collider* collider) {
 		colliders.erase(std::remove(colliders.begin(), colliders.end(), collider), colliders.end());
 	}
+
+	std::vector<Collider*> getColliders() const { return colliders; }
+	
+
 	void update(float dt);
 
 private:

@@ -49,6 +49,9 @@ public:
 	// Ottieni tutte le entità 
     std::vector< GameObject > getGameObjects();
 private:
+	// raycast contro gli oggetti della scena, ritorna il primo oggetto colpito o nullptr se non colpisce nulla
+	// prima colpisce i collider, poi se non colpisce nulla controlla i render mesh (utile per oggetti senza collider)
+	GameObject editorRaycast(const glm::vec3& origin, const glm::vec3& direction, float maxDistance);
     // Calcola le collisioni tra i collider presenti e notifica gli oggetti coinvolti.
     void calculateCollisions(float dt);
 

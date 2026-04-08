@@ -5,7 +5,7 @@ public:
 	EditorApp()
 		:Application(Vulkan)
 	{
-		pushLayer(new EditorLayer());
+		pushLayer(new OnYuu::EditorLayer());
 	}
 private:
 };

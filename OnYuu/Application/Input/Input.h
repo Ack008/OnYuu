@@ -26,6 +26,7 @@ private:
 	virtual void _getMouseWindowPos(double& xpos, double& ypos) = 0;
 	virtual void _setMousePosition(double xpos, double ypos) = 0;
 	virtual void _setMouseState(MouseState state) = 0;
+	virtual void _lockMouse(bool lock) = 0;
 
 	// Implementazione singleton/factory: puntatore all'istanza attiva e funzione di creazione
 	static std::shared_ptr<Input> instance;
@@ -57,6 +58,9 @@ public:
 	}
 	static void setMouseState(MouseState state) {
 		instance->_setMouseState(state);
+	}
+	static void lockMouse(bool lock) {
+		instance->_lockMouse(lock);
 	}
 };
 } // namespace OnYuu

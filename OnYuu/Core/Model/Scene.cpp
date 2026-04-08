@@ -1,5 +1,9 @@
 #include "Core/Engine.h"
 #include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <cfloat>
+#include <limits>
 #include "Components/SkyBoxComponent.h"
 namespace OnYuu {
 	GameObject Scene::createEntity()
@@ -163,6 +167,98 @@ namespace OnYuu {
 		}
 
 		return results;
+	}
+
+	std::pair<glm::vec3, glm::vec3> getAABB(const RenderMeshComponent& meshComp, const Trasform& transform) {
+		glm::vec3 minPoint(FLT_MAX);
+		glm::vec3 maxPoint(-FLT_MAX);
+		for (const auto& vertex : meshComp.mesh->position) {
+			glm::vec4 worldVertex = glm::vec4(vertex, 1.0f);
+			worldVertex = glm::translate(glm::mat4(1.0f), transform.position) *
+				glm::rotate(glm::mat4(1.0f), transform.rotation.x, glm::vec3(1, 0, 0)) *
+				glm::rotate(glm::mat4(1.0f), transform.rotation.y, glm::vec3(0, 1, 0)) *
+				glm::rotate(glm::mat4(1.0f), transform.rotation.z, glm::vec3(0, 0, 1)) *
+				glm::scale(glm::mat4(1.0f), transform.scale) *
+				worldVertex;
+			minPoint = glm::min(minPoint, glm::vec3(worldVertex));
+			maxPoint = glm::max(maxPoint, glm::vec3(worldVertex));
+		}
+		return { minPoint, maxPoint };
+	}
+
+	bool rayBoxIntersection(const glm::vec3& origin, const glm::vec3& direction, const glm::vec3& minPoint, const glm::vec3& maxPoint) {
+		const float eps = 1e-6f;
+		float tMin = 0.0f;
+		float tMax = std::numeric_limits<float>::infinity();
+
+		for (int axis = 0; axis < 3; axis++) {
+			const float o = origin[axis];
+			const float d = direction[axis];
+			const float minA = minPoint[axis];
+			const float maxA = maxPoint[axis];
+
+			if (std::abs(d) < eps) {
+				if (o < minA || o > maxA)
+					return false;
+				continue;
+			}
+
+			float t1 = (minA - o) / d;
+			float t2 = (maxA - o) / d;
+			if (t1 > t2) std::swap(t1, t2);
+
+			tMin = std::max(tMin, t1);
+			tMax = std::min(tMax, t2);
+
+			if (tMin > tMax)
+				return false;
+		}
+
+		return tMax >= 0.0f;
+	}
+
+
+
+	GameObject Scene::editorRaycast(const glm::vec3& origin, const glm::vec3& direction, float maxDistance)
+	{
+		auto colliders = physicsEngine.getColliders();
+		float closestDistance = maxDistance;
+		GameObject closestObject;
+		bool hit = false;
+		std::unordered_set<entt::entity> visited;
+		for (auto collider : colliders) {
+			if (visited.count(collider->obj->getID())) { continue; }
+			visited.insert(collider->obj->getID());
+			if (collider->colliteWith({ origin, direction })) {
+				hit = true;
+				float distance = glm::length(collider->obj->getAbsoluteTransform().position - origin);
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestObject = GameObject(collider->obj->id, this);
+				}
+			}
+		}
+
+		for (auto&& [entity, meshComp, transform] : reg->view<RenderMeshComponent, Trasform>().each()) {
+			if (visited.count(entity)) { continue; }
+			if (!meshComp.mesh) continue; // Skip if mesh is not loaded)
+			visited.insert(entity);
+			auto [minPoint, maxPoint] = getAABB(meshComp, transform);
+			if (rayBoxIntersection(origin, direction, minPoint, maxPoint)) {
+				float distance = glm::length(transform.position - origin);
+				if (distance < closestDistance) {
+					closestDistance = distance;
+					closestObject = GameObject(entity, this);
+					hit = true;
+				}
+			}
+		}
+
+		if (hit) {
+			return closestObject;
+		}
+
+		return GameObject(); // Return an empty GameObject if no collision is detected
 	}
 
 	void Scene::calculateCollisions(float dt)
