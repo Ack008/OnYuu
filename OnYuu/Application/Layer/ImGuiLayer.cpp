@@ -8,6 +8,7 @@
 #include "Platform/API.h"
 #include "Render/Renderer.h"
 #include "Platform/Vulkan/VulkanRender.h"
+#include "ImGuizmo/ImGuizmo.h"
 #include <iostream>
 namespace OnYuu {
 	void ImGuiLayer::onUpdate(float deltaTime) {
@@ -130,7 +131,8 @@ namespace OnYuu {
 		default:
 			break;
 		}
-		ImGui::NewFrame();                // Inizia un nuovo frame ImGui
+		ImGui::NewFrame();     
+		ImGuizmo::BeginFrame();// Inizia un nuovo frame ImGui
 	}
 
 	void ImGuiLayer::end() {

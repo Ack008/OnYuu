@@ -6,6 +6,12 @@ namespace OnYuu {
 
 	class ViewportPanel
 	{
+		enum class GizmoOperation {
+			Translate,
+			Rotate,
+			Scale,
+			All
+		};
 	public:
 		ViewportPanel();
 		~ViewportPanel();
@@ -29,5 +35,6 @@ namespace OnYuu {
 		double m_lastMouseX = 0.0;
 		double m_lastMouseY = 0.0;
 		bool   m_firstClick = true;
+		GizmoOperation m_currentGizmoOperation = GizmoOperation::Translate;
 	};
 }

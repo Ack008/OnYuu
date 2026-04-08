@@ -2,6 +2,7 @@
 #include "../EditorLayer.h"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include "ImGuizmo/ImGuizmo.h"
 
 namespace OnYuu {
 
@@ -34,7 +35,66 @@ namespace OnYuu {
 		{
 			void* textureID = m_EditorLayer->m_renderTarget->getColorAttachment();
 			ImGui::Image(textureID, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+
 		}
+
+		// Gizmo
+
+		GameObject selectedObject = m_EditorLayer->m_SceneHierarchyPanel.GetSelectedEntity();
+		if (selectedObject) {
+
+			ImGuizmo::SetOrthographic(m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Orthographic);
+			ImGuizmo::SetDrawlist();
+			ImGuizmo::SetRect(ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y, ImGui::GetItemRectSize().x, ImGui::GetItemRectSize().y);
+			// get camera matrices
+			auto camera = m_EditorLayer->m_editorCamera.getCamera();
+			glm::mat4 cameraView =  camera->getViewMatrix();
+			glm::mat4 cameraProjection = camera->getProjectionMatrix();
+			if (Render::getAPI() == Vulkan)
+			{
+				cameraProjection[1][1] *= -1.0f;
+			
+
+			}
+			auto& tc = selectedObject.getComponent<Trasform>();
+			glm::mat4 modelMatrix = tc.getModelMatrix();
+			ImGuizmo::OPERATION currentOperation = ImGuizmo::OPERATION::TRANSLATE;
+			switch (m_currentGizmoOperation) {
+			case GizmoOperation::Translate:
+				currentOperation = ImGuizmo::OPERATION::TRANSLATE;
+				break;
+			case GizmoOperation::Rotate:
+				currentOperation = ImGuizmo::OPERATION::ROTATE;
+				break;
+			case GizmoOperation::Scale:
+				currentOperation = ImGuizmo::OPERATION::SCALE;
+				break;
+			case GizmoOperation::All:
+				currentOperation = ImGuizmo::OPERATION::UNIVERSAL;
+				break;
+			}
+			float snapValue = 0.5f; // Snap to 0.5m for translation/scale
+			// Snap to 45 degrees for rotation
+			if (currentOperation == ImGuizmo::OPERATION::ROTATE)
+				snapValue = 45.0f;
+
+			float snapValues[3] = { snapValue, snapValue, snapValue };
+			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), currentOperation, ImGuizmo::WORLD, glm::value_ptr(modelMatrix), nullptr, snapValues);
+			if (ImGuizmo::IsUsing()) {
+				glm::vec3 translation, rotation, scale;
+				Math::DecomposeTransform(modelMatrix, translation, rotation, scale);
+
+				glm::vec3 deltaRotation = rotation - tc.rotation;
+
+				tc.position = translation;
+				tc.rotation = rotation;
+				tc.scale = scale;
+
+			}
+
+				
+		}
+		// Input
 		ImVec2 mousePos = ImGui::GetMousePos();
 		ImVec2 imageMin = ImGui::GetItemRectMin();   // angolo in alto a sinistra dell'immagine
 		ImVec2 imageMax = ImGui::GetItemRectMax();   // angolo in basso a destra
@@ -59,9 +119,9 @@ namespace OnYuu {
 		if (m_isFocused) {
 			keyboardInput(deltaTime);
 		}
-		if (m_isHovered) {
 			bool retFlag;
 			mouseInput(deltaTime, retFlag);
+		if (m_isHovered) {
 		}
 	}
 
@@ -95,30 +155,39 @@ namespace OnYuu {
 			m_lastMouseX = currentX;
 			m_lastMouseY = currentY;
 
-			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective)
-				m_EditorLayer->m_editorCamera.rotate((float)deltaX, -(float)deltaY);
+			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective) {
+
+				float yDir = (Render::getAPI() == Vulkan) ? -(float)deltaY : (float)deltaY;
+				m_EditorLayer->m_editorCamera.rotate((float)deltaX, yDir);
+			}
 			else {
 				m_EditorLayer->m_editorCamera.moveHorizontal((float)deltaX, deltaTime);
 				m_EditorLayer->m_editorCamera.moveVertical((float)deltaY, deltaTime);
 			}
 			Input::lockMouse(true);
+			
+			
 		}
 		else {
 			m_firstClick = true; // reset per la prossima pressione
 			Input::lockMouse(false);
+
 		}
 		retFlag = false;
 
 
 
 		if (Input::isMouseButtonPressed(0)) {
-			raycast();
+			if (!ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
+				raycast();
 		}
 
 	}
 
 	void ViewportPanel::keyboardInput(float deltaTime)
 	{
+		float vertDir = (Render::getAPI() == Vulkan) ? -1.0f : 1.0f;
+
 		if (Input::isKeyPressed(KeyCode::W)) {
 			m_EditorLayer->m_editorCamera.moveForward(1.0f, deltaTime);
 		}
@@ -132,16 +201,29 @@ namespace OnYuu {
 			m_EditorLayer->m_editorCamera.moveHorizontal(1.0f, deltaTime);
 		}
 		if (Input::isKeyPressed(KeyCode::Q)) {
-			m_EditorLayer->m_editorCamera.moveVertical(-1.0f, deltaTime);
+			m_EditorLayer->m_editorCamera.moveVertical(-1.0f * vertDir, deltaTime);
 		}
 		if (Input::isKeyPressed(KeyCode::E)) {
-			m_EditorLayer->m_editorCamera.moveVertical(1.0f, deltaTime);
+			m_EditorLayer->m_editorCamera.moveVertical(1.0f * vertDir, deltaTime);
 		}
 		if (Input::isKeyPressedOnce(KeyCode::Z)) {
 			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective)
 				m_EditorLayer->m_editorCamera.setCameraType(CameraType::Orthographic);
 			else
 				m_EditorLayer->m_editorCamera.setCameraType(CameraType::Perspective);
+		}
+
+		if (Input::isKeyPressedOnce(KeyCode::D1)) {
+			m_currentGizmoOperation = GizmoOperation::Translate;
+		}
+		if (Input::isKeyPressedOnce(KeyCode::D2)) {
+			m_currentGizmoOperation = GizmoOperation::Rotate;
+		}
+		if (Input::isKeyPressedOnce(KeyCode::D3)) {
+			m_currentGizmoOperation = GizmoOperation::Scale;
+		}
+		if (Input::isKeyPressedOnce(KeyCode::D4)) {
+			m_currentGizmoOperation = GizmoOperation::All;
 		}
 	}
 

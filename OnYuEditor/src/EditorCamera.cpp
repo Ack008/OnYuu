@@ -25,7 +25,13 @@ void OnYuu::EditorCamera::moveHorizontal(float dir, float deltaTime)
         break;
     case CameraType::Perspective:
     {
-        const glm::vec3 right = glm::normalize(glm::cross(m_PerspectiveCamera->getDirection(), m_PerspectiveCamera->getUpVector()));
+        const glm::vec3 forward = glm::normalize(m_PerspectiveCamera->getDirection());
+        glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 right = glm::cross(forward, worldUp);
+        if (glm::length2(right) < 0.0001f)
+            right = glm::cross(forward, glm::vec3(0.0f, 0.0f, 1.0f));
+        right = glm::normalize(right);
+
         m_PerspectiveCamera->setPosition(m_PerspectiveCamera->getPosition() + right * dir * m_moveSpeed * deltaTime);
 		m_PerspectiveCamera->setTarget(m_PerspectiveCamera->getPosition() + m_PerspectiveCamera->getDirection());
         break;
@@ -41,10 +47,19 @@ void OnYuu::EditorCamera::moveVertical(float dir, float deltaTime)
         m_Orthocamera->setPosition(m_Orthocamera->getPosition() + glm::vec3(0.0f, dir * m_moveSpeed * deltaTime, 0.0f));
         break;
     case CameraType::Perspective:
-		m_PerspectiveCamera->setPosition(m_PerspectiveCamera->getPosition() + glm::vec3(0.0f, dir * m_moveSpeed * deltaTime, 0.0f));
-        m_PerspectiveCamera->setTarget(m_PerspectiveCamera->getPosition() + m_PerspectiveCamera->getDirection());
+    {
+        const glm::vec3 forward = glm::normalize(m_PerspectiveCamera->getDirection());
+        glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 right = glm::cross(forward, worldUp);
+        if (glm::length2(right) < 0.0001f)
+            right = glm::cross(forward, glm::vec3(0.0f, 0.0f, 1.0f));
+        right = glm::normalize(right);
+        const glm::vec3 up = glm::normalize(glm::cross(right, forward));
 
+		m_PerspectiveCamera->setPosition(m_PerspectiveCamera->getPosition() + up * dir * m_moveSpeed * deltaTime);
+        m_PerspectiveCamera->setTarget(m_PerspectiveCamera->getPosition() + m_PerspectiveCamera->getDirection());
         break;
+    }
     }
 }
 
@@ -67,3 +82,4 @@ void OnYuu::EditorCamera::rotate(float deltaX, float deltaY)
     m_PerspectiveCamera->setRotation(glm::vec3(m_pitch, m_yaw, 0.0f));
     m_PerspectiveCamera->setDirection(front);
 }
+
