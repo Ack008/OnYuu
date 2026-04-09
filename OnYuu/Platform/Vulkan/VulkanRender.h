@@ -135,6 +135,7 @@ namespace OnYuu {
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> inFlightFences;
         std::vector<VkFence> imagesInFlight;
+        bool swapchainNeedsRecreate_ = false;
 
         // ========================================================================
         // DESCRIPTOR SET LAYOUTS (condivisi tra frame)
@@ -276,6 +277,10 @@ namespace OnYuu {
         // Cleanup
         void cleanupDepthResources();
         void cleanupDescriptorLayouts();
+
+        // Swapchain recreation
+        bool recreateSwapchainResources();
+        bool hasFramebufferResize() const;
     };
 
 } // namespace OnYuu

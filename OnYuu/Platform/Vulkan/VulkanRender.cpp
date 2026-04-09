@@ -458,6 +458,81 @@ namespace OnYuu {
         return VK_FORMAT_D32_SFLOAT; // Fallback
     }
 
+    bool VulkanRender::hasFramebufferResize() const {
+        if (!window_ || !swapchain_) {
+            return false;
+        }
+
+        int width = 0;
+        int height = 0;
+        glfwGetFramebufferSize(window_, &width, &height);
+
+        if (width <= 0 || height <= 0) {
+            return false;
+        }
+
+        const VkExtent2D extent = swapchain_->getExtent();
+        return extent.width != static_cast<uint32_t>(width) ||
+            extent.height != static_cast<uint32_t>(height);
+    }
+
+    bool VulkanRender::recreateSwapchainResources() {
+        if (!swapchain_ || !device_) {
+            return false;
+        }
+
+        int width = 0;
+        int height = 0;
+        glfwGetFramebufferSize(window_, &width, &height);
+
+        while (width == 0 || height == 0) {
+            glfwWaitEvents();
+            glfwGetFramebufferSize(window_, &width, &height);
+        }
+
+        device_->waitIdle();
+
+        cleanupDepthResources();
+
+        if (!swapchain_->recreate(surface_, renderPass_, VK_NULL_HANDLE)) {
+            std::cerr << "Failed to recreate swapchain (without depth)!\n";
+            return false;
+        }
+
+        if (!createDepthResources()) {
+            std::cerr << "Failed to recreate depth resources!\n";
+            return false;
+        }
+
+        if (!swapchain_->recreate(surface_, renderPass_, depthImageView_)) {
+            std::cerr << "Failed to recreate swapchain (with depth)!\n";
+            return false;
+        }
+
+        for (auto semaphore : renderFinishedSemaphores) {
+            if (semaphore != VK_NULL_HANDLE) {
+                vkDestroySemaphore(device_->getDevice(), semaphore, nullptr);
+            }
+        }
+
+        renderFinishedSemaphores.assign(swapchain_->getImageCount(), VK_NULL_HANDLE);
+
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+        for (size_t i = 0; i < renderFinishedSemaphores.size(); ++i) {
+            if (vkCreateSemaphore(device_->getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
+                std::cerr << "Failed to create render finished semaphore for a swapchain image!\n";
+                return false;
+            }
+        }
+
+        imagesInFlight.assign(swapchain_->getImageCount(), VK_NULL_HANDLE);
+        swapchainNeedsRecreate_ = false;
+
+        return true;
+    }
+
     // ============================================================================
     // FRAME RENDERING METHODS
     // ============================================================================
@@ -467,59 +542,34 @@ namespace OnYuu {
 
         LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
         vkWaitForFences(device_->getDevice(), 1, &inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
-      
+
+        if (swapchainNeedsRecreate_ || hasFramebufferResize()) {
+            LOG(<< "     ! Swapchain resize detected, recreating...\n");
+            if (!recreateSwapchainResources()) {
+                return;
+            }
+        }
+
         // Step 2: Acquire image
         LOG( << "  2. Acquiring swapchain image...\n");
         VkResult result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            LOG(<< "     ! Swapchain out of date, recreating...\n");
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+            LOG(<< "     ! Swapchain acquire returned out-of-date/suboptimal, recreating...\n");
 
-            device_->waitIdle();
-
-            cleanupDepthResources();
-
-            swapchain_->recreate(surface_, renderPass_, VK_NULL_HANDLE); // ⚠️ Passa NULL temporaneamente
-
-            if (!createDepthResources()) {
-                std::cerr << "Failed to recreate depth resources!\n";
+            if (!recreateSwapchainResources()) {
                 return;
             }
-
-            swapchain_->recreate(surface_, renderPass_, depthImageView_);
-
-            for (auto semaphore : renderFinishedSemaphores) {
-                if (semaphore != VK_NULL_HANDLE) {
-                    vkDestroySemaphore(device_->getDevice(), semaphore, nullptr);
-                }
-            }
-            renderFinishedSemaphores.clear();
-            renderFinishedSemaphores.resize(swapchain_->getImageCount());
-
-            VkSemaphoreCreateInfo semaphoreInfo{};
-            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-            for (size_t i = 0; i < renderFinishedSemaphores.size(); ++i) {
-                if (vkCreateSemaphore(device_->getDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphores[i]) != VK_SUCCESS) {
-                    throw std::runtime_error("failed to create render finished semaphore for a swapchain image!");
-                }
-            }
-
-            imagesInFlight.assign(renderFinishedSemaphores.size(), VK_NULL_HANDLE);
-
-         
 
             result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
             if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
                 std::cerr << "Failed to acquire image after recreate! Result: " << result << "\n";
-
-                syncManager_->resetFence(currentFrame_);
-                vkResetFences(device_->getDevice(), 1, &inFlightFences[currentFrame_]);
                 return;
             }
         }
-        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        else if (result != VK_SUCCESS) {
             std::cerr << " Failed to acquire swapchain image! Result: " << result << "\n";
             return;
         }
@@ -661,11 +711,16 @@ namespace OnYuu {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             LOG(<< "     ! Swapchain out of date/suboptimal, will recreate next frame\n");
+            swapchainNeedsRecreate_ = true;
         }
         else if (result != VK_SUCCESS) {
             std::cerr << "     ✗ Failed to present! Result: " << result << "\n";
         }
         else {
+            if (hasFramebufferResize()) {
+                LOG(<< "     ! Framebuffer size changed, scheduling swapchain recreate\n");
+                swapchainNeedsRecreate_ = true;
+            }
             LOG(<< "     ✓ Image presented successfully\n");
         }
 

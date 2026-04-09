@@ -60,6 +60,7 @@ namespace OnYuu {
                     }
                     width = maxX - minX;
                     height = maxY - minY;
+                    depth = maxZ - minZ;
                     maxPoint = glm::vec3(maxX, maxY, maxZ);
                     minPoint = glm::vec3(minX, minY, minZ);
                 }
@@ -397,8 +398,9 @@ namespace OnYuu {
         closestPointLocal.y = std::max(other->getMinPoint().y, std::min(circleCenterLocal.y, other->getMaxPoint().y));
         closestPointLocal.z = std::max(other->getMinPoint().z, std::min(circleCenterLocal.z, other->getMaxPoint().z));
 
-        glm::vec3 delta = circleCenterLocal - closestPointLocal;
-        float distSq = glm::dot(delta, delta);
+        glm::vec3 closestPointWorld = glm::vec3(boxModel * glm::vec4(closestPointLocal, 1.0f));
+        glm::vec3 deltaWorld = circleCenterWorld - closestPointWorld;
+        float distSq = glm::dot(deltaWorld, deltaWorld);
 
         return distSq <= (radiusWorld * radiusWorld);
     }

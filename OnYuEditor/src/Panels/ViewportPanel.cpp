@@ -1,7 +1,7 @@
 #include "ViewportPanel.h"
 #include "../EditorLayer.h"
-#include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
 #include "ImGuizmo/ImGuizmo.h"
 
 namespace OnYuu {
@@ -79,17 +79,31 @@ namespace OnYuu {
 				snapValue = 45.0f;
 
 			float snapValues[3] = { snapValue, snapValue, snapValue };
-			ImGuizmo::Manipulate(glm::value_ptr(cameraView), glm::value_ptr(cameraProjection), currentOperation, ImGuizmo::WORLD, glm::value_ptr(modelMatrix), nullptr, snapValues);
+			bool useSnap = Input::isKeyPressed(KeyCode::LeftControl) || Input::isKeyPressed(KeyCode::RightControl);
+			glm::mat4 deltaMatrix = glm::mat4(1.0f);
+
+			ImGuizmo::Manipulate(
+				glm::value_ptr(cameraView),
+				glm::value_ptr(cameraProjection),
+				currentOperation,
+				ImGuizmo::WORLD,
+				glm::value_ptr(modelMatrix),
+				glm::value_ptr(deltaMatrix),   // <-- era nullptr
+				useSnap ? snapValues : nullptr
+			);
+
 			if (ImGuizmo::IsUsing()) {
-				glm::vec3 translation, rotation, scale;
-				Math::DecomposeTransform(modelMatrix, translation, rotation, scale);
+				float translation[3], rotation[3], scale[3];
 
-				glm::vec3 deltaRotation = rotation - tc.rotation;
+				// Translate e Scale: decomposizione completa va bene
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), translation, rotation, scale);
+				tc.position = { translation[0], translation[1], translation[2] };
+				tc.scale = { scale[0], scale[1], scale[2] };
 
-				tc.position = translation;
-				tc.rotation = rotation;
-				tc.scale = scale;
-
+				// Rotation: accumula il delta invece di ridecomporre
+				float dT[3], dR[3], dS[3];
+				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(deltaMatrix), dT, dR, dS);
+				tc.rotation += glm::vec3(dR[0], dR[1], dR[2]);
 			}
 
 				
@@ -119,8 +133,8 @@ namespace OnYuu {
 		if (m_isFocused) {
 			keyboardInput(deltaTime);
 		}
-			bool retFlag;
-			mouseInput(deltaTime, retFlag);
+		 bool retFlag;
+		 mouseInput(deltaTime, retFlag);
 		if (m_isHovered) {
 		}
 	}

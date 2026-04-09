@@ -51,9 +51,9 @@ namespace OnYuu {
 			Trasform absoluteTransform = GameObject(entity, this).getAbsoluteTransform();
 			glm::mat4 model = glm::mat4(1.0f);
 			model = glm::translate(model, absoluteTransform.position);
-			model = glm::rotate(model, absoluteTransform.rotation.x, glm::vec3(1, 0, 0));
-			model = glm::rotate(model, absoluteTransform.rotation.y, glm::vec3(0, 1, 0));
-			model = glm::rotate(model, absoluteTransform.rotation.z, glm::vec3(0, 0, 1));
+			model = glm::rotate(model, glm::radians(absoluteTransform.rotation.x), glm::vec3(1, 0, 0));
+			model = glm::rotate(model,glm::radians( absoluteTransform.rotation.y), glm::vec3(0, 1, 0));
+			model = glm::rotate(model,glm::radians( absoluteTransform.rotation.z), glm::vec3(0, 0, 1));
 			model = glm::scale(model, absoluteTransform.scale);
 			Render::getInstance()->addMeshRender(&meshComp, model);
 		}
@@ -175,9 +175,9 @@ namespace OnYuu {
 		for (const auto& vertex : meshComp.mesh->position) {
 			glm::vec4 worldVertex = glm::vec4(vertex, 1.0f);
 			worldVertex = glm::translate(glm::mat4(1.0f), transform.position) *
-				glm::rotate(glm::mat4(1.0f), transform.rotation.x, glm::vec3(1, 0, 0)) *
-				glm::rotate(glm::mat4(1.0f), transform.rotation.y, glm::vec3(0, 1, 0)) *
-				glm::rotate(glm::mat4(1.0f), transform.rotation.z, glm::vec3(0, 0, 1)) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.x), glm::vec3(1, 0, 0)) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.y), glm::vec3(0, 1, 0)) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.z), glm::vec3(0, 0, 1)) *
 				glm::scale(glm::mat4(1.0f), transform.scale) *
 				worldVertex;
 			minPoint = glm::min(minPoint, glm::vec3(worldVertex));

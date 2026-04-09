@@ -3,7 +3,7 @@
 class EditorApp : public Application {
 public:
 	EditorApp()
-		:Application(OpenGL)
+		:Application(Vulkan)
 	{
 		pushLayer(new OnYuu::EditorLayer());
 	}
