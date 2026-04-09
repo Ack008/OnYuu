@@ -4,10 +4,17 @@ namespace OnYuu {
 	ContentBrowsingPanel::ContentBrowsingPanel()
 	{
 		m_currentDirectory = Project::getInstance().getAssetsPath();
+		m_folderIcon = Texture::createTexture("resources/icons/ContentBrowser/DirectoryIcon.png");
+		m_fileIcon = Texture::createTexture("resources/icons/ContentBrowser/FileIcon.png");
+		m_folderIconWrapper = ImGuiTextureWrapper::create(m_folderIcon);
+		m_fileIconWrapper = ImGuiTextureWrapper::create(m_fileIcon);
 	}
 
 	ContentBrowsingPanel::~ContentBrowsingPanel()
-	{}
+	{
+		m_fileIcon->shutdown();
+		m_folderIcon->shutdown();
+	}
 
 	void ContentBrowsingPanel::OnImGuiRender()
 	{
@@ -33,7 +40,8 @@ namespace OnYuu {
 
 			std::string relativePathString = relativePath.string();
 			std::string  filename = path.filename().string();
-			ImGui::Button(filename.c_str(), { thumbnailSize, thumbnailSize });
+			std::shared_ptr<ImGuiTextureWrapper> icon = entry.is_directory() ? m_folderIconWrapper : m_fileIconWrapper;
+			ImGui::ImageButton(filename.c_str(), icon->getTextureID(), {thumbnailSize, thumbnailSize});
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)){
 				if (entry.is_directory())
 				{

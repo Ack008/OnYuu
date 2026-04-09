@@ -36,6 +36,11 @@ namespace OnYuu {
 
     VulkanWindow::~VulkanWindow()
     {
+        if (window) {
+            glfwDestroyWindow(window);
+            window = nullptr;
+        }
+        glfwTerminate();
     }
 
     void VulkanWindow::draw()

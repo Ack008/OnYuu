@@ -18,6 +18,7 @@
 #include "Model/Ray.h"
 // Core application / window / input
 #include "Application/Application.h"
+#include "Application/ImGuiTextureWrapper.h"
 #include "Application/Layer.h"
 #include "Core/View/View.h"
 #include "Application/Layer/ImGuiLayer.h"

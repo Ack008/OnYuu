@@ -32,6 +32,7 @@ private:
 	static std::shared_ptr<Input> instance;
 	static std::shared_ptr<Input> create();
 public:
+	static void reset();
 	// Wrapper statici per l'accesso all'input dall'applicazione
 	static bool isKeyPressed(KeyCode key) {
 		return instance->_isKeyPressed(key);

@@ -11,5 +11,10 @@ namespace OnYuu {
 		void OnImGuiRender();
 	private:
 		std::filesystem::path m_currentDirectory;
+		std::shared_ptr<Texture> m_folderIcon;
+		std::shared_ptr<Texture> m_fileIcon;
+		std::shared_ptr<ImGuiTextureWrapper> m_folderIconWrapper;
+		std::shared_ptr<ImGuiTextureWrapper> m_fileIconWrapper;
+		
 	};
 }

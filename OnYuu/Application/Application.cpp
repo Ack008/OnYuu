@@ -3,8 +3,12 @@
 #include "Platform/API.h"
 #include <iostream>
 #include "AssetManager.h"
+#include "Application/Input/Input.h"
 
-Application* Application::instance = nullptr;
+OnYuu::Application* OnYuu::Application::instance = nullptr;
+API OnYuu::Application::s_startupAPI = API::Vulkan;
+bool OnYuu::Application::s_rendererChangeRequested = false;
+API OnYuu::Application::s_requestedRendererAPI = API::Vulkan;
 namespace OnYuu {
 	Application::Application(API api)
 	{
@@ -12,6 +16,7 @@ namespace OnYuu {
 		Application::instance = this;
 
 		window = Window::create(1280, 720);
+		Input::reset();
 		Render::init();
 
 		imGuiLayer = new ImGuiLayer();
@@ -20,9 +25,26 @@ namespace OnYuu {
 		//globalDataUBO->setData(nullptr, sizeof(GlobalData), BufferUsage::DYNAMIC);
 	}
 
+	void Application::requestRendererChange(API api)
+	{
+		s_requestedRendererAPI = api;
+		s_rendererChangeRequested = true;
+	}
+
+	bool Application::consumeRendererChangeRequest(API& api)
+	{
+		if (!s_rendererChangeRequested) {
+			return false;
+		}
+		api = s_requestedRendererAPI;
+		s_startupAPI = s_requestedRendererAPI;
+		s_rendererChangeRequested = false;
+		return true;
+	}
+
 	void Application::Run()
 	{
-		while (!window->shouldClose()) {
+		while (!window->shouldClose() && !s_rendererChangeRequested) {
 			window->beginFrame();
 			//sendGlobalShaderData();
 

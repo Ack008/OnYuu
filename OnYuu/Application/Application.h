@@ -4,6 +4,7 @@
 #include "Application/Layer/ImGuiLayer.h"
 #include "Core/View/View.h"
 #include "Render/Buffer.h"
+#include "Platform/API.h"
 namespace OnYuu {
 // Classe principale dell'applicazione: gestisce il ciclo principale, i layer,
 // la finestra e i dati globali da passare agli shader.
@@ -38,11 +39,16 @@ public:
 	// Ritorna la finestra condivisa (shared_ptr)
 	std::shared_ptr<Window> getWindow() const { return window; }
 
+	static void setStartupAPI(API api) { s_startupAPI = api; }
+	static API getStartupAPI() { return s_startupAPI; }
+	static void requestRendererChange(API api);
+	static bool consumeRendererChangeRequest(API& api);
+
 	// Factory probabile: metodo statico per creare un'applicazione specifica
 	static Application* createApplication();
 
 private:
-	// Container dei layer attivi; ownership dei singoli Layer è manuale (raw ptr)
+	// Container dei layer attivi; ownership dei singoli Layer ? manuale (raw ptr)
 	std::vector<Layer*> layers;
 
 	// Layer dedicato a ImGui (interfaccia): pointer grezzo, probabilmente creato/gestito altrove
@@ -53,6 +59,9 @@ private:
 
 	// Istanza singleton statica
 	static Application* instance;
+	static API s_startupAPI;
+	static bool s_rendererChangeRequested;
+	static API s_requestedRendererAPI;
 
 	// Struct per i dati globali da passare agli shader (uniform buffer).
 	// Nota: i padding sono presenti per rispettare gli allineamenti std140

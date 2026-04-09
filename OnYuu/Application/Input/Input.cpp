@@ -4,6 +4,12 @@
 #include "Platform/OpenGL/Input/OpenGLInput.h"
 namespace OnYuu {
 std::shared_ptr<Input> Input::instance = Input::create();
+
+void Input::reset()
+{
+	instance = Input::create();
+}
+
 std::shared_ptr<Input> Input::create() {
 	switch (Render::getAPI()) {
 		case API::OpenGL:
@@ -11,5 +17,6 @@ std::shared_ptr<Input> Input::create() {
 			return std::make_shared<OpenGLInput>();
 		break;
 	}
+	return std::make_shared<OpenGLInput>();
 }
 } // namespace OnYuu

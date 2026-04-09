@@ -10,6 +10,9 @@ namespace OnYuu {
     }    
     AssetManager& AssetManager::instance() {
         static AssetManager mgr;
+        if (mgr.meshes_.empty() || mgr.materials_.empty() || mgr.shaders_.empty()) {
+            mgr.loadDefaultAssets();
+        }
         return mgr;
     }
 
@@ -108,6 +111,7 @@ namespace OnYuu {
         materials_.clear();
         textures_.clear();
         cubeMaps_.clear();
+        shaders_.clear();
 
     }
     void AssetManager::loadDefaultAssets()

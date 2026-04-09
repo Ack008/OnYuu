@@ -109,6 +109,9 @@ namespace OnYuu {
         if (!glfwInit())  // Se l’inizializzazione fallisce, esce dal programma con codice -1
             std::exit(-1);
 
+        // Forza la creazione di un contesto OpenGL (i window hint persistono tra creazioni)
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+
         // Setta versioni OpenGL e profilo core (3.3 core profile)
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);

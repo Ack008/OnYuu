@@ -2,6 +2,24 @@
 
 namespace OnYuu {
 
+static const char* rendererToString(API api)
+{
+	switch (api)
+	{
+	case API::OpenGL: return "OpenGL";
+	case API::DirectX11: return "DirectX11";
+	case API::DirectX12: return "DirectX12";
+	case API::Vulkan: return "Vulkan";
+	case API::Metal: return "Metal";
+	default: return "None";
+	}
+}
+
+static bool isRendererSupported(API api)
+{
+	return api == API::OpenGL || api == API::Vulkan;
+}
+
 void EditorLayer::onUpdate(float deltaTime)
 {
 	m_scene->update(deltaTime);
@@ -16,6 +34,39 @@ void EditorLayer::onEvent()
 
 void EditorLayer::onImGuiRender()
 {
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("Renderer")) {
+			if (ImGui::BeginMenu("Seleziona renderer")) {
+				ImGui::BeginChild("##RendererSelectionScroll", ImVec2(220.0f, 130.0f), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+				const API renderers[] = { API::OpenGL, API::DirectX11, API::DirectX12, API::Vulkan, API::Metal };
+				const API currentApi = Render::getAPI();
+
+				for (API selectedApi : renderers) {
+					const bool isSelected = selectedApi == currentApi;
+					if (ImGui::Selectable(rendererToString(selectedApi), isSelected)) {
+						API targetApi = selectedApi;
+						if (!isRendererSupported(selectedApi)) {
+							targetApi = (currentApi == API::OpenGL) ? API::Vulkan : API::OpenGL;
+							if (!isRendererSupported(targetApi)) {
+								targetApi = API::OpenGL;
+							}
+						}
+
+						if (targetApi != currentApi) {
+							Application::requestRendererChange(targetApi);
+						}
+					}
+				}
+
+				ImGui::EndChild();
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
     // because it would be confusing to have two docking targets within each others.
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
