@@ -1,6 +1,11 @@
 #include "BatchRenderer.h"
 #include "Core/Model/Components/Camera.h"
 #include <iostream>
+#ifdef _DEBUG
+#define LOG(x) std::cout << x << std::endl;
+#else 
+#define LOG(x)
+#endif
 namespace OnYuu {
 
     BatchRender::BatchRender()
@@ -79,7 +84,7 @@ namespace OnYuu {
         {
             throw std::runtime_error("Cannot submit while a scene is active. Call EndScene() before submitting.");
         }
-        std::cout << "BatchRender::submit() - Numero di scene da renderizzare: " << renderScenes.size() << std::endl;
+        LOG("BatchRender::submit() - Numero di scene da renderizzare: " << renderScenes.size());
 
         // stampa di debug
         for (const auto& scene : renderScenes) {
@@ -87,11 +92,11 @@ namespace OnYuu {
             size_t meshCount = scene.meshRenders.size();
             SkyBoxComponent* skybox = scene.skybox;
             Background2DRender* background2D = scene.background2D;
-            std::cout << "Scene - Camera: " << (cam ? "Set" : "Not Set")
+           LOG("Scene - Camera: " << (cam ? "Set" : "Not Set")
                 << ", Mesh Renders: " << meshCount
                 << ", SkyBox: " << (skybox ? "Set" : "Not Set")
                 << ", Background2D: " << (background2D ? "Set" : "Not Set")
-                << std::endl;
+                << std::endl);
 
 
         }

@@ -22,6 +22,7 @@
 #include "Core/View/View.h"
 #include "Application/Layer/ImGuiLayer.h"
 #include "Application/Input/Input.h"
+#include "Application/Project.h"
 #include "Platform/API.h"
 
 // Scene / game objects / components

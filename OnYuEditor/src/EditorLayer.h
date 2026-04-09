@@ -2,6 +2,7 @@
 #include "Core/Engine.h"
 #include "Panels/SceneHierarchyPanel.h"
 #include "Panels/ViewportPanel.h"
+#include "Panels/ContentBrowsingPanel.h"
 #include "EditorCamera.h"
 
 namespace OnYuu {
@@ -26,6 +27,7 @@ private:
 	std::shared_ptr<RenderTarget> m_renderTarget;
 	SceneHierarchyPanel m_SceneHierarchyPanel;
 	ViewportPanel m_ViewportPanel;
+	ContentBrowsingPanel m_ContentBrowsingPanel;
 	friend class ViewportPanel;
 };
 

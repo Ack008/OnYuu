@@ -1,8 +1,8 @@
 #include "VulkanRenderTarget.h"
 #include "Render/Renderer.h"
 #include "Platform/Vulkan/VulkanRender.h"
-#include <ImGui/backends/imgui_impl_vulkan.h>
 #include <stdexcept>
+#include <cstdint>
 
 namespace OnYuu {
 	VulkanRenderTarget::VulkanRenderTarget(uint32_t width, uint32_t height)
@@ -28,7 +28,6 @@ namespace OnYuu {
 		depthImages_.resize(frameCount_, VK_NULL_HANDLE);
 		depthImageViews_.resize(frameCount_, VK_NULL_HANDLE);
 		depthAllocations_.resize(frameCount_, VK_NULL_HANDLE);
-		imguiDescriptorSets_.resize(frameCount_, VK_NULL_HANDLE);
 		colorLayouts_.resize(frameCount_, VK_IMAGE_LAYOUT_UNDEFINED);
 
 		for (uint32_t i = 0; i < frameCount_; ++i) {
@@ -129,14 +128,6 @@ namespace OnYuu {
 			throw std::runtime_error("VulkanRenderTarget: failed to create color sampler");
 		}
 
-		for (uint32_t i = 0; i < frameCount_; ++i) {
-			imguiDescriptorSets_[i] = ImGui_ImplVulkan_AddTexture(
-				colorSampler_,
-				colorImageViews_[i],
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-			);
-		}
-
 		{
 			VkCommandBuffer cmd = renderer->beginSingleTimeCommands();
 			std::vector<VkImageMemoryBarrier> initBarriers;
@@ -180,11 +171,6 @@ namespace OnYuu {
 	{
 		if (device_ != VK_NULL_HANDLE) {
 			vkDeviceWaitIdle(device_);
-			for (auto set : imguiDescriptorSets_) {
-				if (set != VK_NULL_HANDLE) {
-					ImGui_ImplVulkan_RemoveTexture(set);
-				}
-			}
 			if (colorSampler_ != VK_NULL_HANDLE) {
 				vkDestroySampler(device_, colorSampler_, nullptr);
 				colorSampler_ = VK_NULL_HANDLE;
@@ -266,16 +252,21 @@ namespace OnYuu {
 	{
 		auto* renderer = static_cast<VulkanRender*>(Render::getInstance().get());
 		const uint32_t frame = renderer ? renderer->getCurrentFrame() : 0;
-		if (frame >= imguiDescriptorSets_.size()) {
-			return nullptr;
-		}
-		return reinterpret_cast<void*>(imguiDescriptorSets_[frame]);
+#if defined(VK_USE_64_BIT_PTR_DEFINES) && (VK_USE_64_BIT_PTR_DEFINES == 1)
+		return reinterpret_cast<void*>(getColorImageView(frame));
+#else
+		return reinterpret_cast<void*>(static_cast<uint64_t>(getColorImageView(frame)));
+#endif
 	}
 
 	void* VulkanRenderTarget::getDepthAttachment() const
 	{
 		auto* renderer = static_cast<VulkanRender*>(Render::getInstance().get());
 		const uint32_t frame = renderer ? renderer->getCurrentFrame() : 0;
+#if defined(VK_USE_64_BIT_PTR_DEFINES) && (VK_USE_64_BIT_PTR_DEFINES == 1)
 		return reinterpret_cast<void*>(getDepthImage(frame));
+#else
+		return reinterpret_cast<void*>(static_cast<uint64_t>(getDepthImage(frame)));
+#endif
 	}
 }

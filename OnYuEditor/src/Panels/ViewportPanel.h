@@ -3,6 +3,7 @@
 
 namespace OnYuu {
 	class EditorLayer;
+	class ImGuiTextureWrapper;
 
 	class ViewportPanel
 	{
@@ -36,5 +37,7 @@ namespace OnYuu {
 		double m_lastMouseY = 0.0;
 		bool   m_firstClick = true;
 		GizmoOperation m_currentGizmoOperation = GizmoOperation::Translate;
+		std::shared_ptr<ImGuiTextureWrapper> m_viewportTextureWrapper;
+		std::shared_ptr<RenderTarget> m_boundRenderTarget;
 	};
 }

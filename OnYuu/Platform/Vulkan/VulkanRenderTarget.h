@@ -36,7 +36,6 @@ namespace OnYuu {
 		std::vector<VkImage> depthImages_;
 		std::vector<VkImageView> depthImageViews_;
 		std::vector<VmaAllocation> depthAllocations_;
-		std::vector<VkDescriptorSet> imguiDescriptorSets_;
 		std::vector<VkImageLayout> colorLayouts_;
 		VkSampler colorSampler_ = VK_NULL_HANDLE;
 		VkFormat colorFormat_ = VK_FORMAT_UNDEFINED;

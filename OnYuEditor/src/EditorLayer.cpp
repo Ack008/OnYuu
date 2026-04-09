@@ -52,6 +52,7 @@ void EditorLayer::onImGuiRender()
 
 	m_ViewportPanel.onImGuiRender();
     m_SceneHierarchyPanel.OnImGuiRender();
+	m_ContentBrowsingPanel.OnImGuiRender();
 
 }
 

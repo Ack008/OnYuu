@@ -1,5 +1,6 @@
 #include "ViewportPanel.h"
 #include "../EditorLayer.h"
+#include "Application/ImGuiTextureWrapper.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
 #include "ImGuizmo/ImGuizmo.h"
@@ -31,11 +32,33 @@ namespace OnYuu {
 			imageSize = ImVec2(width, height);
 		}
 
-		if (m_EditorLayer && m_EditorLayer->getRenderTarget())
+		if (m_EditorLayer)
 		{
-			void* textureID = m_EditorLayer->m_renderTarget->getColorAttachment();
-			ImGui::Image(textureID, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+			auto renderTarget = m_EditorLayer->getRenderTarget();
+			if (renderTarget)
+			{
+				if (!m_viewportTextureWrapper || m_boundRenderTarget != renderTarget)
+				{
+					m_viewportTextureWrapper = ImGuiTextureWrapper::create(renderTarget);
+					m_boundRenderTarget = renderTarget;
+				}
 
+				void* textureID = m_viewportTextureWrapper ? m_viewportTextureWrapper->getTextureID() : nullptr;
+				if (textureID)
+					ImGui::Image(textureID, imageSize, ImVec2(0, 1), ImVec2(1, 0));
+				else
+					ImGui::Dummy(imageSize);
+			}
+			else
+			{
+				m_viewportTextureWrapper.reset();
+				m_boundRenderTarget.reset();
+				ImGui::Dummy(imageSize);
+			}
+		}
+		else
+		{
+			ImGui::Dummy(imageSize);
 		}
 
 		// Gizmo
@@ -227,16 +250,16 @@ namespace OnYuu {
 				m_EditorLayer->m_editorCamera.setCameraType(CameraType::Perspective);
 		}
 
-		if (Input::isKeyPressedOnce(KeyCode::D1)) {
+		if (Input::isKeyPressedOnce(KeyCode::T) || Input::isKeyPressedOnce(KeyCode::D1)) {
 			m_currentGizmoOperation = GizmoOperation::Translate;
 		}
-		if (Input::isKeyPressedOnce(KeyCode::D2)) {
+		if (Input::isKeyPressedOnce(KeyCode::R) || Input::isKeyPressedOnce(KeyCode::D2)) {
 			m_currentGizmoOperation = GizmoOperation::Rotate;
 		}
-		if (Input::isKeyPressedOnce(KeyCode::D3)) {
+		if (Input::isKeyPressedOnce(KeyCode::X) || Input::isKeyPressedOnce(KeyCode::D3)) {
 			m_currentGizmoOperation = GizmoOperation::Scale;
 		}
-		if (Input::isKeyPressedOnce(KeyCode::D4)) {
+		if (Input::isKeyPressedOnce(KeyCode::G) || Input::isKeyPressedOnce(KeyCode::D4)) {
 			m_currentGizmoOperation = GizmoOperation::All;
 		}
 	}

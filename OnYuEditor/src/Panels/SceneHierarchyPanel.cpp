@@ -283,6 +283,24 @@ namespace OnYuu {
                 rmc.material = AssetManager::instance().getMaterialPtr("default");
 				rmc.renderingType = RenderingTypeEnum::TRIANGLE;
             }
+            if (ImGui::MenuItem("Create cube ")) {
+                GameObject child = m_Context->createEntity();
+                child.setFather(entity);
+                child.getComponent<TagComponent>().tag = "New Cube";
+                auto& rmc = child.addComponent<RenderMeshComponent>();
+                rmc.mesh = AssetManager::instance().getMeshPtr("cube");
+                rmc.material = AssetManager::instance().getMaterialPtr("default");
+            }
+
+            if (ImGui::MenuItem("Create quad ")) {
+                GameObject child = m_Context->createEntity();
+                child.setFather(entity);
+                child.getComponent<TagComponent>().tag = "New Quad";
+                auto& rmc = child.addComponent<RenderMeshComponent>();
+                rmc.mesh = AssetManager::instance().getMeshPtr("quad");
+                rmc.material = AssetManager::instance().getMaterialPtr("default");
+			}
+
             ImGui::PushStyleColor(ImGuiCol_Text, Theme::Danger);
             if (ImGui::MenuItem("\xef\x87\x97  Delete Entity"))
                 entityDeleted = true;

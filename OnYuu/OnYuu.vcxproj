@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="Application\Application.cpp" />
     <ClCompile Include="Application\AssetManager.cpp" />
+    <ClCompile Include="Application\ImGuiTextureWrapper.cpp" />
     <ClCompile Include="Application\MeshImporter.cpp" />
     <ClCompile Include="Application\Project.cpp" />
     <ClCompile Include="Core\CubeMap.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLRenderTarget.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.cpp" />
     <ClCompile Include="Platform\Vulkan\IndirectDrawSystem.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBuffer.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanBufferPool.cpp" />
@@ -169,6 +171,7 @@
     <ClCompile Include="Platform\Vulkan\VulkanSwapchain.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanSyncManager.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanTexture.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanImGuiTextureWrapper.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanWindow.cpp" />
     <ClCompile Include="Render\BatchRenderer.cpp" />
     <ClCompile Include="Render\BatchRenderer.h" />
@@ -232,11 +235,13 @@
     <ClInclude Include="Platform\API.h" />
     <ClInclude Include="Application\Application.h" />
     <ClInclude Include="Application\AssetManager.h" />
+    <ClInclude Include="Application\ImGuiTextureWrapper.h" />
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLRenderTarget.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.h" />
     <ClInclude Include="Platform\Vulkan\IndirectDrawSystem.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBuffer.h" />
     <ClInclude Include="Platform\Vulkan\VulkanBufferPool.h" />
@@ -252,6 +257,7 @@
     <ClInclude Include="Platform\Vulkan\VulkanSwapchain.h" />
     <ClInclude Include="Platform\Vulkan\VulkanSyncManager.h" />
     <ClInclude Include="Platform\Vulkan\VulkanTexture.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanImGuiTextureWrapper.h" />
     <ClInclude Include="Platform\Vulkan\VulkanWindow.h" />
     <ClInclude Include="Render\Buffer.h" />
     <ClInclude Include="Core\Model\Components\Camera.h" />
@@ -364,3 +370,5 @@
     <Error Condition="!Exists('..\packages\glm.1.0.1\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glm.1.0.1\build\native\glm.targets'))" />
   </Target>
 </Project>
+
+
