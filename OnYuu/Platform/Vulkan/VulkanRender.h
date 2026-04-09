@@ -36,6 +36,8 @@ namespace OnYuu {
         // Override BatchRender interface
         void BeginFrame() override;
         void submit() override;
+        void invalidateShader(const std::shared_ptr<Shader>& shader) override;
+        void invalidateMaterial(const std::shared_ptr<Material>& material) override;
         void Shutdown() override;
         void setSkyBox(SkyBoxComponent* skybox) override;
         void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;

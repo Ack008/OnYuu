@@ -1,9 +1,100 @@
 #include "AssetManager.h"
 #include "Core/CubeMap.h"
+#include "json/json.hpp"
 #include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <cstring>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+namespace {
+    using json = nlohmann::json;
+
+    bool readFloatArray(const json& value, std::vector<float>& out)
+    {
+        if (!value.is_array()) {
+            return false;
+        }
+        out.clear();
+        out.reserve(value.size());
+        for (const auto& item : value) {
+            if (!item.is_number()) {
+                return false;
+            }
+            out.push_back(item.get<float>());
+        }
+        return true;
+    }
+
+    bool parseMaterialParam(const json& paramJson, OnYuu::AssetManager::MaterialParam& out)
+    {
+        if (!paramJson.is_object() || !paramJson.contains("type") || !paramJson.contains("value")) {
+            return false;
+        }
+
+        const std::string typeName = paramJson.value("type", std::string{});
+        const json& value = paramJson["value"];
+
+        if (typeName == "Int") {
+            if (!value.is_number_integer()) return false;
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Int;
+            out.value = value.get<int>();
+            return true;
+        }
+        if (typeName == "Float") {
+            if (!value.is_number()) return false;
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Float;
+            out.value = value.get<float>();
+            return true;
+        }
+        if (typeName == "Bool") {
+            if (!value.is_boolean()) return false;
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Bool;
+            out.value = value.get<bool>();
+            return true;
+        }
+
+        std::vector<float> f;
+        if (!readFloatArray(value, f)) {
+            return false;
+        }
+
+        if (typeName == "Vec2" && f.size() == 2) {
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Vec2;
+            out.value = glm::vec2(f[0], f[1]);
+            return true;
+        }
+        if (typeName == "Vec3" && f.size() == 3) {
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Vec3;
+            out.value = glm::vec3(f[0], f[1], f[2]);
+            return true;
+        }
+        if (typeName == "Vec4" && f.size() == 4) {
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Vec4;
+            out.value = glm::vec4(f[0], f[1], f[2], f[3]);
+            return true;
+        }
+        if (typeName == "Mat3" && f.size() == 9) {
+            glm::mat3 m(1.0f);
+            std::memcpy(glm::value_ptr(m), f.data(), 9 * sizeof(float));
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Mat3;
+            out.value = m;
+            return true;
+        }
+        if (typeName == "Mat4" && f.size() == 16) {
+            glm::mat4 m(1.0f);
+            std::memcpy(glm::value_ptr(m), f.data(), 16 * sizeof(float));
+            out.type = OnYuu::AssetManager::MaterialParam::Type::Mat4;
+            out.value = m;
+            return true;
+        }
+
+        return false;
+    }
+}
+
 namespace OnYuu {
     AssetManager::AssetManager() {
         loadDefaultAssets();
@@ -12,8 +103,25 @@ namespace OnYuu {
         static AssetManager mgr;
         if (mgr.meshes_.empty() || mgr.materials_.empty() || mgr.shaders_.empty()) {
             mgr.loadDefaultAssets();
+            mgr.rebuildShaderMaterialDependencies();
         }
         return mgr;
+    }
+
+    std::string AssetManager::findShaderNameForMaterial(const std::shared_ptr<Material>& material) const
+    {
+        if (!material || !material->getShader()) {
+            return "";
+        }
+
+        auto shaderPtr = material->getShader();
+        for (const auto& [shaderName, metaShader] : shaders_) {
+            if (metaShader && metaShader->getShader() == shaderPtr) {
+                return shaderName;
+            }
+        }
+
+        return "";
     }
 
     std::shared_ptr<Mesh> AssetManager::addMesh(const std::string& name, std::shared_ptr<Mesh> mesh) {
@@ -37,7 +145,25 @@ namespace OnYuu {
             std::cout << "[AssetManager] addMaterial: replacing material '" << name << "' old_ptr=" << it->second.get()
                 << " old_use_count=" << it->second.use_count() << std::endl;
         }
+
+        auto oldMetaIt = materialMetadatas_.find(name);
+        if (oldMetaIt != materialMetadatas_.end() && !oldMetaIt->second.shaderName.empty()) {
+            auto depIt = shaderToMaterials_.find(oldMetaIt->second.shaderName);
+            if (depIt != shaderToMaterials_.end()) {
+                depIt->second.erase(name);
+            }
+        }
+
         materials_[name] = std::move(mat);
+
+        auto& metadata = materialMetadatas_[name];
+        if (metadata.shaderName.empty()) {
+            metadata.shaderName = findShaderNameForMaterial(materials_[name]);
+        }
+        if (!metadata.shaderName.empty()) {
+            shaderToMaterials_[metadata.shaderName].insert(name);
+        }
+
         return materials_[name];
     }
 
@@ -53,6 +179,59 @@ namespace OnYuu {
         auto ptr = getMaterialPtr(name);
         Material* raw = ptr ? ptr.get() : nullptr;
         return raw;
+    }
+
+    void AssetManager::setMaterialMetadata(const std::string& materialName, const MaterialMetadata& metadata)
+    {
+        auto oldIt = materialMetadatas_.find(materialName);
+        if (oldIt != materialMetadatas_.end() && !oldIt->second.shaderName.empty()) {
+            auto depIt = shaderToMaterials_.find(oldIt->second.shaderName);
+            if (depIt != shaderToMaterials_.end()) {
+                depIt->second.erase(materialName);
+            }
+        }
+
+        materialMetadatas_[materialName] = metadata;
+        if (!metadata.shaderName.empty()) {
+            shaderToMaterials_[metadata.shaderName].insert(materialName);
+        }
+    }
+
+    const AssetManager::MaterialMetadata* AssetManager::getMaterialMetadata(const std::string& materialName) const
+    {
+        auto it = materialMetadatas_.find(materialName);
+        return it != materialMetadatas_.end() ? &it->second : nullptr;
+    }
+
+    std::vector<std::string> AssetManager::getMaterialsUsingShader(const std::string& shaderName) const
+    {
+        std::vector<std::string> result;
+        auto it = shaderToMaterials_.find(shaderName);
+        if (it == shaderToMaterials_.end()) {
+            return result;
+        }
+
+        result.reserve(it->second.size());
+        for (const auto& materialName : it->second) {
+            result.push_back(materialName);
+        }
+        return result;
+    }
+
+    void AssetManager::rebuildShaderMaterialDependencies()
+    {
+        shaderToMaterials_.clear();
+
+        for (auto& [materialName, material] : materials_) {
+            auto& metadata = materialMetadatas_[materialName];
+            if (metadata.shaderName.empty()) {
+                metadata.shaderName = findShaderNameForMaterial(material);
+            }
+
+            if (!metadata.shaderName.empty()) {
+                shaderToMaterials_[metadata.shaderName].insert(materialName);
+            }
+        }
     }
 
     std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::shared_ptr<Texture> tex) {
@@ -86,10 +265,18 @@ namespace OnYuu {
         return getCubeMapPtr(name).get();
     }
 
-    std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name, std::shared_ptr<MetaShader> shader)
+    std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name)
     {
-        shaders_[name] = std::move(shader);
-        return shaders_[name];
+        try {
+            auto metaShader = MetaShader::create(name);
+            shaders_[name] = std::move(metaShader);
+            rebuildShaderMaterialDependencies();
+            return shaders_[name];
+        } catch (const std::exception& e) {
+            std::cerr << "[AssetManager] Failed to load shader '" << name << "': " << e.what() << std::endl;
+            return nullptr;
+		}
+       
 	}
     std::shared_ptr<MetaShader> AssetManager::getShaderPtr(const std::string& name) const
     {
@@ -112,6 +299,8 @@ namespace OnYuu {
         textures_.clear();
         cubeMaps_.clear();
         shaders_.clear();
+        materialMetadatas_.clear();
+        shaderToMaterials_.clear();
 
     }
     void AssetManager::loadDefaultAssets()
@@ -378,6 +567,64 @@ void vertexMain()
 	POSITION = CAMERA_PROJ * CAMERA_VIEW * vec4(V_WORLD_POS,1);
 }
         )";
-		addShader("default", MetaShader::create(defaultMetaShaderCode, true));
+		addShader("default");
     }
+
+    bool AssetManager::importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName)
+    {
+        std::ifstream in(jsonPath);
+        if (!in.is_open()) {
+            std::cerr << "[AssetManager] importMaterialMetadataFromJson: cannot open file '" << jsonPath << "'\n";
+            return false;
+        }
+
+        json j;
+        try {
+            in >> j;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[AssetManager] importMaterialMetadataFromJson: invalid json in '"
+                << jsonPath << "' -> " << e.what() << "\n";
+            return false;
+        }
+
+        MaterialMetadata metadata{};
+        metadata.shaderName = j.value("shaderName", std::string{});
+        metadata.sourcePath = j.value("sourcePath", jsonPath);
+        metadata.version = j.value("version", 1u);
+
+        if (metadata.shaderName.empty()) {
+            std::cerr << "[AssetManager] importMaterialMetadataFromJson: missing 'shaderName' in '" << jsonPath << "'\n";
+            return false;
+        }
+
+        if (j.contains("params") && j["params"].is_object()) {
+            for (auto it = j["params"].begin(); it != j["params"].end(); ++it) {
+                MaterialParam param{};
+                if (parseMaterialParam(it.value(), param)) {
+                    metadata.params[it.key()] = param;
+                }
+                else {
+                    std::cerr << "[AssetManager] importMaterialMetadataFromJson: skipped invalid param '" << it.key() << "' in '" << jsonPath << "'\n";
+                }
+            }
+        }
+
+        if (j.contains("textures") && j["textures"].is_object()) {
+            for (auto it = j["textures"].begin(); it != j["textures"].end(); ++it) {
+                if (it.value().is_string()) {
+                    metadata.textures[it.key()] = it.value().get<std::string>();
+                }
+            }
+        }
+
+        std::string resolvedMaterialName = materialName;
+        if (resolvedMaterialName.empty()) {
+            resolvedMaterialName = std::filesystem::path(jsonPath).stem().string();
+        }
+
+        setMaterialMetadata(resolvedMaterialName, metadata);
+        return true;
+    }
+
 }

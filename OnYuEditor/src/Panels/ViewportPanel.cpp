@@ -156,9 +156,9 @@ namespace OnYuu {
 		if (m_isFocused) {
 			keyboardInput(deltaTime);
 		}
-		 bool retFlag;
-		 mouseInput(deltaTime, retFlag);
 		if (m_isHovered) {
+			bool retFlag;
+			mouseInput(deltaTime, retFlag);
 		}
 	}
 

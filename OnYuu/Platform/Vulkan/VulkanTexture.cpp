@@ -22,6 +22,7 @@ namespace OnYuu {
 
 	void VulkanTexture::shutdown()
 	{
+		vkQueueWaitIdle(((VulkanRender*)(Render::getInstance().get()))->getGraphicQueue());
 		VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
 		vkDestroySampler(renderer->getInit().device, textureSampler, nullptr);
 		vkDestroyImageView(renderer->getInit().device, textureImageView, nullptr);

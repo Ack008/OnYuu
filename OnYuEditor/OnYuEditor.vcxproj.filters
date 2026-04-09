@@ -33,6 +33,9 @@
     <ClCompile Include="src\Panels\ContentBrowsingPanel.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="src\Helpers\MaterialFileWriter.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EditorLayer.h">
@@ -48,6 +51,9 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="src\Panels\ContentBrowsingPanel.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Helpers\MaterialFileWriter.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>

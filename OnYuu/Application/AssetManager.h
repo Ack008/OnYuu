@@ -2,6 +2,9 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <variant>
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Material.h"
 #include "Core/Texture.h"
@@ -41,6 +44,22 @@ namespace OnYuu {
 
     class AssetManager {
     public:
+        struct MaterialParam {
+            enum class Type {
+                Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Bool
+            };
+
+            Type type;
+            std::variant<int, float, glm::vec2, glm::vec3, glm::vec4, glm::mat3, glm::mat4, bool> value;
+        };
+        struct MaterialMetadata {
+            std::string shaderName;
+            std::string sourcePath;
+            std::unordered_map<std::string, MaterialParam> params;
+            std::unordered_map<std::string, std::string> textures;
+            uint32_t version = 1;
+        };
+
         // Restituisce l'istanza singleton. L'implementazione dovrebbe usare una
         // variabile statica locale per garantire l'inizializzazione thread-safe.
         static AssetManager& instance();
@@ -64,6 +83,12 @@ namespace OnYuu {
         // Puntatore grezzo comodita (puo essere nullptr).
         Material* getMaterial(const std::string& name) const;
 
+        void setMaterialMetadata(const std::string& materialName, const MaterialMetadata& metadata);
+        const MaterialMetadata* getMaterialMetadata(const std::string& materialName) const;
+        std::vector<std::string> getMaterialsUsingShader(const std::string& shaderName) const;
+        void rebuildShaderMaterialDependencies();
+        bool importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName = "");
+
         std::shared_ptr<Texture> addTexture(const std::string& name, std::shared_ptr<Texture> tex);
         std::shared_ptr<Texture> getTexturePtr(const std::string& name) const;
         Texture* getTexture(const std::string& name) const;
@@ -73,7 +98,7 @@ namespace OnYuu {
         CubeMap* getCubeMap(const std::string& name) const;
 
 
-		std::shared_ptr<MetaShader> addShader(const std::string& name, std::shared_ptr<MetaShader> shader);
+		std::shared_ptr<MetaShader> addShader(const std::string& name);
 		std::shared_ptr<MetaShader> getShaderPtr(const std::string& name) const;
         // ottieni la mappa delle mesh
         const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
@@ -93,6 +118,8 @@ namespace OnYuu {
         std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
 		std::unordered_map<std::string, std::shared_ptr<MetaShader>> shaders_;
         std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
+        std::unordered_map<std::string, MaterialMetadata> materialMetadatas_;
+        std::unordered_map<std::string, std::unordered_set<std::string>> shaderToMaterials_;
     private:
         // Disabilita copy e assign per il singleton
         AssetManager(const AssetManager&) = delete;
@@ -105,6 +132,7 @@ namespace OnYuu {
         void loadPlane();
 		void loadDefaultMaterials();
 		void loadDefaultShaders();
+        std::string findShaderNameForMaterial(const std::shared_ptr<Material>& material) const;
 
     };
 } // namespace OnYuu

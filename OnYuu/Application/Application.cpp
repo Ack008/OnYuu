@@ -95,6 +95,7 @@ namespace OnYuu {
 		// Distruggo l'imGui layer se presente
 		imGuiLayer->onDetach();
 		delete imGuiLayer;
+
 		AssetManager::instance().shutdown();
 		Render::getInstance()->Shutdown();
 	}

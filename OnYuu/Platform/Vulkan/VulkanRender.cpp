@@ -1228,184 +1228,209 @@ namespace OnYuu {
         }
     }
 
-    // ============================================================================
-    // PIPELINE MANAGEMENT
-    // ============================================================================
-
     VkPipeline VulkanRender::getOrCreatePipeline(const PipelineKey& key,
-        std::shared_ptr<Material> material) {
-        // Check cache
-        auto it = pipelineCache_.find(key);
-        if (it != pipelineCache_.end()) {
-            return it->second;
-        }
-
-        // Create new pipeline
-        auto shader = static_cast<VulkanShader*>(key.shader.get());
-
-        VulkanPipelineManager::PipelineConfig config =
-            VulkanPipelineManager::PipelineConfig::defaultConfig();
-
-        // Shader stages
-        VkPipelineShaderStageCreateInfo vertStage{};
-        vertStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        vertStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
-        vertStage.module = shader->getVertexShaderModule();
-        vertStage.pName = "main";
-
-        VkPipelineShaderStageCreateInfo fragStage{};
-        fragStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-        fragStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-        fragStage.module = shader->getFragmentShaderModule();
-        fragStage.pName = "main";
-
-        config.shaderStages = { vertStage, fragStage };
-
-        // Vertex input (position, color, texcoord, normal)
-        VkVertexInputBindingDescription bindingDesc{};
-        bindingDesc.binding = 0;
-        bindingDesc.stride = sizeof(glm::vec3) + sizeof(glm::vec4) +
-            sizeof(glm::vec2) + sizeof(glm::vec3);
-        bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        std::vector<VkVertexInputAttributeDescription> attributeDescs(4);
-
-        // Position
-        attributeDescs[0].binding = 0;
-        attributeDescs[0].location = 0;
-        attributeDescs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescs[0].offset = 0;
-
-        // Color
-        attributeDescs[1].binding = 0;
-        attributeDescs[1].location = 1;
-        attributeDescs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-        attributeDescs[1].offset = sizeof(glm::vec3);
-
-        // TexCoord
-        attributeDescs[2].binding = 0;
-        attributeDescs[2].location = 2;
-        attributeDescs[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attributeDescs[2].offset = sizeof(glm::vec3) + sizeof(glm::vec4);
-
-        // Normal
-        attributeDescs[3].binding = 0;
-        attributeDescs[3].location = 3;
-        attributeDescs[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescs[3].offset = sizeof(glm::vec3) + sizeof(glm::vec4) + sizeof(glm::vec2);
-
-        std::vector<VkVertexInputBindingDescription> bindings = { bindingDesc };
-
-        config.vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        config.vertexInput.vertexBindingDescriptionCount = bindings.size();
-        config.vertexInput.pVertexBindingDescriptions = bindings.data();
-        config.vertexInput.vertexAttributeDescriptionCount = attributeDescs.size();
-        config.vertexInput.pVertexAttributeDescriptions = attributeDescs.data();
-
-        // Topology
-        config.inputAssembly.topology = toPrimitiveTopology(key.renderingType);
-
-        // Descriptor layouts
-        config.descriptorLayouts = { globalDescriptorLayout_, materialDescriptorLayout_ };
-
-        // Push constants (model matrix)
-        VkPushConstantRange pushConstant{};
-        pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-        pushConstant.offset = 0;
-        pushConstant.size = sizeof(glm::mat4);
-        config.pushConstants = { pushConstant };
-
-        // Dynamic rendering config instead of renderPass
-        config.renderPass = VK_NULL_HANDLE;
-        config.colorAttachmentFormats = { key.colorFormat };
-        config.depthAttachmentFormat = key.depthFormat;
-
-        VkPipeline pipeline = pipelineManager_->createGraphicsPipeline(config);
-
-        if (pipeline != VK_NULL_HANDLE) {
-            pipelineCache_[key] = pipeline;
-        }
-
-        return pipeline;
+    std::shared_ptr<Material> material) {
+    auto it = pipelineCache_.find(key);
+    if (it != pipelineCache_.end()) {
+        return it->second;
     }
 
-    // ============================================================================
-    // HELPER METHODS
-    // ============================================================================
+    auto shader = static_cast<VulkanShader*>(key.shader.get());
 
-    VkCommandBuffer VulkanRender::beginSingleTimeCommands() {
-        return commandManager_->beginSingleTime();
+    VulkanPipelineManager::PipelineConfig config =
+        VulkanPipelineManager::PipelineConfig::defaultConfig();
+
+    VkPipelineShaderStageCreateInfo vertStage{};
+    vertStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertStage.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertStage.module = shader->getVertexShaderModule();
+    vertStage.pName = "main";
+
+    VkPipelineShaderStageCreateInfo fragStage{};
+    fragStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragStage.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragStage.module = shader->getFragmentShaderModule();
+    fragStage.pName = "main";
+
+    config.shaderStages = { vertStage, fragStage };
+
+    VkVertexInputBindingDescription bindingDesc{};
+    bindingDesc.binding = 0;
+    bindingDesc.stride = sizeof(glm::vec3) + sizeof(glm::vec4) +
+        sizeof(glm::vec2) + sizeof(glm::vec3);
+    bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    std::vector<VkVertexInputAttributeDescription> attributeDescs(4);
+
+    attributeDescs[0].binding = 0;
+    attributeDescs[0].location = 0;
+    attributeDescs[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescs[0].offset = 0;
+
+    attributeDescs[1].binding = 0;
+    attributeDescs[1].location = 1;
+    attributeDescs[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescs[1].offset = sizeof(glm::vec3);
+
+    attributeDescs[2].binding = 0;
+    attributeDescs[2].location = 2;
+    attributeDescs[2].format = VK_FORMAT_R32G32_SFLOAT;
+    attributeDescs[2].offset = sizeof(glm::vec3) + sizeof(glm::vec4);
+
+    attributeDescs[3].binding = 0;
+    attributeDescs[3].location = 3;
+    attributeDescs[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+    attributeDescs[3].offset = sizeof(glm::vec3) + sizeof(glm::vec4) + sizeof(glm::vec2);
+
+    std::vector<VkVertexInputBindingDescription> bindings = { bindingDesc };
+
+    config.vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    config.vertexInput.vertexBindingDescriptionCount = bindings.size();
+    config.vertexInput.pVertexBindingDescriptions = bindings.data();
+    config.vertexInput.vertexAttributeDescriptionCount = attributeDescs.size();
+    config.vertexInput.pVertexAttributeDescriptions = attributeDescs.data();
+
+    config.inputAssembly.topology = toPrimitiveTopology(key.renderingType);
+    config.descriptorLayouts = { globalDescriptorLayout_, materialDescriptorLayout_ };
+
+    VkPushConstantRange pushConstant{};
+    pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    pushConstant.offset = 0;
+    pushConstant.size = sizeof(glm::mat4);
+    config.pushConstants = { pushConstant };
+
+    config.renderPass = VK_NULL_HANDLE;
+    config.colorAttachmentFormats = { key.colorFormat };
+    config.depthAttachmentFormat = key.depthFormat;
+
+    VkPipeline pipeline = pipelineManager_->createGraphicsPipeline(config);
+
+    if (pipeline != VK_NULL_HANDLE) {
+        pipelineCache_[key] = pipeline;
     }
 
-    void VulkanRender::endSingleTimeCommands(VkCommandBuffer cmd) {
-        commandManager_->endSingleTime(cmd, device_->getGraphicsQueue());
+    return pipeline;
+}
+
+VkCommandBuffer VulkanRender::beginSingleTimeCommands() {
+    return commandManager_->beginSingleTime();
+}
+
+void VulkanRender::endSingleTimeCommands(VkCommandBuffer cmd) {
+    commandManager_->endSingleTime(cmd, device_->getGraphicsQueue());
+}
+
+void VulkanRender::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
+    VkCommandBuffer cmd = beginSingleTimeCommands();
+
+    VkBufferCopy copyRegion{};
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size = size;
+
+    vkCmdCopyBuffer(cmd, src, dst, 1, &copyRegion);
+
+    endSingleTimeCommands(cmd);
+}
+
+void VulkanRender::setSkyBox(SkyBoxComponent* skybox) {
+    BatchRender::setSkyBox(skybox);
+}
+
+void VulkanRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) {
+    BatchRender::addMeshRender(mesh, model);
+}
+
+void VulkanRender::removeCachedMesh(const std::shared_ptr<Mesh>& mesh) {
+    auto it = pooledMeshes_.find(mesh);
+    if (it != pooledMeshes_.end()) {
+        std::cout << "Removing cached mesh from GPU\n";
+        it->second->shutdown();
+        pooledMeshes_.erase(it);
+        meshDrawInfo_.erase(mesh);
+    }
+}
+
+void VulkanRender::cleanupDepthResources() {
+    if (depthImageView_ != VK_NULL_HANDLE) {
+        device_->getDispatch().destroyImageView(depthImageView_, nullptr);
+        depthImageView_ = VK_NULL_HANDLE;
     }
 
-    void VulkanRender::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
-        VkCommandBuffer cmd = beginSingleTimeCommands();
+    if (depthImage_ != VK_NULL_HANDLE) {
+        vmaDestroyImage(allocator_, depthImage_, depthAllocation_);
+        depthImage_ = VK_NULL_HANDLE;
+        depthAllocation_ = VK_NULL_HANDLE;
+    }
+}
 
-        VkBufferCopy copyRegion{};
-        copyRegion.srcOffset = 0;
-        copyRegion.dstOffset = 0;
-        copyRegion.size = size;
-
-        vkCmdCopyBuffer(cmd, src, dst, 1, &copyRegion);
-
-        endSingleTimeCommands(cmd);
+void VulkanRender::cleanupDescriptorLayouts() {
+    if (globalDescriptorLayout_ != VK_NULL_HANDLE) {
+        descriptorManager_->destroyLayout(globalDescriptorLayout_);
+        globalDescriptorLayout_ = VK_NULL_HANDLE;
     }
 
-    // ============================================================================
-    // BATCH RENDERER INTERFACE
-    // ============================================================================
+    if (materialDescriptorLayout_ != VK_NULL_HANDLE) {
+        descriptorManager_->destroyLayout(materialDescriptorLayout_);
+        materialDescriptorLayout_ = VK_NULL_HANDLE;
+    }
+}
 
-    void VulkanRender::setSkyBox(SkyBoxComponent* skybox) {
-        BatchRender::setSkyBox(skybox);
+void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
+{
+    if (!shader || !device_ || !device_->isValid()) {
+        return;
     }
 
-    void VulkanRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) {
-        BatchRender::addMeshRender(mesh, model);
-    }
+    device_->waitIdle();
 
-
-    void VulkanRender::removeCachedMesh(const std::shared_ptr<Mesh>& mesh) {
-        //std::lock_guard<std::mutex> lock(meshCacheMutex_); // Aggiungi mutex per thread-safety
-
-        auto it = pooledMeshes_.find(mesh);
-        if (it != pooledMeshes_.end()) {
-            std::cout << "Removing cached mesh from GPU\n";
-            it->second->shutdown(); // Libera risorse GPU
-            pooledMeshes_.erase(it);
-            meshDrawInfo_.erase(mesh);
-        }
-    }
-    // ============================================================================
-    // CLEANUP METHODS
-    // ============================================================================
-
-    void VulkanRender::cleanupDepthResources() {
-        if (depthImageView_ != VK_NULL_HANDLE) {
-            device_->getDispatch().destroyImageView(depthImageView_, nullptr);
-            depthImageView_ = VK_NULL_HANDLE;
-        }
-
-        if (depthImage_ != VK_NULL_HANDLE) {
-            vmaDestroyImage(allocator_, depthImage_, depthAllocation_);
-            depthImage_ = VK_NULL_HANDLE;
-            depthAllocation_ = VK_NULL_HANDLE;
-        }
-    }
-
-    void VulkanRender::cleanupDescriptorLayouts() {
-        if (globalDescriptorLayout_ != VK_NULL_HANDLE) {
-            descriptorManager_->destroyLayout(globalDescriptorLayout_);
-            globalDescriptorLayout_ = VK_NULL_HANDLE;
-        }
-
-        if (materialDescriptorLayout_ != VK_NULL_HANDLE) {
-            descriptorManager_->destroyLayout(materialDescriptorLayout_);
-            materialDescriptorLayout_ = VK_NULL_HANDLE;
+    if (pipelineManager_) {
+        for (auto it = pipelineCache_.begin(); it != pipelineCache_.end();) {
+            if (it->first.shader == shader) {
+                if (it->second != VK_NULL_HANDLE) {
+                    pipelineManager_->destroyPipeline(it->second);
+                }
+                it = pipelineCache_.erase(it);
+            }
+            else {
+                ++it;
+            }
         }
     }
+
+    for (auto& [mat, res] : materialResources_) {
+        if (mat && mat->getShader() == shader) {
+            invalidateMaterial(mat);
+        }
+    }
+}
+
+void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
+{
+    if (!material || !device_ || !device_->isValid()) {
+        return;
+    }
+
+    auto it = materialResources_.find(material);
+    if (it == materialResources_.end()) {
+        return;
+    }
+
+    auto& res = it->second;
+    if (descriptorManager_ && !res.descriptorSets.empty()) {
+        descriptorManager_->freeSets(res.descriptorSets);
+        res.descriptorSets.clear();
+    }
+
+    for (auto& ubo : res.ubos) {
+        if (ubo) {
+            ubo->shutdown();
+        }
+    }
+    res.ubos.clear();
+}
+
+    
 
     void VulkanRender::Shutdown() {
         if (!device_ || !device_->isValid()) {

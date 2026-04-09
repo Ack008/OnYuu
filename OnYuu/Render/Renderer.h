@@ -12,6 +12,7 @@
 #include "RenderTarget.h"
 using namespace OnYuu;
 namespace OnYuu {
+	class Material;
 
 	// Render: interfaccia astratta che rappresenta il sistema di rendering di alto
 	// livello. Contiene funzioni virtuali che dovranno essere implementate da una
@@ -62,6 +63,8 @@ namespace OnYuu {
 		virtual void BeginScene(Camera* camera, std::shared_ptr<RenderTarget> target = nullptr) {}
 		virtual void EndScene() {}
 		virtual void submit() {}
+		virtual void invalidateShader(const std::shared_ptr<Shader>& shader) {}
+		virtual void invalidateMaterial(const std::shared_ptr<Material>& material) {}
 		virtual void Shutdown() = 0;
 		static void setAPI(API renderAPI) {
 			api = renderAPI;
