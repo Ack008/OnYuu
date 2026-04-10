@@ -701,11 +701,6 @@ namespace OnYuu {
 				}
 				rebuildMaterialParamsFromShader();
 			}
-			ImGui::SameLine();
-			if (ImGui::Button("Reload from Shader")) {
-				rebuildMaterialParamsFromShader();
-			}
-
 			ImGui::Separator();
 
 			ImGui::BeginChild("MaterialParams", ImVec2(ImGui::GetContentRegionAvail().x, 280), true);
@@ -890,6 +885,13 @@ namespace OnYuu {
 				if (saveShaderEditor()) {
 					// Update buffer from saved content
 					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
+					for (std::string& materialName : AssetManager::instance().getMaterialsUsingShader(m_shaderEditor.shaderPath.string())) {
+						AssetManager::instance().importMaterialMetadataFromJson(m_materialEditor.materialPath.string(), materialName);
+						if (AssetManager::instance().getMaterialPtr(materialName)) {
+							Render::getInstance()->invalidateMaterial(AssetManager::instance().getMaterialPtr(materialName));
+							AssetManager::instance().createMaterialFromMetadata(materialName);
+						}
+					}
 				}
 			}
 			ImGui::SameLine();
