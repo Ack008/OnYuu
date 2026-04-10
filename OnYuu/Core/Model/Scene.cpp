@@ -96,7 +96,7 @@ namespace OnYuu {
 		for (auto [entity, background] : backgroundView.each()) {
 			RenderMeshComponent backgroundMeshComp;
 			backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
-			backgroundMeshComp.material = background.material;
+			backgroundMeshComp.materialID = background.materialID;
 			Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
 			break;
 		}

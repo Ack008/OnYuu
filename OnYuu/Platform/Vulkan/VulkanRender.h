@@ -138,6 +138,7 @@ namespace OnYuu {
         std::vector<VkFence> inFlightFences;
         std::vector<VkFence> imagesInFlight;
         bool swapchainNeedsRecreate_ = false;
+        bool isFrameRecording_ = false; // ? Traccia se il command buffer è in recording
 
         // ========================================================================
         // DESCRIPTOR SET LAYOUTS (condivisi tra frame)
@@ -166,6 +167,9 @@ namespace OnYuu {
             std::vector<std::shared_ptr<class VulkanUniformBuffer>> ubos;
         };
         std::unordered_map<std::shared_ptr<class Material>, MaterialResources> materialResources_;
+
+        // Deferred deletion per materiali invalidati durante il frame
+        std::vector<std::shared_ptr<class Material>> pendingMaterialInvalidations_;
 
         // ========================================================================
         // PIPELINE CACHE

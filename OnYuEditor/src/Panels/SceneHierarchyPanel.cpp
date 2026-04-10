@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <type_traits>
+#include <filesystem>
 
 #ifdef _MSVC_LANG
 #define _CRT_SECURE_NO_WARNINGS
@@ -174,7 +175,7 @@ namespace OnYuu {
                         obj.getComponent<TagComponent>().tag = tag;
                         auto& rmc = obj.addComponent<RenderMeshComponent>();
                         rmc.mesh = AssetManager::instance().getMeshPtr(meshKey);
-                        rmc.material = AssetManager::instance().getMaterialPtr("default");
+                        rmc.materialID = "default";
                         rmc.renderingType = RenderingTypeEnum::TRIANGLE;
                     }
                     };
@@ -280,7 +281,7 @@ namespace OnYuu {
                 child.getComponent<TagComponent>().tag = "New Sphere";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
                 rmc.mesh = AssetManager::instance().getMeshPtr("sphere");
-                rmc.material = AssetManager::instance().getMaterialPtr("default");
+                rmc.materialID = "default";
 				rmc.renderingType = RenderingTypeEnum::TRIANGLE;
             }
             if (ImGui::MenuItem("Create cube ")) {
@@ -289,7 +290,7 @@ namespace OnYuu {
                 child.getComponent<TagComponent>().tag = "New Cube";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
                 rmc.mesh = AssetManager::instance().getMeshPtr("cube");
-                rmc.material = AssetManager::instance().getMaterialPtr("default");
+                rmc.materialID = "default";
             }
 
             if (ImGui::MenuItem("Create quad ")) {
@@ -298,7 +299,7 @@ namespace OnYuu {
                 child.getComponent<TagComponent>().tag = "New Quad";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
                 rmc.mesh = AssetManager::instance().getMeshPtr("quad");
-                rmc.material = AssetManager::instance().getMaterialPtr("default");
+                rmc.materialID = "default";
 			}
 
             ImGui::PushStyleColor(ImGuiCol_Text, Theme::Danger);
@@ -541,7 +542,7 @@ namespace OnYuu {
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Theme::DangerHover);
                     if (ImGui::SmallButton("Unload")) {
                         c.mesh = nullptr;
-                        c.material = nullptr;
+                        c.materialID = "";
                     }
                     ImGui::PopStyleColor(2);
                 }
@@ -581,19 +582,48 @@ namespace OnYuu {
 
                 // Material
                 ImGui::Spacing();
-                ImGui::TextColored(Theme::TextDim, "Material");
+                ImGui::Button( "Material");
                 ImGui::SameLine(150.f);
-                if (!c.material) {
+                if (c.materialID.empty()) {
                     BadgeText("  None  ", { 0.45f,0.20f,0.20f,1.f });
+                    // DRAG AND DROP TARGET
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_MATERIAL"))
+                        {
+                            const char* matID = (const char*)payload->Data;
+                            c.materialID = std::string(matID);
+                            std::cout << "Assigned material: " << matID << std::endl;
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
                     return;
                 }
-                BadgeText("  Loaded  ", { 0.22f,0.45f,0.65f,1.f });
+                BadgeText(c.materialID.c_str(), {0.22f,0.45f,0.65f,1.f});
+                // DRAG AND DROP TARGET
+                if (ImGui::BeginDragDropTarget())
+                {
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_MATERIAL"))
+                    {
+                        if (!AssetManager::instance().getMaterialMetadata((const char*)payload->Data))
+                        {
+							std::filesystem::path materialPath = Project::getInstance().getAssetsPath() / std::filesystem::path(std::string((const char*)payload->Data) + ".mat");
+                            AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), (const char*)payload->Data);
+
+                        }
+						AssetManager::instance().createMaterialFromMetadata((const char*)payload->Data);
+                        const char* matID = (const char*)payload->Data;
+                        c.materialID = std::string(matID);
+                        
+                    }
+                    ImGui::EndDragDropTarget();
+                }
 
                 ImGui::Spacing();
                 ImGui::SetNextItemWidth(-1.f);
                 if (ImGui::BeginCombo("##MaterialValues", "\xef\x83\xa6  Material Properties"))
                 {
-                    auto  mat = c.material;
+                    auto  mat = AssetManager::instance().getMaterialPtr(c.materialID);
                     auto& uniforms = mat->getUniforms();
                     for (auto& [name, value] : uniforms)
                     {

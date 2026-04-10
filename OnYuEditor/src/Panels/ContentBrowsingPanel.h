@@ -34,6 +34,12 @@ namespace OnYuu {
 			std::vector<MaterialParamEditor> params;
 		};
 
+		struct ShaderEditorState {
+			std::filesystem::path shaderPath;
+			std::string content;
+			bool isDirty = false;
+		};
+
 	private:
 		void contentBrowserContextMenu();
 		void openItemContextMenu(const std::filesystem::path& itemPath, bool isDirectory);
@@ -45,6 +51,9 @@ namespace OnYuu {
 		bool saveMaterialEditor();
 		void rebuildMaterialParamsFromShader();
 		void drawMaterialParamEditor(MaterialParamEditor& param);
+		bool loadShaderEditor(const std::filesystem::path& shaderPath);
+		bool saveShaderEditor();
+		void openShaderEditorWindow();
 		static std::string normalizeMaterialType(std::string type);
 		static bool isTextureLikeType(const std::string& type);
 		static std::filesystem::path openPngFilePicker(const std::filesystem::path& initialDir = {});
@@ -73,5 +82,11 @@ namespace OnYuu {
 		MaterialEditorState m_materialEditor;
 		std::filesystem::path m_materialToEditPath;
 		bool m_materialEditorLoaded = false;
+
+		// Shader editor
+		ShaderEditorState m_shaderEditor;
+		bool m_shaderEditorOpen = false;
+		static constexpr size_t SHADER_BUFFER_SIZE = 64 * 1024; // 64KB per shader text
+		char m_shaderEditorBuffer[SHADER_BUFFER_SIZE] = {};
 	};
 }

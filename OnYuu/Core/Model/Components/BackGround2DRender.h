@@ -3,7 +3,7 @@
 #include <memory>
 namespace OnYuu {
 struct Background2DRender {
-    std::shared_ptr<Material> material;
+    std::string materialID;
 };
 
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "Application/Layer.h"
+#include "Application/ImGuiTextureWrapper.h"
 #include "Core/Engine.h"
 class VulkanAppLayer :
 	public Layer
@@ -20,5 +21,5 @@ class VulkanAppLayer :
 	std::shared_ptr<Shader> shader;
 	std::shared_ptr<Shader> shader2;
 	std::shared_ptr<RenderTarget> renderTarget;
-
+	std::shared_ptr<ImGuiTextureWrapper> renderTargetTextureWrapper;
 };

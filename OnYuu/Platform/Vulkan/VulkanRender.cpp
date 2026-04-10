@@ -541,6 +541,33 @@ namespace OnYuu {
         frameNumber++;
 
         LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
+        
+        // ✅ STEP 0: Processa le invalidazioni differite dal frame precedente
+        if (!pendingMaterialInvalidations_.empty()) {
+            LOG(<< "  0. Processing " << pendingMaterialInvalidations_.size() << " pending material invalidations...\n");
+            device_->waitIdle();
+            
+            for (const auto& material : pendingMaterialInvalidations_) {
+                auto it = materialResources_.find(material);
+                if (it != materialResources_.end()) {
+                    auto& res = it->second;
+                    if (descriptorManager_ && !res.descriptorSets.empty()) {
+                        descriptorManager_->freeSets(res.descriptorSets);
+                        res.descriptorSets.clear();
+                    }
+                    for (auto& ubo : res.ubos) {
+                        if (ubo) {
+                            ubo->shutdown();
+                        }
+                    }
+                    res.ubos.clear();
+                    materialResources_.erase(it);
+                }
+            }
+            pendingMaterialInvalidations_.clear();
+            LOG(<< "     ✓ Pending invalidations processed\n");
+        }
+        
         vkWaitForFences(device_->getDevice(), 1, &inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
 
         if (swapchainNeedsRecreate_ || hasFramebufferResize()) {
@@ -600,6 +627,7 @@ namespace OnYuu {
             std::cerr << " Failed to begin command buffer!\n";
             return;
         }
+        isFrameRecording_ = true; // ← Frame è in recording
         LOG( << "  Command buffer recording started\n");
 
 		// Step 6: Begin render pass
@@ -669,12 +697,15 @@ namespace OnYuu {
         LOG(<< "     ✓ Render pass ended\n");
         sceneTarget.clear();
         swapChainRenderedScenes.clear();
+        
         // Step 2: End command buffer
         LOG(<< "  2. Ending command buffer...\n");
         if (!commandManager_->end(currentFrame_)) {
             std::cerr << "     ✗ Failed to end command buffer!\n";
+            isFrameRecording_ = false; // ← Frame non è più in recording
             return;
         }
+        isFrameRecording_ = false; // ← Frame non è più in recording
         LOG(<< "     ✓ Command buffer recording ended\n");
 
         const auto& frameSync = syncManager_->getFrameSync(currentFrame_);
@@ -955,7 +986,12 @@ namespace OnYuu {
             VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
 
             if (materialResources_.find(material) == materialResources_.end()) {
-                std::cerr << "         ✗ Material resources not found!\n";
+                LOG( << "         ⚠ Material resources not yet initialized, initializing now...\n");
+                updateMaterialDescriptors(material);
+            }
+
+            if (materialResources_.find(material) == materialResources_.end()) {
+                std::cerr << "         ✗ Material resources still not available!\n";
                 continue;
             }
 
@@ -1018,8 +1054,12 @@ namespace OnYuu {
             << usedMaterials.size() << " materials\n");
 
         for (const auto& material : usedMaterials) {
-            material->apply();
-            material->bind();
+            // Skip materials that haven't been initialized yet
+            // (they will be initialized on first use)
+            if (materialResources_.find(material) != materialResources_.end()) {
+                material->apply();
+                material->bind();
+            }
             updateMaterialDescriptors(material);
         }
     }
@@ -1214,7 +1254,7 @@ namespace OnYuu {
             }
         }
 
-        // Update material properties
+        // Update material properties - only update UBO data, NOT descriptor sets
         material->apply();
         auto shader = static_cast<VulkanShader*>(material->getShader().get());
         const auto& uniformData = shader->getUniformBuffer();
@@ -1398,10 +1438,26 @@ void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
         }
     }
 
-    for (auto& [mat, res] : materialResources_) {
+    std::vector<std::shared_ptr<Material>> materialsToInvalidate;
+    materialsToInvalidate.reserve(materialResources_.size());
+    for (const auto& [mat, res] : materialResources_) {
         if (mat && mat->getShader() == shader) {
-            invalidateMaterial(mat);
+            materialsToInvalidate.push_back(mat);
         }
+    }
+
+    // Se il frame è in recording, differisci le invalidazioni
+    if (isFrameRecording_) {
+        LOG(<< "Shader invalidation: " << materialsToInvalidate.size() 
+            << " materials deferred to next frame\n");
+        for (const auto& mat : materialsToInvalidate) {
+            pendingMaterialInvalidations_.push_back(mat);
+        }
+        return;
+    }
+
+    for (const auto& mat : materialsToInvalidate) {
+        invalidateMaterial(mat);
     }
 }
 
@@ -1416,6 +1472,18 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
         return;
     }
 
+    // Se il frame è in recording, differisci la liberazione al prossimo frame
+    if (isFrameRecording_) {
+        LOG(<< "Material invalidation deferred (frame is recording)\n");
+        pendingMaterialInvalidations_.push_back(material);
+        return;
+    }
+
+    // Altrimenti, libera immediatamente
+    // Descriptor sets can only be freed once all submitted command buffers using
+    // them have completed execution.
+    device_->waitIdle();
+
     auto& res = it->second;
     if (descriptorManager_ && !res.descriptorSets.empty()) {
         descriptorManager_->freeSets(res.descriptorSets);
@@ -1428,9 +1496,9 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
         }
     }
     res.ubos.clear();
-}
 
-    
+    materialResources_.erase(it);
+}
 
     void VulkanRender::Shutdown() {
         if (!device_ || !device_->isValid()) {

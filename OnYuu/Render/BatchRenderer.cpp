@@ -20,10 +20,18 @@ namespace OnYuu {
     void BatchRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model)
     {
 
-        if (mesh == nullptr || !mesh->material)
+        if (mesh == nullptr || mesh->materialID.empty())
             return;
         if (sceneStarted && !renderScenes.empty()) {
-            BatchCouple couple = std::make_pair(mesh->material, mesh->renderingType);
+            auto material = AssetManager::instance().getMaterialPtr(mesh->materialID);
+            if (!material) {
+                material = AssetManager::instance().getMaterialPtr("default");
+                if (!material) {
+                    return;
+                }
+            }
+
+            BatchCouple couple = std::make_pair(material, mesh->renderingType);
             renderScenes.back().meshRenders.push_back(RenderData{ mesh,model });
             renderScenes.back().batches[couple].push_back(RenderData{ mesh,model });
         }
@@ -102,6 +110,9 @@ namespace OnYuu {
         }
     }
 }
+
+
+
 
 
 

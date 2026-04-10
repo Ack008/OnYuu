@@ -2,6 +2,8 @@
 #include <cstring>
 #include <algorithm>
 #include <cctype>
+#include <sstream>
+#include <fstream>
 #include "json/json.hpp"
 
 #ifdef _WIN32
@@ -179,7 +181,7 @@ namespace OnYuu {
 		const std::string lower = toLowerCopy(type);
 		if (lower == "int" || lower == "ivec2" || lower == "ivec3" || lower == "ivec4" || lower == "uint") return "Int";
 		if (lower == "float" || lower == "double" ) return "Float";
-		if (lower == "bool") return "Bool";
+		if (lower == "bool" ) return "Bool";
 		if (lower == "vec2" || lower == "dvec2" || lower == "uvec2" || lower == "ivec2") return "Vec2";
 		if (lower == "vec3" || lower == "dvec3" || lower == "uvec3" || lower == "ivec3") return "Vec3";
 		if (lower == "vec4" || lower == "dvec4" || lower == "uvec4" || lower == "ivec4") return "Vec4";
@@ -240,6 +242,16 @@ namespace OnYuu {
 
 			ImGui::PushID(path.string().c_str());
 			ImGui::ImageButton("##icon", icon->getTextureID(), { thumbnailSize, thumbnailSize });
+
+			if (!entry.is_directory() && path.extension() == ".mat") {
+				const std::string materialId =  relativePath.stem().string();
+				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
+					ImGui::SetDragDropPayload("ASSET_MATERIAL", materialId.c_str(), materialId.size() + 1);
+					ImGui::Text("Material: %s", materialId.c_str());
+					ImGui::EndDragDropSource();
+				}
+			}
+
 			openItemContextMenu(path, entry.is_directory());
 
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
@@ -249,6 +261,11 @@ namespace OnYuu {
 				else if (path.extension() == ".mat") {
 					if (loadMaterialEditor(path)) {
 						m_openEditMaterialPopup = true;
+					}
+				}
+				else if (path.extension() == ".shader") {
+					if (loadShaderEditor(path)) {
+						m_shaderEditorOpen = true;
 					}
 				}
 			}
@@ -267,6 +284,7 @@ namespace OnYuu {
 		openRenamePopup();
 		createMaterialPopup();
 		openMaterialPopup();
+		openShaderEditorWindow();
 
 		ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16.0f, 256.0f);
 		ImGui::SliderFloat("Padding", &padding, 0.0f, 32.0f);
@@ -332,6 +350,73 @@ namespace OnYuu {
 		}
 	}
 
+	bool ContentBrowsingPanel::loadShaderEditor(const std::filesystem::path& shaderPath)
+	{
+		std::ifstream in(shaderPath);
+		if (!in.is_open()) {
+			return false;
+		}
+
+		// Leggi il contenuto del file
+		std::stringstream buffer;
+		buffer << in.rdbuf();
+		in.close();
+
+		m_shaderEditor = {};
+		m_shaderEditor.shaderPath = shaderPath;
+		m_shaderEditor.content = buffer.str();
+		m_shaderEditor.isDirty = false;
+
+		// Copia il contenuto nel buffer per l'editor
+		if (m_shaderEditor.content.size() >= SHADER_BUFFER_SIZE - 1) {
+			return false; // File troppo grande
+		}
+		strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
+
+		return true;
+	}
+
+	bool ContentBrowsingPanel::saveShaderEditor()
+	{
+		if (m_shaderEditor.shaderPath.empty()) {
+			return false;
+		}
+
+		// Aggiorna il contenuto dal buffer
+		std::string shaderContent = m_shaderEditorBuffer;
+		
+		
+
+		// Scrivi il file
+		std::ofstream out(m_shaderEditor.shaderPath);
+		if (!out.is_open()) {
+			return false;
+		}
+
+		out << shaderContent;
+		out.close();
+
+		// Aggiorna il content dello state
+		m_shaderEditor.content = shaderContent;
+
+		// Invalida e ricarica lo shader nel asset manager
+		std::string shaderRelativePath = std::filesystem::relative(
+			m_shaderEditor.shaderPath,
+			Project::getInstance().getAssetsPath()
+		).string();
+
+		// Rimuovi l'estensione .shader se presente
+		if (shaderRelativePath.ends_with(".shader")) {
+			shaderRelativePath = shaderRelativePath.substr(0, shaderRelativePath.size() - 7);
+		}
+		std::cout << "Reloading shader: " << shaderRelativePath << std::endl;
+		// Ricarica lo shader nel asset manager (forza il reload)
+		AssetManager::instance().addShader(m_shaderEditor.shaderPath.string());
+
+		m_shaderEditor.isDirty = false;
+		return true;
+	}
+
 	bool ContentBrowsingPanel::loadMaterialEditor(const std::filesystem::path& materialPath)
 	{
 		std::ifstream in(materialPath);
@@ -372,7 +457,7 @@ namespace OnYuu {
 				MaterialParamEditor param;
 				param.name = it.key();
 				param.type = "Texture";
-				param.isTexture = true;
+			param.isTexture = true;
 				if (it.value().is_string()) {
 					param.texturePath = it.value().get<std::string>();
 					strncpy_s(param.texturePathBuffer, param.texturePath.c_str(), _TRUNCATE);
@@ -502,7 +587,14 @@ namespace OnYuu {
 
 		out << materialJson.dump(4);
 		out.close();
-		AssetManager::instance().importMaterialMetadataFromJson(m_materialEditor.materialPath.string(), m_materialEditor.materialPath.stem().string());
+
+		const std::string materialName = m_materialEditor.materialPath.stem().string();
+		AssetManager::instance().importMaterialMetadataFromJson(m_materialEditor.materialPath.string(), materialName);
+		if (AssetManager::instance().getMaterialPtr(materialName)) {
+			Render::getInstance()->invalidateMaterial(AssetManager::instance().getMaterialPtr(materialName));
+			AssetManager::instance().createMaterialFromMetadata(materialName);
+		}
+
 		return true;
 	}
 
@@ -703,6 +795,12 @@ namespace OnYuu {
 				if (!ec && m_currentDirectory == itemPath) {
 					m_currentDirectory = itemPath.parent_path();
 				}
+				std::string extension = itemPath.extension().string();
+				if (extension == ".mat") {
+					std::string  materialName = itemPath.stem().string();
+					AssetManager::instance().removeMaterial(materialName);
+					Render::getInstance()->invalidateMaterial(AssetManager::instance().getMaterialPtr(materialName));
+				}
 			}
 			if (ImGui::MenuItem("Rename"))
 			{
@@ -773,5 +871,65 @@ namespace OnYuu {
 			}
 			ImGui::EndPopup();
 		}
+	}
+
+	void ContentBrowsingPanel::openShaderEditorWindow()
+	{
+		if (!m_shaderEditorOpen) {
+			return;
+		}
+
+		ImGui::SetNextWindowSize(ImVec2(1000.0f, 600.0f), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Shader Editor", &m_shaderEditorOpen))
+		{
+			ImGui::Text("File: %s", m_shaderEditor.shaderPath.string().c_str());
+			ImGui::Separator();
+
+			// Top toolbar
+			if (ImGui::Button("Save")) {
+				if (saveShaderEditor()) {
+					// Update buffer from saved content
+					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Reload")) {
+				// Ricarica il file dal disco
+				loadShaderEditor(m_shaderEditor.shaderPath);
+			}
+			ImGui::SameLine();
+			ImGui::TextColored(m_shaderEditor.isDirty ? ImVec4(1.0f, 1.0f, 0.0f, 1.0f) : ImVec4(0.5f, 0.5f, 0.5f, 1.0f),
+				m_shaderEditor.isDirty ? "Modified*" : "Saved");
+
+			ImGui::Separator();
+
+			// Shader editor con multiline text input
+			static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+			if (ImGui::InputTextMultiline("##shader_content", m_shaderEditorBuffer, SHADER_BUFFER_SIZE,
+				ImVec2(-1.0f, -50.0f), flags))
+			{
+				m_shaderEditor.isDirty = true;
+				m_shaderEditor.content = m_shaderEditorBuffer;
+			}
+
+			ImGui::Separator();
+
+			// Bottom buttons
+			if (ImGui::Button("Save##bottom", ImVec2(100.0f, 0.0f))) {
+				if (saveShaderEditor()) {
+					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
+				}
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel##bottom", ImVec2(100.0f, 0.0f))) {
+				m_shaderEditorOpen = false;
+				m_shaderEditor = {};
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Reload##bottom", ImVec2(100.0f, 0.0f))) {
+				loadShaderEditor(m_shaderEditor.shaderPath);
+			}
+		}
+		ImGui::End();
 	}
 }

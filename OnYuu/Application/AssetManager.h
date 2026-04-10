@@ -80,6 +80,9 @@ namespace OnYuu {
         std::shared_ptr<Material> addMaterial(const std::string& name, std::shared_ptr<Material> mat);
         // Restituisce lo shared_ptr per il materiale (vuoto se non trovato).
         std::shared_ptr<Material> getMaterialPtr(const std::string& name) const;
+		// Rimuove un materiale dal manager. Se il materiale non esiste, non fa nulla.
+		void removeMaterial(const std::string& name);
+
         // Puntatore grezzo comodita (puo essere nullptr).
         Material* getMaterial(const std::string& name) const;
 
@@ -88,6 +91,7 @@ namespace OnYuu {
         std::vector<std::string> getMaterialsUsingShader(const std::string& shaderName) const;
         void rebuildShaderMaterialDependencies();
         bool importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName = "");
+        bool createMaterialFromMetadata(const std::string& materialName);
 
         std::shared_ptr<Texture> addTexture(const std::string& name, std::shared_ptr<Texture> tex);
         std::shared_ptr<Texture> getTexturePtr(const std::string& name) const;

@@ -28,7 +28,6 @@ struct Mesh {
 // dangling pointer quando AssetManager rimpiazza una mesh.
 struct RenderMeshComponent {
     std::shared_ptr<Mesh> mesh; // shared ownership della mesh
-    std::shared_ptr<Material> material; // materiale condiviso per il draw
 	std::string materialID;
 	RenderingTypeEnum renderingType = RenderingTypeEnum::TRIANGLE;
 

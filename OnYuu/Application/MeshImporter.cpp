@@ -97,7 +97,7 @@ namespace OnYuu {
 				mat->set("material.shininess", 50.0f);
 			}
 			// assegno il materiale alla componente
-			currentMesh.getComponent<RenderMeshComponent>().material = mat;
+			currentMesh.getComponent<RenderMeshComponent>().materialID = name;
 
 			// Creo e registro la mesh nel AssetManager usando il nome unico
 			std::shared_ptr<Mesh> tempMesh = AssetManager::instance().addMesh(name, std::make_shared<Mesh>());

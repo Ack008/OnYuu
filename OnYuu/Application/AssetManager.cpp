@@ -175,6 +175,11 @@ namespace OnYuu {
         return nullptr;
     }
 
+    void AssetManager::removeMaterial(const std::string& name)
+    {
+		materials_.erase(name);
+    }
+
     Material* AssetManager::getMaterial(const std::string& name) const {
         auto ptr = getMaterialPtr(name);
         Material* raw = ptr ? ptr.get() : nullptr;
@@ -230,6 +235,7 @@ namespace OnYuu {
 
             if (!metadata.shaderName.empty()) {
                 shaderToMaterials_[metadata.shaderName].insert(materialName);
+                
             }
         }
     }
@@ -624,6 +630,85 @@ void vertexMain()
         }
 
         setMaterialMetadata(resolvedMaterialName, metadata);
+        return true;
+    }
+
+    bool AssetManager::createMaterialFromMetadata(const std::string& materialName)
+    {
+        auto metaIt = materialMetadatas_.find(materialName);
+        if (metaIt == materialMetadatas_.end()) {
+            std::cerr << "[AssetManager] createMaterialFromMetadata: metadata not found for '" << materialName << "'\n";
+            return false;
+        }
+
+        const MaterialMetadata& metadata = metaIt->second;
+
+        std::shared_ptr<MetaShader> shader = getShaderPtr(metadata.shaderName);
+        if (!shader && !metadata.sourcePath.empty()) {
+            shader = getShaderPtr(metadata.sourcePath);
+            if (!shader) {
+                shader = addShader(metadata.sourcePath);
+            }
+        }
+        if (!shader) {
+            shader = addShader(metadata.shaderName);
+        }
+
+        if (!shader) {
+            std::cerr << "[AssetManager] createMaterialFromMetadata: shader not found for material '" << materialName << "'\n";
+            return false;
+        }
+
+        auto material = std::make_shared<Material>(shader);
+
+        for (const auto& [paramName, param] : metadata.params) {
+            switch (param.type) {
+            case MaterialParam::Type::Int:
+                material->set(paramName, std::get<int>(param.value));
+                break;
+            case MaterialParam::Type::Float:
+                material->set(paramName, std::get<float>(param.value));
+                break;
+            case MaterialParam::Type::Vec2:
+                material->set(paramName, std::get<glm::vec2>(param.value));
+                break;
+            case MaterialParam::Type::Vec3:
+                material->set(paramName, std::get<glm::vec3>(param.value));
+                break;
+            case MaterialParam::Type::Vec4:
+                material->set(paramName, std::get<glm::vec4>(param.value));
+                break;
+            case MaterialParam::Type::Mat3:
+                material->set(paramName, std::get<glm::mat3>(param.value));
+                break;
+            case MaterialParam::Type::Mat4:
+                material->set(paramName, std::get<glm::mat4>(param.value));
+                break;
+            case MaterialParam::Type::Bool:
+                material->set(paramName, std::get<bool>(param.value) ? 1 : 0);
+                break;
+            }
+        }
+
+        for (const auto& [uniformName, textureRef] : metadata.textures) {
+            std::shared_ptr<Texture> texture = getTexturePtr(textureRef);
+            if (!texture && std::filesystem::exists(textureRef)) {
+                texture = Texture::createTexture(textureRef);
+                if (texture) {
+                    addTexture(textureRef, texture);
+                }
+            }
+
+            if (texture) {
+                material->set(uniformName, texture);
+            }
+            else {
+                std::cerr << "[AssetManager] createMaterialFromMetadata: texture not found '" << textureRef
+                    << "' for material '" << materialName << "'\n";
+            }
+        }
+
+        addMaterial(materialName, material);
         return true;
     }
 

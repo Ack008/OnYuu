@@ -1,5 +1,6 @@
 #include "VulkanAppLayer.h"
 #include "Render/Renderer.h"
+#include "Application/ImGuiTextureWrapper.h"
 #include <ImGui/imgui.h>
 glm::vec3 traslate = glm::vec3(0,0.f,0.f);
 glm::vec3 traslate2 = glm::vec3(2, 0.f, 0.f);
@@ -34,7 +35,11 @@ void VulkanAppLayer::onImGuiRender()
 {
 	ImGui::Begin("Vulkan App Layer");
 	ImVec2 avail = ImGui::GetContentRegionAvail(); // spazio interno disponibile
-	ImGui::Image((ImTextureID)renderTarget->getColorAttachment(), avail);
+	void* textureId = renderTargetTextureWrapper ? renderTargetTextureWrapper->getTextureID() : nullptr;
+	if (textureId)
+		ImGui::Image(textureId, avail, ImVec2(0, 1), ImVec2(1, 0));
+	else
+		ImGui::Dummy(avail);
 	ImGui::End();
 	ImGui::Begin("Controlli");
 	ImGui::DragFloat3("translate mesh", &traslate.x, 0.2, -10.0f, 10.0f);
@@ -45,6 +50,7 @@ void VulkanAppLayer::onImGuiRender()
 void VulkanAppLayer::onAttach()
 {
 	renderTarget = RenderTarget::create(1600, 900);
+	renderTargetTextureWrapper = ImGuiTextureWrapper::create(renderTarget);
 	// Testing meta shader
 	std::shared_ptr<MetaShader> metaShader = MetaShader::create("Asset/Meta-shader/firstShader.meta");
 
@@ -67,12 +73,12 @@ void VulkanAppLayer::onAttach()
 	mat2->set("color", glm::vec4(.0f, 0.0f, 1.0f, 1.0f));
 
 
-	renderMesh.material = mat;
+	renderMesh.materialID = "default_material";
 	renderMesh.mesh = AssetManager::instance().getMeshPtr("sphere");
 	renderMesh2.mesh = AssetManager::instance().getMeshPtr("cube");
-	renderMesh2.material = mat2;
+	renderMesh2.materialID = "default_material2";
 	renderMesh3.mesh = AssetManager::instance().getMeshPtr("cylinder");
-	renderMesh3.material = mat2;
+	renderMesh3.materialID = "default_material2";
 
 }
 
