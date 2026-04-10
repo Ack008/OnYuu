@@ -64,3 +64,5 @@ std::string OnYuu::VulkanMetaShader::getUniformName(const std::string& originalN
 	}
 	return originalName;
 }
+
+

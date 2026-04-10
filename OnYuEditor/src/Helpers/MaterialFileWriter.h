@@ -7,6 +7,6 @@ namespace OnYuu {
 	class MaterialFileWriter
 	{
 	public:
-		static bool writeMaterialToFile(const std::string& path, const std::string& shaderPath);
+		static bool writeMaterialToFile(const std::string& path, const std::string& shaderPath, std::shared_ptr<MetaShader> shader);
 	};
 } // namespace OnYuu

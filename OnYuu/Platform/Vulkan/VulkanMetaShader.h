@@ -14,6 +14,7 @@ namespace OnYuu {
 		void setUniformMat3(const char* name, const float* value) override;
 		void setUniformMat4(const char* name, const float* value, int count) override;
 		std::string getUniformName(const std::string& originalName) override;
+
 	private:
 		VulkanVisitor vKVisitor;
 

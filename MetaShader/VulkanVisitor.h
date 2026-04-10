@@ -90,7 +90,6 @@ public:
     void produceStandardVertexShader();
     void produceVertexShader(const ShaderInfo& shader);
     void injectVertexVaryingInitialization();
-
     void printFragmentShader() const;
     void printVertexShader() const;
     std::string getFragmentShaderCode() const { return fragmentShaderCode_; }

@@ -90,7 +90,6 @@ public:
 
     void printFragmentShader() const;
     void printVertexShader() const;
-
 	std::string getFragmentShaderCode() const { return fragmentShaderCode_; }
 	std::string getVertexShaderCode() const { return vertexShaderCode_; }
 };

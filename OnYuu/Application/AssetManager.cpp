@@ -567,7 +567,7 @@ void vertexMain()
 	POSITION = CAMERA_PROJ * CAMERA_VIEW * vec4(V_WORLD_POS,1);
 }
         )";
-		addShader("default");
+		shaders_["default"] = MetaShader::create(defaultMetaShaderCode, true);
     }
 
     bool AssetManager::importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName)

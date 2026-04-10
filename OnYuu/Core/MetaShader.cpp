@@ -51,8 +51,18 @@ namespace OnYuu {
 		return content;
 	}
 
+	std::unordered_map<std::string, std::string> MetaShader::getUniformNameTypeMap() const
+	{
+		std::unordered_map<std::string, std::string> uniformMap;
+		for (const auto& uniform : glslVisitor.getShaderInfo().uniforms) {
+			uniformMap[uniform.name] = uniform.type;
+		}
+		return uniformMap;
+	}
+
 	std::shared_ptr<MetaShader> OnYuu::MetaShader::create(const std::string& filename, bool isShaderSource)
 	{
+		std::cout << "Creating MetaShader for file: " << filename << " (isShaderSource=" << isShaderSource << ")\n";
 		switch (Render::getAPI())
 		{
 		case API::OpenGL:
