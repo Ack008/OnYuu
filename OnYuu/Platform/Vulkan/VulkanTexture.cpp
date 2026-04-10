@@ -80,8 +80,6 @@ namespace OnYuu {
 		VmaAllocationCreateInfo imgAllocInfo{};
 		imgAllocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-
-		((VulkanRender*)(Render::getInstance().get()))->endSingleTimeCommands(((VulkanRender*)(Render::getInstance().get()))->beginSingleTimeCommands());
 		vmaCreateImage(allocator, &imageInfo, &imgAllocInfo,
 			&textureImage, &this->textureImageAllocation, nullptr);
 

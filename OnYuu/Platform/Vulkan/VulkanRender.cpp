@@ -1215,9 +1215,14 @@ namespace OnYuu {
     void VulkanRender::updateMaterialDescriptors(std::shared_ptr<Material> material) {
         auto& matRes = materialResources_[material];
 
+        // Ensure the material has a fresh view of its uniforms/textures before we
+        // read the texture list for descriptor updates.
+        material->apply();
+        material->bind();
+
         // Initialize resources if needed
         if (matRes.descriptorSets.empty()) {
-            uint32_t frameCount = swapchain_->getImageCount();
+            const uint32_t frameCount = MAX_FRAMES_IN_FLIGHT;
             matRes.descriptorSets = descriptorManager_->allocateSets(
                 materialDescriptorLayout_, frameCount
             );
@@ -1233,29 +1238,27 @@ namespace OnYuu {
                 // Bind material UBO
                 descriptorManager_->updateBuffer(matRes.descriptorSets[i], 0,
                     matRes.ubos[i]->getVulkanBuffer(), uboSize);
-
-                // Bind textures if present
-                const auto& textures = material->getTextures();
-                if (!textures.empty()) {
-                    std::vector<VkDescriptorImageInfo> imageInfos;
-                    imageInfos.reserve(textures.size());
-
-                    for (const auto& tex : textures) {
-                        auto vkTex = static_cast<VulkanTexture*>(tex.get());
-                        VkDescriptorImageInfo imgInfo{};
-                        imgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                        imgInfo.imageView = vkTex->getImageView();
-                        imgInfo.sampler = vkTex->getSampler();
-                        imageInfos.push_back(imgInfo);
-                    }
-
-                    descriptorManager_->updateImages(matRes.descriptorSets[i], 1, imageInfos);
-                }
             }
         }
 
+        const auto& textures = material->getTextures();
+        if (!textures.empty() && !matRes.descriptorSets.empty()) {
+            std::vector<VkDescriptorImageInfo> imageInfos;
+            imageInfos.reserve(textures.size());
+
+            for (const auto& tex : textures) {
+                auto vkTex = static_cast<VulkanTexture*>(tex.get());
+                VkDescriptorImageInfo imgInfo{};
+                imgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imgInfo.imageView = vkTex->getImageView();
+                imgInfo.sampler = vkTex->getSampler();
+                imageInfos.push_back(imgInfo);
+            }
+
+            descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
+        }
+
         // Update material properties - only update UBO data, NOT descriptor sets
-        material->apply();
         auto shader = static_cast<VulkanShader*>(material->getShader().get());
         const auto& uniformData = shader->getUniformBuffer();
 
