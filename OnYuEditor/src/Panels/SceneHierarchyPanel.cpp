@@ -13,7 +13,6 @@
 #ifdef _MSVC_LANG
 #define _CRT_SECURE_NO_WARNINGS
 #endif
-
 namespace OnYuu {
 
     // ─── Palette ────────────────────────────────────────────────────────────────
@@ -177,6 +176,7 @@ namespace OnYuu {
                         rmc.mesh = AssetManager::instance().getMeshPtr(meshKey);
                         rmc.materialID = "default";
                         rmc.renderingType = RenderingTypeEnum::TRIANGLE;
+
                     }
                     };
 

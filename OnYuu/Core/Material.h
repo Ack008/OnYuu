@@ -3,11 +3,13 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 #include <glm/glm.hpp>
 #include "Shader.h"
 #include "Texture.h"
 #include "MetaShader.h"
 namespace OnYuu {
+class AssetManager;
 // Material: incapsula le proprietà necessarie per il rendering (uniforms,
 // shader utilizzato, ecc.). È un livello di astrazione sopra lo `Shader` e
 // permette di cambiare proprietà senza toccare direttamente il codice dello
@@ -19,7 +21,7 @@ public:
 		glm::mat3, glm::mat4, std::shared_ptr<Texture>>;
 
 	Material(std::shared_ptr<Shader> shader);
-	Material(std::shared_ptr<MetaShader> metaShader);
+	Material(std::string shaderID);
 	Material(const Material&) = default;
 	Material(Material&&) noexcept = default;
 	Material& operator=(const Material&) = default;
@@ -34,7 +36,7 @@ public:
 	// Bind del materiale se necessario (es. bind di texture). Qui può essere
 	// effettuato anche il set del programma shader.
 	void bind();
-	std::shared_ptr<Shader> getShader() const { return _shader; }
+	std::shared_ptr<Shader> getShader() const;
 
 	/*
 	Pseudocodice (piano dettagliato):
@@ -54,8 +56,8 @@ public:
 	const std::vector<std::shared_ptr<Texture>>& getTextures() const { return textures_; }
 
 private:
-	std::shared_ptr<Shader> _shader;
-	std::shared_ptr<MetaShader> _metaShader;
+	std::string shaderID; // Identificatore dello shader, utile per debug o editor
+	std::shared_ptr<Shader> shader_;
 	// Mappa dei uniform da applicare allo shader
 	std::unordered_map<std::string, UniformValue> uniforms_;
 	// Traccia quali uniform sono già stati impostati (per evitare set ridondanti)

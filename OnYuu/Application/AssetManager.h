@@ -104,6 +104,10 @@ namespace OnYuu {
 
 		std::shared_ptr<MetaShader> addShader(const std::string& name);
 		std::shared_ptr<MetaShader> getShaderPtr(const std::string& name) const;
+
+        // Load a material from file if not already loaded
+        std::shared_ptr<Material> loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath = "");
+        
         // ottieni la mappa delle mesh
         const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
             return meshes_;

@@ -385,7 +385,6 @@ namespace OnYuu {
 		// Aggiorna il contenuto dal buffer
 		std::string shaderContent = m_shaderEditorBuffer;
 		
-		
 
 		// Scrivi il file
 		std::ofstream out(m_shaderEditor.shaderPath);
@@ -399,19 +398,18 @@ namespace OnYuu {
 		// Aggiorna il content dello state
 		m_shaderEditor.content = shaderContent;
 
-		// Invalida e ricarica lo shader nel asset manager
-		std::string shaderRelativePath = std::filesystem::relative(
-			m_shaderEditor.shaderPath,
-			Project::getInstance().getAssetsPath()
-		).string();
-
-		// Rimuovi l'estensione .shader se presente
-		if (shaderRelativePath.ends_with(".shader")) {
-			shaderRelativePath = shaderRelativePath.substr(0, shaderRelativePath.size() - 7);
+		// Get shader name from path
+		std::string shaderName = std::filesystem::path(m_shaderEditor.shaderPath).stem().string();
+		
+		// Reload the shader in asset manager
+		auto shader = AssetManager::instance().addShader(m_shaderEditor.shaderPath.string());
+		
+		// Ensure it's also registered with the shader name for future lookups
+		if (shader && shaderName != m_shaderEditor.shaderPath.string()) {
+			// This is handled in AssetManager::addShader now
 		}
-		std::cout << "Reloading shader: " << shaderRelativePath << std::endl;
-		// Ricarica lo shader nel asset manager (forza il reload)
-		AssetManager::instance().addShader(m_shaderEditor.shaderPath.string());
+
+		std::cout << "Saved shader: " << shaderName << std::endl;
 
 		m_shaderEditor.isDirty = false;
 		return true;
@@ -434,9 +432,22 @@ namespace OnYuu {
 
 		m_materialEditor = {};
 		m_materialEditor.materialPath = materialPath;
-		m_materialEditor.shaderPath = j.value("sourcePath", std::string{});
-		if (m_materialEditor.shaderPath.empty()) {
-			m_materialEditor.shaderPath = j.value("shaderPath", std::string{});
+		
+		// Load shader path and resolve relative paths
+		std::string sourcePath = j.value("sourcePath", std::string{});
+		if (sourcePath.empty()) {
+			sourcePath = j.value("shaderPath", std::string{});
+		}
+		
+		// If path is relative, resolve it relative to assets directory
+		if (!sourcePath.empty()) {
+			std::filesystem::path shaderPath(sourcePath);
+			if (!shaderPath.is_absolute()) {
+				shaderPath = Project::getInstance().getAssetsPath() / shaderPath;
+			}
+			m_materialEditor.shaderPath = shaderPath.string();
+		} else {
+			m_materialEditor.shaderPath.clear();
 		}
 
 		if (j.contains("params") && j["params"].is_object()) {
@@ -467,7 +478,8 @@ namespace OnYuu {
 		}
 
 		if (!m_materialEditor.shaderPath.empty()) {
-			strncpy_s(m_editMaterialShaderBuffer, m_materialEditor.shaderPath.c_str(), _TRUNCATE);
+			std::string shaderPathStr = m_materialEditor.shaderPath.string();
+			strncpy_s(m_editMaterialShaderBuffer, sizeof(m_editMaterialShaderBuffer), shaderPathStr.c_str(), _TRUNCATE);
 		}
 		else {
 			m_editMaterialShaderBuffer[0] = '\0';
@@ -481,10 +493,18 @@ namespace OnYuu {
 
 	void ContentBrowsingPanel::rebuildMaterialParamsFromShader()
 	{
-		std::shared_ptr<MetaShader> shader = AssetManager::instance().getShaderPtr(m_materialEditor.shaderPath);
-		if (!shader && !m_materialEditor.shaderPath.empty()) {
-			AssetManager::instance().addShader(m_materialEditor.shaderPath);
-			shader = AssetManager::instance().getShaderPtr(m_materialEditor.shaderPath);
+		if (m_materialEditor.shaderPath.empty()) {
+			return;
+		}
+
+		// Get shader name from path
+		std::string shaderName = std::filesystem::path(m_materialEditor.shaderPath).stem().string();
+		
+		std::shared_ptr<MetaShader> shader = AssetManager::instance().getShaderPtr(shaderName);
+		if (!shader) {
+			// Try loading from file path
+			AssetManager::instance().addShader(m_materialEditor.shaderPath.string());
+			shader = AssetManager::instance().getShaderPtr(shaderName);
 		}
 		if (!shader) {
 			return;
@@ -526,9 +546,24 @@ namespace OnYuu {
 			return false;
 		}
 
+		// Convert shader path to relative for storage
+		std::string shaderPathForStorage = m_materialEditor.shaderPath.string();
+		if (!shaderPathForStorage.empty()) {
+			std::filesystem::path shaderPath(shaderPathForStorage);
+			if (shaderPath.is_absolute()) {
+				std::filesystem::path assetsPath = Project::getInstance().getAssetsPath();
+				try {
+					shaderPathForStorage = std::filesystem::relative(shaderPath, assetsPath).string();
+				}
+				catch (...) {
+					// If relative conversion fails, keep absolute path
+				}
+			}
+		}
+
 		json materialJson;
 		materialJson["shaderName"] = std::filesystem::path(m_materialEditor.shaderPath).stem().string();
-		materialJson["sourcePath"] = m_materialEditor.shaderPath;
+		materialJson["sourcePath"] = shaderPathForStorage;
 		materialJson["version"] = 1u;
 		materialJson["params"] = json::object();
 		materialJson["textures"] = json::object();
@@ -689,7 +724,7 @@ namespace OnYuu {
 				std::filesystem::path picked = openShaderFilePicker(m_materialEditor.shaderPath.empty() ? m_currentDirectory : std::filesystem::path(m_materialEditor.shaderPath).parent_path());
 				if (!picked.empty()) {
 					m_materialEditor.shaderPath = picked.string();
-					strncpy_s(m_editMaterialShaderBuffer, m_materialEditor.shaderPath.c_str(), _TRUNCATE);
+					strncpy_s(m_editMaterialShaderBuffer, m_materialEditor.shaderPath.string().c_str(), _TRUNCATE);
 				}
 			}
 			if (ImGui::Button("Apply Shader")) {
@@ -885,11 +920,36 @@ namespace OnYuu {
 				if (saveShaderEditor()) {
 					// Update buffer from saved content
 					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
-					for (std::string& materialName : AssetManager::instance().getMaterialsUsingShader(m_shaderEditor.shaderPath.string())) {
-						AssetManager::instance().importMaterialMetadataFromJson(m_materialEditor.materialPath.string(), materialName);
-						if (AssetManager::instance().getMaterialPtr(materialName)) {
-							Render::getInstance()->invalidateMaterial(AssetManager::instance().getMaterialPtr(materialName));
-							AssetManager::instance().createMaterialFromMetadata(materialName);
+					
+					// Get shader name from path
+					std::string shaderName = std::filesystem::path(m_shaderEditor.shaderPath).stem().string();
+					
+					// Find and update all materials using this shader
+					std::vector<std::string> materialsUsingShader = AssetManager::instance().getMaterialsUsingShader(shaderName);
+					
+					if (!materialsUsingShader.empty()) {
+						std::cout << "Updating " << materialsUsingShader.size() << " materials using shader '" << shaderName << "'\n";
+						
+						for (const std::string& materialName : materialsUsingShader) {
+							// Reload the material metadata from its file
+							const auto* metadata = AssetManager::instance().getMaterialMetadata(materialName);
+							if (metadata) {
+								// Get the material file path from metadata
+								std::string materialFilePath = metadata->sourcePath;
+								if (materialFilePath.empty()) {
+									materialFilePath = Project::getInstance().getAssetsPath() + "/" + materialName + ".mat";
+								}
+								
+								// Re-import metadata (rebuilds params from new shader)
+								AssetManager::instance().importMaterialMetadataFromJson(materialFilePath, materialName);
+								
+								// Invalidate and recreate material
+								if (auto mat = AssetManager::instance().getMaterialPtr(materialName)) {
+									Render::getInstance()->invalidateMaterial(mat);
+									AssetManager::instance().createMaterialFromMetadata(materialName);
+									std::cout << "  Updated material: " << materialName << "\n";
+								}
+							}
 						}
 					}
 				}

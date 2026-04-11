@@ -22,6 +22,7 @@ static bool isRendererSupported(API api)
 
 void EditorLayer::onUpdate(float deltaTime)
 {
+
 	m_scene->update(deltaTime);
 	std::shared_ptr<Camera> activeCamera = m_editorCamera.getCamera();
 	m_scene->render(activeCamera.get(), m_renderTarget);

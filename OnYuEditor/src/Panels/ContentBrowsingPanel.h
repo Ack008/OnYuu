@@ -30,7 +30,7 @@ namespace OnYuu {
 
 		struct MaterialEditorState {
 			std::filesystem::path materialPath;
-			std::string shaderPath;
+			std::filesystem::path shaderPath;
 			std::vector<MaterialParamEditor> params;
 		};
 

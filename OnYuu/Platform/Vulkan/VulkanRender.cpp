@@ -608,9 +608,11 @@ namespace OnYuu {
         imagesInFlight[imageIndex_] = inFlightFences[currentFrame_];
         vkResetFences(device_->getDevice(), 1, &inFlightFences[currentFrame_]);
 
-
-       
-
+        if (renderScenes.size() > 1 && renderScenes[0].batches.size() > 0) {
+            std::cout << "cazzo";
+        }
+        
+   
 
 
         // Step 4: Update descriptors

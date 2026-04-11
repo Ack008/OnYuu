@@ -1,5 +1,6 @@
 #include "AssetManager.h"
 #include "Core/CubeMap.h"
+#include "Project.h"
 #include "json/json.hpp"
 #include <iostream>
 #include <fstream>
@@ -276,6 +277,13 @@ namespace OnYuu {
         try {
             auto metaShader = MetaShader::create(name);
             shaders_[name] = std::move(metaShader);
+            
+            // Also register with shader name (stem) for easier lookup
+            std::string shaderName = std::filesystem::path(name).stem().string();
+            if (shaderName != name) {
+                shaders_[shaderName] = shaders_[name];
+            }
+            
             rebuildShaderMaterialDependencies();
             return shaders_[name];
         } catch (const std::exception& e) {
@@ -289,6 +297,44 @@ namespace OnYuu {
         auto it = shaders_.find(name);
         return it != shaders_.end() ? it->second : nullptr;
 	}
+
+    std::shared_ptr<Material> AssetManager::loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath)
+    {
+        // Check if already loaded
+        auto existing = getMaterialPtr(materialName);
+        if (existing) {
+            return existing;
+        }
+
+        // Try to find and load from file
+        std::string pathToLoad = materialPath;
+        if (pathToLoad.empty()) {
+            // Try to construct path from material name
+            pathToLoad = Project::getInstance().getAssetsPath() + "/" + materialName + ".mat";
+        }
+
+        // Ensure path uses correct separator
+        std::filesystem::path matPath(pathToLoad);
+        if (!std::filesystem::exists(matPath)) {
+            std::cerr << "[AssetManager] loadMaterialIfNeeded: material file not found '" << pathToLoad << "'\n";
+            return nullptr;
+        }
+
+        // Import metadata from JSON
+        if (!importMaterialMetadataFromJson(matPath.string(), materialName)) {
+            std::cerr << "[AssetManager] loadMaterialIfNeeded: failed to import metadata for '" << materialName << "'\n";
+            return nullptr;
+        }
+
+        // Create material from metadata
+        if (!createMaterialFromMetadata(materialName)) {
+            std::cerr << "[AssetManager] loadMaterialIfNeeded: failed to create material from metadata for '" << materialName << "'\n";
+            return nullptr;
+        }
+
+        return getMaterialPtr(materialName);
+    }
+
     void AssetManager::shutdown() {
         for (auto& [name, texture] : textures_) {
             if (texture) {
@@ -557,7 +603,7 @@ namespace OnYuu {
     }
     void AssetManager::loadDefaultMaterials()
     {
-		addMaterial("default", std::make_shared<Material>(getShaderPtr("default")))->set("color",glm::vec4(1,0,1,1));
+		materials_["default"] = std::make_shared<Material>("default");
     }
     void AssetManager::loadDefaultShaders()
     {
@@ -596,7 +642,20 @@ void vertexMain()
 
         MaterialMetadata metadata{};
         metadata.shaderName = j.value("shaderName", std::string{});
-        metadata.sourcePath = j.value("sourcePath", jsonPath);
+        
+        // Load sourcePath and resolve relative paths
+        std::string sourcePath = j.value("sourcePath", std::string{});
+        if (!sourcePath.empty()) {
+            std::filesystem::path shaderPath(sourcePath);
+            if (!shaderPath.is_absolute()) {
+                // Resolve relative to assets directory
+                shaderPath = Project::getInstance().getAssetsPath() / shaderPath;
+            }
+            metadata.sourcePath = shaderPath.string();
+        } else {
+            metadata.sourcePath = jsonPath;
+        }
+        
         metadata.version = j.value("version", 1u);
 
         if (metadata.shaderName.empty()) {
@@ -645,12 +704,16 @@ void vertexMain()
 
         std::shared_ptr<MetaShader> shader = getShaderPtr(metadata.shaderName);
         if (!shader && !metadata.sourcePath.empty()) {
-            shader = getShaderPtr(metadata.sourcePath);
-            if (!shader) {
-                shader = addShader(metadata.sourcePath);
+            // Try loading from source path
+            shader = addShader(metadata.sourcePath);
+            
+            // ? Register the shader ALSO with shaderName for future lookups
+            if (shader && metadata.shaderName != metadata.sourcePath) {
+                shaders_[metadata.shaderName] = shader;
             }
         }
         if (!shader) {
+            // Last resort: try loading by shaderName directly
             shader = addShader(metadata.shaderName);
         }
 
@@ -659,7 +722,7 @@ void vertexMain()
             return false;
         }
 
-        auto material = std::make_shared<Material>(shader);
+        auto material = std::make_shared<Material>(metadata.shaderName);
 
         for (const auto& [paramName, param] : metadata.params) {
             switch (param.type) {

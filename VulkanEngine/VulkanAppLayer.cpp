@@ -52,15 +52,15 @@ void VulkanAppLayer::onAttach()
 	renderTarget = RenderTarget::create(1600, 900);
 	renderTargetTextureWrapper = ImGuiTextureWrapper::create(renderTarget);
 	// Testing meta shader
-	std::shared_ptr<MetaShader> metaShader = MetaShader::create("Asset/Meta-shader/firstShader.meta");
+	std::shared_ptr<MetaShader> metaShader = AssetManager::instance().addShader("default_shader");
 
 	camera = std::make_shared<Perspective>(45.0f, 16/9, 0.1f, 100.0f);
 	//camera = std::make_shared<OnYuu::Orthographic>(-10,10,-10,10,0.1,-100);
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
 	//shader2 = Shader::create("Asset/VkShader/generated-ver.o", "Asset/VkShader/generated-frag.o");
 
-	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>(metaShader));
-	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>(metaShader));
+	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>("default_shader"));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>("default_shader"));
 
 
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));

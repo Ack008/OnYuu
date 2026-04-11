@@ -58,8 +58,10 @@ namespace OnYuu {
 			imGuiLayer->begin();
 			for (Layer* layer : layers) {
 				layer->onImGuiRender();
+				
 			}
 			imGuiLayer->end();
+				
 			Render::getInstance()->submit();
 			window->draw();
 		}

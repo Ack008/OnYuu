@@ -1,14 +1,23 @@
 #include "Engine.h"
+#include "Application/AssetManager.h"
 namespace OnYuu {
 Material::Material(std::shared_ptr<Shader> shader)
-	: _shader(shader)
+	: shader_(std::move(shader))
 {
 }
-Material::Material(std::shared_ptr<MetaShader> metaShader)
-	: _metaShader(metaShader), _shader(metaShader->getShader())
+Material::Material(std::string shaderID)
+	: shaderID(std::move(shaderID))
 {
 }
 
+std::shared_ptr<Shader> Material::getShader() const
+{
+	if (shader_) {
+		return shader_;
+	}
+	auto metaShader = AssetManager::instance().getShaderPtr(shaderID);
+	return metaShader ? metaShader->getShader() : nullptr;
+}
 
 void Material::set(const std::string& name, const UniformValue& value)
 {
@@ -17,11 +26,12 @@ void Material::set(const std::string& name, const UniformValue& value)
 }
 void Material::bind()
 {
-	if (!_shader)
+	auto shader = getShader();
+	if (!shader)
 	{
 		return;
 	}
-	_shader->useShader();
+	shader->useShader();
 	
 	for (auto& [name, _] : alreadySet_) {
 		alreadySet_[name] = false; // Reset all uniforms to not set
@@ -29,10 +39,12 @@ void Material::bind()
 }
 void Material::apply()
 {
-	if (!_shader)
+	auto shader = getShader();
+	if (!shader)
 	{
 		return;
 	}
+	auto _metaShader = AssetManager::instance().getShaderPtr(shaderID);
 	int slot = 0;
 	textures_.clear();
 	for (const auto& [name, value] : uniforms_) {
@@ -46,49 +58,49 @@ void Material::apply()
 						_metaShader->setUniformInt(name.c_str(), arg);
 					}
 					else
-						_shader->setUniformInt(name.c_str(), arg);
+						shader->setUniformInt(name.c_str(), arg);
 				}
 				else if constexpr (std::is_same_v<T, float>) {
 					if(_metaShader) {
 						_metaShader->setUniformFloat(name.c_str(), arg);
 					}
 					else
-						_shader->setUniformFloat(name.c_str(), arg);
+						shader->setUniformFloat(name.c_str(), arg);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec2>) {
 					if(_metaShader) {
 						_metaShader->setUniformVec2(name.c_str(), &arg[0]);
 					}
 					else
-						_shader->setUniformVec2(name.c_str(), &arg[0]);
+						shader->setUniformVec2(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec3>) {
 					if(_metaShader) {
 						_metaShader->setUniformVec3(name.c_str(), &arg[0]);
 					}
 					else
-					_shader->setUniformVec3(name.c_str(), &arg[0]);
+						shader->setUniformVec3(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::vec4>) {
 					if(_metaShader) {
 						_metaShader->setUniformVec4(name.c_str(), &arg[0]);
 					}
 					else
-					_shader->setUniformVec4(name.c_str(), &arg[0]);
+						shader->setUniformVec4(name.c_str(), &arg[0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::mat3>) {
 					if(_metaShader) {
 						_metaShader->setUniformMat3(name.c_str(), &arg[0][0]);
 					}
 					else
-					_shader->setUniformMat3(name.c_str(), &arg[0][0]);
+						shader->setUniformMat3(name.c_str(), &arg[0][0]);
 				}
 				else if constexpr (std::is_same_v<T, glm::mat4>) {
 					if(_metaShader) {
 						_metaShader->setUniformMat4(name.c_str(), &arg[0][0]);
 					}
 					else
-					_shader->setUniformMat4(name.c_str(), &arg[0][0]);
+						shader->setUniformMat4(name.c_str(), &arg[0][0]);
 				}
 				else if constexpr (std::is_same_v<T, std::shared_ptr<Texture>>) {
 					if (arg) {
@@ -97,7 +109,7 @@ void Material::apply()
 							_metaShader->setUniformInt(name.c_str(), slot);
 						}
 						else
-						_shader->setUniformInt(name.c_str(), slot);
+							shader->setUniformInt(name.c_str(), slot);
 						textures_.push_back(arg);
 						slot++;
 					}
@@ -106,6 +118,6 @@ void Material::apply()
 			}, value);
 		alreadySet_[name] = true;
 	}
-	_shader->flushCostants();
+	shader->flushCostants();
 }
 } // namespace OnYuu
