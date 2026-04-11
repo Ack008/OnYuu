@@ -106,6 +106,50 @@ namespace OnYuu {
         ImGui::TextColored(fg, "%s", label);
     }
 
+    static bool ResolveMaterialAssetPath(const std::string& materialName, std::filesystem::path& outFilePath, std::string& outMaterialKey)
+    {
+        const std::filesystem::path assetsRoot = Project::getInstance().getAssetsPath();
+        std::filesystem::path requested(materialName);
+
+        auto normalizeKey = [&](const std::filesystem::path& p) {
+            std::filesystem::path keyPath = p;
+            if (keyPath.extension() == ".mat") {
+                keyPath.replace_extension();
+            }
+            return keyPath.generic_string();
+        };
+
+        std::filesystem::path candidate = assetsRoot / requested;
+        if (candidate.extension() != ".mat") {
+            candidate.replace_extension(".mat");
+        }
+
+        if (std::filesystem::exists(candidate)) {
+            outFilePath = candidate;
+            outMaterialKey = normalizeKey(requested);
+            return true;
+        }
+
+        const std::string requestedStem = requested.stem().string();
+        if (requestedStem.empty()) {
+            return false;
+        }
+
+        for (const auto& entry : std::filesystem::recursive_directory_iterator(assetsRoot)) {
+            if (!entry.is_regular_file() || entry.path().extension() != ".mat") {
+                continue;
+            }
+
+            if (entry.path().stem() == requestedStem) {
+                outFilePath = entry.path();
+                outMaterialKey = normalizeKey(std::filesystem::relative(entry.path(), assetsRoot));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // ─── Panel ──────────────────────────────────────────────────────────────────
     SceneHierarchyPanel::SceneHierarchyPanel(const std::shared_ptr<Scene>& context)
     {
@@ -591,9 +635,29 @@ namespace OnYuu {
                     {
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_MATERIAL"))
                         {
-                            const char* matID = (const char*)payload->Data;
-                            c.materialID = std::string(matID);
-                            std::cout << "Assigned material: " << matID << std::endl;
+                            std::string payloadMaterial((const char*)payload->Data, payload->DataSize);
+                            while (!payloadMaterial.empty() && payloadMaterial.back() == '\0') {
+                                payloadMaterial.pop_back();
+                            }
+
+                            std::filesystem::path materialPath;
+                            std::string materialKey;
+                            if (ResolveMaterialAssetPath(payloadMaterial, materialPath, materialKey))
+                            {
+                                if (!AssetManager::instance().getMaterialMetadata(materialKey))
+                                {
+                                    AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), materialKey);
+                                }
+
+                                if (AssetManager::instance().createMaterialFromMetadata(materialKey))
+                                {
+                                    c.materialID = materialKey;
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "[SceneHierarchyPanel] Unable to resolve material asset '" << payloadMaterial << "'" << std::endl;
+                            }
                         }
                         ImGui::EndDragDropTarget();
                     }
@@ -605,16 +669,29 @@ namespace OnYuu {
                 {
                     if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ASSET_MATERIAL"))
                     {
-                        if (!AssetManager::instance().getMaterialMetadata((const char*)payload->Data))
-                        {
-							std::filesystem::path materialPath = Project::getInstance().getAssetsPath() / std::filesystem::path(std::string((const char*)payload->Data) + ".mat");
-                            AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), (const char*)payload->Data);
-
+                        std::string payloadMaterial((const char*)payload->Data, payload->DataSize);
+                        while (!payloadMaterial.empty() && payloadMaterial.back() == '\0') {
+                            payloadMaterial.pop_back();
                         }
-						AssetManager::instance().createMaterialFromMetadata((const char*)payload->Data);
-                        const char* matID = (const char*)payload->Data;
-                        c.materialID = std::string(matID);
-                        
+
+                        std::filesystem::path materialPath;
+                        std::string materialKey;
+                        if (ResolveMaterialAssetPath(payloadMaterial, materialPath, materialKey))
+                        {
+                            if (!AssetManager::instance().getMaterialMetadata(materialKey))
+                            {
+                                AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), materialKey);
+                            }
+
+                            if (AssetManager::instance().createMaterialFromMetadata(materialKey))
+                            {
+                                c.materialID = materialKey;
+                            }
+                        }
+                        else
+                        {
+                            std::cerr << "[SceneHierarchyPanel] Unable to resolve material asset '" << payloadMaterial << "'" << std::endl;
+                        }
                     }
                     ImGui::EndDragDropTarget();
                 }

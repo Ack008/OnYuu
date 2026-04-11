@@ -5,20 +5,36 @@
 #include <sstream>
 #include <fstream>
 #include "json/json.hpp"
-
-#ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#define Escape WinEscape
-#include <windows.h>
-#include <commdlg.h>
-#undef Escape
-#pragma comment(lib, "Comdlg32.lib")
-#endif
+#include "ImGuiFileDialog.h"
 
 namespace {
 	using json = nlohmann::json;
+
+	std::filesystem::path canonicalPath(const std::filesystem::path& p)
+	{
+		std::error_code ec;
+		auto c = std::filesystem::weakly_canonical(p, ec);
+		if (ec) {
+			return p.lexically_normal();
+		}
+		return c;
+	}
+
+	bool isPathInside(const std::filesystem::path& root, const std::filesystem::path& candidate)
+	{
+		const auto normalizedRoot = canonicalPath(root);
+		const auto normalizedCandidate = canonicalPath(candidate);
+
+		auto rootIt = normalizedRoot.begin();
+		auto candidateIt = normalizedCandidate.begin();
+		for (; rootIt != normalizedRoot.end() && candidateIt != normalizedCandidate.end(); ++rootIt, ++candidateIt) {
+			if (*rootIt != *candidateIt) {
+				return false;
+			}
+		}
+
+		return rootIt == normalizedRoot.end();
+	}
 
 	std::string toLowerCopy(std::string value)
 	{
@@ -105,75 +121,61 @@ namespace {
 		return false;
 	}
 
-#ifdef _WIN32
-	std::filesystem::path pickPngFile(const std::filesystem::path& initialDir)
+	std::filesystem::path handleFileDialog(const std::string& dialogId, const std::string& title, const char* filters, bool requestOpen, const std::filesystem::path& initialDir)
 	{
-		char fileBuffer[MAX_PATH] = {};
-		OPENFILENAMEA ofn{};
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = nullptr;
-		ofn.lpstrFile = fileBuffer;
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "PNG Images\0*.png\0All Files\0*.*\0";
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+		auto* dialog = ImGuiFileDialog::Instance();
+		const std::filesystem::path assetsRoot = canonicalPath(Project::getInstance().getAssetsPath());
 
-		std::string initialDirStr = initialDir.empty() ? std::string{} : initialDir.string();
-		if (!initialDirStr.empty()) {
-			ofn.lpstrInitialDir = initialDirStr.c_str();
+		if (requestOpen) {
+			IGFD::FileDialogConfig config;
+			config.path = assetsRoot.string();
+
+			if (!initialDir.empty()) {
+				std::filesystem::path candidateInitial = initialDir;
+				if (!candidateInitial.is_absolute()) {
+					candidateInitial = assetsRoot / candidateInitial;
+				}
+				candidateInitial = canonicalPath(candidateInitial);
+				if (isPathInside(assetsRoot, candidateInitial)) {
+					config.path = candidateInitial.string();
+				}
+			}
+
+			dialog->OpenDialog(dialogId, title, filters, config);
 		}
 
-		if (GetOpenFileNameA(&ofn)) {
-			return std::filesystem::path(fileBuffer);
-		}
-		return {};
-	}
-
-	std::filesystem::path pickShaderFile(const std::filesystem::path& initialDir)
-	{
-		char fileBuffer[MAX_PATH] = {};
-		OPENFILENAMEA ofn{};
-		ofn.lStructSize = sizeof(ofn);
-		ofn.hwndOwner = nullptr;
-		ofn.lpstrFile = fileBuffer;
-		ofn.nMaxFile = MAX_PATH;
-		ofn.lpstrFilter = "Shader Files\0*.shader\0All Files\0*.*\0";
-		ofn.nFilterIndex = 1;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-
-		std::string initialDirStr = initialDir.empty() ? std::string{} : initialDir.string();
-		if (!initialDirStr.empty()) {
-			ofn.lpstrInitialDir = initialDirStr.c_str();
+		if (dialog->Display(dialogId)) {
+			std::filesystem::path selectedPath;
+			if (dialog->IsOk()) {
+				selectedPath = dialog->GetFilePathName();
+				if (!selectedPath.empty()) {
+					if (!selectedPath.is_absolute()) {
+						selectedPath = assetsRoot / selectedPath;
+					}
+					selectedPath = canonicalPath(selectedPath);
+					if (!isPathInside(assetsRoot, selectedPath)) {
+						selectedPath.clear();
+					}
+				}
+			}
+			dialog->Close();
+			return selectedPath;
 		}
 
-		if (GetOpenFileNameA(&ofn)) {
-			return std::filesystem::path(fileBuffer);
-		}
 		return {};
 	}
-#else
-	std::filesystem::path pickPngFile(const std::filesystem::path&)
-	{
-		return {};
-	}
-
-	std::filesystem::path pickShaderFile(const std::filesystem::path&)
-	{
-		return {};
-	}
-#endif
 }
 
 namespace OnYuu {
 
-	std::filesystem::path ContentBrowsingPanel::openPngFilePicker(const std::filesystem::path& initialDir)
+	std::filesystem::path ContentBrowsingPanel::openPngFilePicker(const std::string& dialogId, bool requestOpen, const std::filesystem::path& initialDir)
 	{
-		return pickPngFile(initialDir);
+		return handleFileDialog(dialogId, "Select Texture", ".png", requestOpen, initialDir);
 	}
 
-	std::filesystem::path ContentBrowsingPanel::openShaderFilePicker(const std::filesystem::path& initialDir)
+	std::filesystem::path ContentBrowsingPanel::openShaderFilePicker(const std::string& dialogId, bool requestOpen, const std::filesystem::path& initialDir)
 	{
-		return pickShaderFile(initialDir);
+		return handleFileDialog(dialogId, "Select Shader", ".shader", requestOpen, initialDir);
 	}
 
 	std::string ContentBrowsingPanel::normalizeMaterialType(std::string type)
@@ -412,7 +414,7 @@ namespace OnYuu {
 		std::cout << "Saved shader: " << shaderName << std::endl;
 
 		m_shaderEditor.isDirty = false;
-		return true;
+		return shader != nullptr;
 	}
 
 	bool ContentBrowsingPanel::loadMaterialEditor(const std::filesystem::path& materialPath)
@@ -436,7 +438,7 @@ namespace OnYuu {
 		// Load shader path and resolve relative paths
 		std::string sourcePath = j.value("sourcePath", std::string{});
 		if (sourcePath.empty()) {
-			sourcePath = j.value("shaderPath", std::string{});
+			sourcePath = j.value("shaderPath", std::string{}); // Fallback to shaderPath
 		}
 		
 		// If path is relative, resolve it relative to assets directory
@@ -542,12 +544,17 @@ namespace OnYuu {
 
 	bool ContentBrowsingPanel::saveMaterialEditor()
 	{
-		if (m_materialEditor.materialPath.empty()) {
+		return saveMaterialEditor(m_materialEditor);
+	}
+
+	bool ContentBrowsingPanel::saveMaterialEditor(const MaterialEditorState& editorState)
+	{
+		if (editorState.materialPath.empty()) {
 			return false;
 		}
 
 		// Convert shader path to relative for storage
-		std::string shaderPathForStorage = m_materialEditor.shaderPath.string();
+		std::string shaderPathForStorage = editorState.shaderPath.string();
 		if (!shaderPathForStorage.empty()) {
 			std::filesystem::path shaderPath(shaderPathForStorage);
 			if (shaderPath.is_absolute()) {
@@ -562,13 +569,13 @@ namespace OnYuu {
 		}
 
 		json materialJson;
-		materialJson["shaderName"] = std::filesystem::path(m_materialEditor.shaderPath).stem().string();
+		materialJson["shaderName"] = std::filesystem::path(editorState.shaderPath).stem().string();
 		materialJson["sourcePath"] = shaderPathForStorage;
 		materialJson["version"] = 1u;
 		materialJson["params"] = json::object();
 		materialJson["textures"] = json::object();
 
-		for (const auto& param : m_materialEditor.params) {
+		for (const auto& param : editorState.params) {
 			if (param.isTexture || isTextureLikeType(param.type)) {
 				materialJson["textures"][param.name] = param.texturePath.empty() ? std::string(param.texturePathBuffer) : param.texturePath;
 				continue;
@@ -615,7 +622,7 @@ namespace OnYuu {
 			}
 		}
 
-		std::ofstream out(m_materialEditor.materialPath);
+		std::ofstream out(editorState.materialPath);
 		if (!out.is_open()) {
 			return false;
 		}
@@ -623,8 +630,8 @@ namespace OnYuu {
 		out << materialJson.dump(4);
 		out.close();
 
-		const std::string materialName = m_materialEditor.materialPath.stem().string();
-		AssetManager::instance().importMaterialMetadataFromJson(m_materialEditor.materialPath.string(), materialName);
+		const std::string materialName = editorState.materialPath.stem().string();
+		AssetManager::instance().importMaterialMetadataFromJson(editorState.materialPath.string(), materialName);
 		if (AssetManager::instance().getMaterialPtr(materialName)) {
 			Render::getInstance()->invalidateMaterial(AssetManager::instance().getMaterialPtr(materialName));
 			AssetManager::instance().createMaterialFromMetadata(materialName);
@@ -649,12 +656,13 @@ namespace OnYuu {
 			ImGui::SetNextItemWidth(inputWidth);
 			ImGui::InputText("##texture", param.texturePathBuffer, sizeof(param.texturePathBuffer), ImGuiInputTextFlags_ReadOnly);
 			ImGui::SameLine();
-			if (ImGui::Button("...")) {
-				std::filesystem::path picked = pickPngFile(param.texturePath.empty() ? m_currentDirectory : std::filesystem::path(param.texturePath).parent_path());
-				if (!picked.empty()) {
-					param.texturePath = picked.string();
-					strncpy_s(param.texturePathBuffer, param.texturePath.c_str(), _TRUNCATE);
-				}
+			bool openTexturePicker = ImGui::Button("...");
+			const std::filesystem::path textureInitialDir = param.texturePath.empty() ? m_currentDirectory : std::filesystem::path(param.texturePath).parent_path();
+			const std::string textureDialogId = "TexturePicker##" + param.name;
+			std::filesystem::path picked = openPngFilePicker(textureDialogId, openTexturePicker, textureInitialDir);
+			if (!picked.empty()) {
+				param.texturePath = picked.string();
+				strncpy_s(param.texturePathBuffer, param.texturePath.c_str(), _TRUNCATE);
 			}
 		}
 		else if (param.type == "Int") {
@@ -720,12 +728,12 @@ namespace OnYuu {
 			ImGui::SetNextItemWidth(shaderInputWidth);
 			ImGui::InputText("Shader Path", m_editMaterialShaderBuffer, sizeof(m_editMaterialShaderBuffer), ImGuiInputTextFlags_ReadOnly);
 			ImGui::SameLine();
-			if (ImGui::Button("...")) {
-				std::filesystem::path picked = openShaderFilePicker(m_materialEditor.shaderPath.empty() ? m_currentDirectory : std::filesystem::path(m_materialEditor.shaderPath).parent_path());
-				if (!picked.empty()) {
-					m_materialEditor.shaderPath = picked.string();
-					strncpy_s(m_editMaterialShaderBuffer, m_materialEditor.shaderPath.string().c_str(), _TRUNCATE);
-				}
+			bool openShaderPicker = ImGui::Button("...");
+			const std::filesystem::path shaderInitialDir = m_materialEditor.shaderPath.empty() ? m_currentDirectory : std::filesystem::path(m_materialEditor.shaderPath).parent_path();
+			std::filesystem::path picked = openShaderFilePicker("MaterialShaderPicker", openShaderPicker, shaderInitialDir);
+			if (!picked.empty()) {
+				m_materialEditor.shaderPath = picked.string();
+				strncpy_s(m_editMaterialShaderBuffer, m_materialEditor.shaderPath.string().c_str(), _TRUNCATE);
 			}
 			if (ImGui::Button("Apply Shader")) {
 				m_materialEditor.shaderPath = m_editMaterialShaderBuffer;
@@ -909,6 +917,60 @@ namespace OnYuu {
 			return;
 		}
 
+		auto saveShaderAndUpdateMaterials = [&]() -> bool {
+			if (!saveShaderEditor()) {
+				return false;
+			}
+
+			strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
+
+			std::string shaderName = std::filesystem::path(m_shaderEditor.shaderPath).stem().string();
+			std::vector<std::string> materialsUsingShader = AssetManager::instance().getMaterialsUsingShader(shaderName);
+			if (materialsUsingShader.empty()) {
+				return true;
+			}
+
+			std::cout << "Updating " << materialsUsingShader.size() << " materials using shader '" << shaderName << "'\n";
+
+			const auto backupMaterialEditor = m_materialEditor;
+			const auto backupMaterialToEditPath = m_materialToEditPath;
+			const bool backupMaterialEditorLoaded = m_materialEditorLoaded;
+			char backupEditShaderBuffer[sizeof(m_editMaterialShaderBuffer)] = {};
+			std::memcpy(backupEditShaderBuffer, m_editMaterialShaderBuffer, sizeof(m_editMaterialShaderBuffer));
+
+			const std::filesystem::path assetsPath = Project::getInstance().getAssetsPath();
+			for (const std::string& materialName : materialsUsingShader) {
+				std::filesystem::path materialFilePath;
+				for (const auto& entry : std::filesystem::recursive_directory_iterator(assetsPath)) {
+					if (!entry.is_regular_file()) continue;
+					const auto& p = entry.path();
+					if (p.extension() == ".mat" && p.stem() == materialName) {
+						materialFilePath = p;
+						break;
+					}
+				}
+
+				if (materialFilePath.empty() || !loadMaterialEditor(materialFilePath)) {
+					std::cout << "  Skipped material (file not found): " << materialName << "\n";
+					continue;
+				}
+
+				m_materialEditor.shaderPath = m_shaderEditor.shaderPath;
+				strncpy_s(m_editMaterialShaderBuffer, sizeof(m_editMaterialShaderBuffer), m_materialEditor.shaderPath.string().c_str(), _TRUNCATE);
+				rebuildMaterialParamsFromShader();
+
+				MaterialEditorState updatedMaterialState = m_materialEditor;
+				
+			}
+
+			m_materialEditor = backupMaterialEditor;
+			m_materialToEditPath = backupMaterialToEditPath;
+			m_materialEditorLoaded = backupMaterialEditorLoaded;
+			std::memcpy(m_editMaterialShaderBuffer, backupEditShaderBuffer, sizeof(m_editMaterialShaderBuffer));
+
+			return true;
+		};
+
 		ImGui::SetNextWindowSize(ImVec2(1000.0f, 600.0f), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Shader Editor", &m_shaderEditorOpen))
 		{
@@ -917,42 +979,7 @@ namespace OnYuu {
 
 			// Top toolbar
 			if (ImGui::Button("Save")) {
-				if (saveShaderEditor()) {
-					// Update buffer from saved content
-					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
-					
-					// Get shader name from path
-					std::string shaderName = std::filesystem::path(m_shaderEditor.shaderPath).stem().string();
-					
-					// Find and update all materials using this shader
-					std::vector<std::string> materialsUsingShader = AssetManager::instance().getMaterialsUsingShader(shaderName);
-					
-					if (!materialsUsingShader.empty()) {
-						std::cout << "Updating " << materialsUsingShader.size() << " materials using shader '" << shaderName << "'\n";
-						
-						for (const std::string& materialName : materialsUsingShader) {
-							// Reload the material metadata from its file
-							const auto* metadata = AssetManager::instance().getMaterialMetadata(materialName);
-							if (metadata) {
-								// Get the material file path from metadata
-								std::string materialFilePath = metadata->sourcePath;
-								if (materialFilePath.empty()) {
-									materialFilePath = Project::getInstance().getAssetsPath() + "/" + materialName + ".mat";
-								}
-								
-								// Re-import metadata (rebuilds params from new shader)
-								AssetManager::instance().importMaterialMetadataFromJson(materialFilePath, materialName);
-								
-								// Invalidate and recreate material
-								if (auto mat = AssetManager::instance().getMaterialPtr(materialName)) {
-									Render::getInstance()->invalidateMaterial(mat);
-									AssetManager::instance().createMaterialFromMetadata(materialName);
-									std::cout << "  Updated material: " << materialName << "\n";
-								}
-							}
-						}
-					}
-				}
+				saveShaderAndUpdateMaterials();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Reload")) {
@@ -978,9 +1005,7 @@ namespace OnYuu {
 
 			// Bottom buttons
 			if (ImGui::Button("Save##bottom", ImVec2(100.0f, 0.0f))) {
-				if (saveShaderEditor()) {
-					strncpy_s(m_shaderEditorBuffer, SHADER_BUFFER_SIZE, m_shaderEditor.content.c_str(), _TRUNCATE);
-				}
+				saveShaderAndUpdateMaterials();
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel##bottom", ImVec2(100.0f, 0.0f))) {

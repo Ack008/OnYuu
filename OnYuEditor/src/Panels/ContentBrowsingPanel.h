@@ -49,6 +49,7 @@ namespace OnYuu {
 		void openMaterialPopup();
 		bool loadMaterialEditor(const std::filesystem::path& materialPath);
 		bool saveMaterialEditor();
+		bool saveMaterialEditor(const MaterialEditorState& editorState);
 		void rebuildMaterialParamsFromShader();
 		void drawMaterialParamEditor(MaterialParamEditor& param);
 		bool loadShaderEditor(const std::filesystem::path& shaderPath);
@@ -56,8 +57,8 @@ namespace OnYuu {
 		void openShaderEditorWindow();
 		static std::string normalizeMaterialType(std::string type);
 		static bool isTextureLikeType(const std::string& type);
-		static std::filesystem::path openPngFilePicker(const std::filesystem::path& initialDir = {});
-		static std::filesystem::path openShaderFilePicker(const std::filesystem::path& initialDir = {});
+		static std::filesystem::path openPngFilePicker(const std::string& dialogId, bool requestOpen, const std::filesystem::path& initialDir = {});
+		static std::filesystem::path openShaderFilePicker(const std::string& dialogId, bool requestOpen, const std::filesystem::path& initialDir = {});
 
 	private:
 		std::filesystem::path m_currentDirectory;

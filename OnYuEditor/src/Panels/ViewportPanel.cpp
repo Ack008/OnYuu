@@ -156,7 +156,9 @@ namespace OnYuu {
 		if (m_isFocused) {
 			keyboardInput(deltaTime);
 		}
-		if (m_isHovered) {
+
+		const bool rightMouseDown = Input::isMouseButtonPressed(1);
+		if (m_isHovered || m_isRightMouseControlling || rightMouseDown) {
 			bool retFlag;
 			mouseInput(deltaTime, retFlag);
 		}
@@ -173,16 +175,26 @@ namespace OnYuu {
 	void ViewportPanel::mouseInput(float deltaTime, bool& retFlag)
 	{
 		retFlag = true;
+
 		if (Input::isMouseButtonPressed(1)) {
+			if (!m_isRightMouseControlling) {
+				if (!m_isHovered || !m_isFocused) {
+					retFlag = false;
+					return;
+				}
+				m_isRightMouseControlling = true;
+				m_firstClick = true;
+			}
+
 			double currentX, currentY;
 			Input::getMouseWindowPos(currentX, currentY);
 
 			if (m_firstClick) {
-				// Prima volta che si preme: inizializza la posizione, nessuna rotazione ancora
 				m_lastMouseX = currentX;
 				m_lastMouseY = currentY;
 				m_firstClick = false;
 				Input::lockMouse(true);
+				retFlag = false;
 				return;
 			}
 
@@ -193,7 +205,6 @@ namespace OnYuu {
 			m_lastMouseY = currentY;
 
 			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective) {
-
 				float yDir = (Render::getAPI() == Vulkan) ? -(float)deltaY : (float)deltaY;
 				m_EditorLayer->m_editorCamera.rotate((float)deltaX, yDir);
 			}
@@ -202,23 +213,20 @@ namespace OnYuu {
 				m_EditorLayer->m_editorCamera.moveVertical((float)deltaY, deltaTime);
 			}
 			Input::lockMouse(true);
-			
-			
 		}
 		else {
-			m_firstClick = true; // reset per la prossima pressione
-			Input::lockMouse(false);
-
+			m_firstClick = true;
+			if (m_isRightMouseControlling) {
+				Input::lockMouse(false);
+			}
+			m_isRightMouseControlling = false;
 		}
 		retFlag = false;
-
-
 
 		if (Input::isMouseButtonPressed(0)) {
 			if (!ImGuizmo::IsOver() && !ImGuizmo::IsUsing())
 				raycast();
 		}
-
 	}
 
 	void ViewportPanel::keyboardInput(float deltaTime)

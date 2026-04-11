@@ -1,4 +1,4 @@
-#include "AssetManager.h"
+﻿#include "AssetManager.h"
 #include "Core/CubeMap.h"
 #include "Project.h"
 #include "json/json.hpp"
@@ -707,7 +707,7 @@ void vertexMain()
             // Try loading from source path
             shader = addShader(metadata.sourcePath);
             
-            // ? Register the shader ALSO with shaderName for future lookups
+            // ✅ Register the shader ALSO with shaderName for future lookups
             if (shader && metadata.shaderName != metadata.sourcePath) {
                 shaders_[metadata.shaderName] = shader;
             }
@@ -771,7 +771,7 @@ void vertexMain()
             }
         }
 
-        addMaterial(materialName, material);
+        addMaterial(materialName, material)->set("color", glm::vec4(1,0,1,1));
         return true;
     }
 

@@ -36,6 +36,7 @@ namespace OnYuu {
 		double m_lastMouseX = 0.0;
 		double m_lastMouseY = 0.0;
 		bool   m_firstClick = true;
+		bool   m_isRightMouseControlling = false;
 		GizmoOperation m_currentGizmoOperation = GizmoOperation::Translate;
 		std::shared_ptr<ImGuiTextureWrapper> m_viewportTextureWrapper;
 		std::shared_ptr<RenderTarget> m_boundRenderTarget;
