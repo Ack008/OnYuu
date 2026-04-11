@@ -844,9 +844,9 @@ namespace OnYuu {
 		// Set dynamic viewport and scissor
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = 0.0f;
+		viewport.y = static_cast<float>(extent.height);
 		viewport.width = static_cast<float>(extent.width);
-		viewport.height = static_cast<float>(extent.height);
+		viewport.height = -static_cast<float>(extent.height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(cmd, 0, 1, &viewport);
@@ -888,9 +888,9 @@ namespace OnYuu {
         // Set dynamic viewport and scissor
         VkViewport viewport{};
         viewport.x = 0.0f;
-        viewport.y = 0.0f;
+        viewport.y = static_cast<float>(swapchain_->getExtent().height);
         viewport.width = static_cast<float>(swapchain_->getExtent().width);
-        viewport.height = static_cast<float>(swapchain_->getExtent().height);
+        viewport.height = -static_cast<float>(swapchain_->getExtent().height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(cmd, 0, 1, &viewport);

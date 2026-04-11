@@ -73,12 +73,6 @@ namespace OnYuu {
 			auto camera = m_EditorLayer->m_editorCamera.getCamera();
 			glm::mat4 cameraView =  camera->getViewMatrix();
 			glm::mat4 cameraProjection = camera->getProjectionMatrix();
-			if (Render::getAPI() == Vulkan)
-			{
-				cameraProjection[1][1] *= -1.0f;
-			
-
-			}
 			auto& tc = selectedObject.getComponent<Trasform>();
 			glm::mat4 modelMatrix = tc.getModelMatrix();
 			ImGuizmo::OPERATION currentOperation = ImGuizmo::OPERATION::TRANSLATE;
@@ -205,8 +199,7 @@ namespace OnYuu {
 			m_lastMouseY = currentY;
 
 			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective) {
-				float yDir = (Render::getAPI() == Vulkan) ? -(float)deltaY : (float)deltaY;
-				m_EditorLayer->m_editorCamera.rotate((float)deltaX, yDir);
+				m_EditorLayer->m_editorCamera.rotate((float)deltaX, (float)deltaY);
 			}
 			else {
 				m_EditorLayer->m_editorCamera.moveHorizontal((float)deltaX, deltaTime);
@@ -231,8 +224,6 @@ namespace OnYuu {
 
 	void ViewportPanel::keyboardInput(float deltaTime)
 	{
-		float vertDir = (Render::getAPI() == Vulkan) ? -1.0f : 1.0f;
-
 		if (Input::isKeyPressed(KeyCode::W)) {
 			m_EditorLayer->m_editorCamera.moveForward(1.0f, deltaTime);
 		}
@@ -246,10 +237,10 @@ namespace OnYuu {
 			m_EditorLayer->m_editorCamera.moveHorizontal(1.0f, deltaTime);
 		}
 		if (Input::isKeyPressed(KeyCode::Q)) {
-			m_EditorLayer->m_editorCamera.moveVertical(-1.0f * vertDir, deltaTime);
+			m_EditorLayer->m_editorCamera.moveVertical(-1.0f, deltaTime);
 		}
 		if (Input::isKeyPressed(KeyCode::E)) {
-			m_EditorLayer->m_editorCamera.moveVertical(1.0f * vertDir, deltaTime);
+			m_EditorLayer->m_editorCamera.moveVertical(1.0f, deltaTime);
 		}
 		if (Input::isKeyPressedOnce(KeyCode::Z)) {
 			if (m_EditorLayer->m_editorCamera.getCameraType() == CameraType::Perspective)

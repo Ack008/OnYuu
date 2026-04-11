@@ -9,6 +9,24 @@
 
 namespace {
 	using json = nlohmann::json;
+	bool g_openInvalidSelectionPopup = false;
+
+	void drawInvalidSelectionPopup()
+	{
+		if (g_openInvalidSelectionPopup) {
+			ImGui::OpenPopup("InvalidSelectionPopup");
+			g_openInvalidSelectionPopup = false;
+		}
+
+		ImGui::SetNextWindowSize(ImVec2(520.0f, 0.0f), ImGuiCond_Appearing);
+		if (ImGui::BeginPopupModal("InvalidSelectionPopup", nullptr)) {
+			ImGui::TextWrapped("Please select a file inside the Assets directory.");
+			if (ImGui::Button("OK")) {
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
+	}
 
 	std::filesystem::path canonicalPath(const std::filesystem::path& p)
 	{
@@ -154,6 +172,7 @@ namespace {
 					}
 					selectedPath = canonicalPath(selectedPath);
 					if (!isPathInside(assetsRoot, selectedPath)) {
+						g_openInvalidSelectionPopup = true;
 						selectedPath.clear();
 					}
 				}
@@ -287,6 +306,7 @@ namespace OnYuu {
 		createMaterialPopup();
 		openMaterialPopup();
 		openShaderEditorWindow();
+		drawInvalidSelectionPopup();
 
 		ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16.0f, 256.0f);
 		ImGui::SliderFloat("Padding", &padding, 0.0f, 32.0f);
@@ -664,6 +684,7 @@ namespace OnYuu {
 				param.texturePath = picked.string();
 				strncpy_s(param.texturePathBuffer, param.texturePath.c_str(), _TRUNCATE);
 			}
+			
 		}
 		else if (param.type == "Int") {
 			ImGui::SetNextItemWidth(220.0f);
