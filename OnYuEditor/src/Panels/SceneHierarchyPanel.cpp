@@ -2,6 +2,7 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
+#include "ImGuiFileDialog.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -14,6 +15,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 namespace OnYuu {
+
+    namespace {
+        constexpr const char* kImportMeshDialogId = "ImportMeshObjDialog";
+        constexpr const char* kImportShaderDialogId = "ImportMeshShaderDialog";
+    }
 
     // ─── Palette ────────────────────────────────────────────────────────────────
     namespace Theme {
@@ -230,10 +236,48 @@ namespace OnYuu {
                 ImGui::Spacing();
                 ImGui::TextColored(Theme::TextDim, "PRIMITIVES");
                 ImGui::Separator();
-                makeObj("\xe2\x97\x8b  Sphere", "sphere", "New Sphere");
-                makeObj("\xe2\x96\xa1  Cube", "cube", "New Cube");
-                makeObj("\xe2\x96\xb3  Quad", "quad", "New Quad");
+                makeObj("○  Sphere", "sphere", "New Sphere");
+                makeObj("□  Cube", "cube", "New Cube");
+                makeObj("△  Quad", "quad", "New Quad");
+                if (ImGui::MenuItem("Import Mesh")) {
+                    IGFD::FileDialogConfig config;
+                    config.path = Project::getInstance().getAssetsPath();
+                    ImGuiFileDialog::Instance()->OpenDialog(kImportMeshDialogId, "Import Mesh", ".obj", config);
+                }
                 ImGui::EndPopup();
+            }
+
+            static std::filesystem::path pendingImportedMeshPath;
+            static bool openShaderDialogNextFrame = false;
+
+            if (ImGuiFileDialog::Instance()->Display(kImportMeshDialogId)) {
+                if (ImGuiFileDialog::Instance()->IsOk()) {
+                    pendingImportedMeshPath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    openShaderDialogNextFrame = !pendingImportedMeshPath.empty();
+                }
+                ImGuiFileDialog::Instance()->Close();
+            }
+
+            if (openShaderDialogNextFrame) {
+                IGFD::FileDialogConfig shaderConfig;
+                shaderConfig.path = Project::getInstance().getAssetsPath();
+                ImGuiFileDialog::Instance()->OpenDialog(kImportShaderDialogId, "Select Shader", ".shader", shaderConfig);
+                openShaderDialogNextFrame = false;
+            }
+
+            if (ImGuiFileDialog::Instance()->Display(kImportShaderDialogId)) {
+                if (ImGuiFileDialog::Instance()->IsOk()) {
+                    std::filesystem::path shaderPath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    auto metaShader = AssetManager::instance().addShader(shaderPath.string());
+                    if (metaShader && metaShader->getShader() && !pendingImportedMeshPath.empty()) {
+                        GameObject importedRoot = MeshImporter::instance().importMesh(pendingImportedMeshPath.string(), m_Context.get(), metaShader->getShader());
+                        if (importedRoot) {
+                            m_SelectionContext = importedRoot;
+                        }
+                    }
+                    pendingImportedMeshPath.clear();
+                }
+                ImGuiFileDialog::Instance()->Close();
             }
 
             // Footer: entity count
