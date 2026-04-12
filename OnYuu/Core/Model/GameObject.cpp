@@ -9,7 +9,15 @@ namespace OnYuu {
 
     }
 
-
+    void GameObject::Destroy()
+    {
+        auto& children = getComponent<TreeComponent>().obj;
+        for (std::size_t i = 0; i < children.size(); ++i)
+        {
+            children[i].Destroy();
+        }
+        _sceneptr->addToDestroy(new GameObject(id, _sceneptr));
+    }
 
     GameObject GameObject::instantiatePrefabNow(Prefab* prefab)
     {
@@ -26,16 +34,16 @@ namespace OnYuu {
         father.getComponent<TreeComponent>().obj.push_back(*this);
     }
 
-    Trasform GameObject::getAbsoluteTransform()
+    Transform GameObject::getAbsoluteTransform()
     {
-        Trasform local = getComponent<Trasform>();
+        Transform local = getComponent<Transform>();
         TreeComponent& tree = getComponent<TreeComponent>();
 
         if (!tree.father)
             return local;
 
         GameObject parent(tree.father);
-        Trasform parentAbs = parent.getAbsoluteTransform();
+        Transform parentAbs = parent.getAbsoluteTransform();
 
         return parentAbs + local;
     }

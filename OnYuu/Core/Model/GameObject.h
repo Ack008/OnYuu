@@ -9,7 +9,7 @@
 #include "Core/Model/Components/ScriptingSystem.h"
 #include "Core/Model/Components/TagComponent.h"
 namespace OnYuu {
-    class Trasform;
+    class Transform;
     // GameObject.h
     // Wrapper leggero attorno a `entt::entity` che espone API comode per gestire
     // componenti, script e interazioni con la `Scene`.
@@ -71,7 +71,7 @@ namespace OnYuu {
             }
             return _sceneptr->reg->get<T>(id);
         }
-        Trasform getAbsoluteTransform();
+        Transform getAbsoluteTransform();
 
         //Istanzia un prefab in modo ritardato
         void delayedIstantiatePrefab(Prefab* prefab) {
@@ -161,9 +161,7 @@ namespace OnYuu {
 
         // Segnala la distruzione dell'oggetto: la rimozione effettiva avverrà in un
         // punto sicuro (tipicamente a fine frame) dalla `Scene`.
-        void Destroy() {
-            _sceneptr->addToDestroy(new GameObject(id, _sceneptr));
-        }
+        void Destroy();
         bool operator ==(const GameObject& other) const {
             return id == other.id && _sceneptr == other._sceneptr;
         }

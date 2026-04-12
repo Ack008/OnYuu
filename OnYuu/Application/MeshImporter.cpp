@@ -94,15 +94,15 @@ namespace OnYuu {
 			}
 			else
 			{
-				mat->set("material.shininess", 50.0f);
+				//mat->set("material.shininess", 50.0f);
 			}
 			// assegno il materiale alla componente
-			currentMesh.getComponent<RenderMeshComponent>().materialID = name;
+			currentMesh.getComponent<RenderMeshComponent>().setMaterialID(name);
 
 			// Creo e registro la mesh nel AssetManager usando il nome unico
 			std::shared_ptr<Mesh> tempMesh = AssetManager::instance().addMesh(name, std::make_shared<Mesh>());
 			// Assegno la shared_ptr direttamente alla componente (migrazione completa)
-			currentMesh.getComponent<RenderMeshComponent>().mesh = tempMesh;
+			currentMesh.getComponent<RenderMeshComponent>().setMesh(tempMesh);
 
 			for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 

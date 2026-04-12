@@ -10,7 +10,7 @@ namespace OnYuu {
 	{
 		entt::entity id = reg->create();
 		reg->emplace<TagComponent>(id, "GameObject");
-		reg->emplace<Trasform>(id);
+		reg->emplace<Transform>(id);
 		reg->emplace<TreeComponent>(id);
 		return { id,this };
 	}
@@ -46,16 +46,11 @@ namespace OnYuu {
 		toInstantiate.clear();
 	}
 	void Scene::sendToRender() {
-		auto meshView = reg->view<RenderMeshComponent, Trasform, TreeComponent>();
+		auto meshView = reg->view<RenderMeshComponent, Transform, TreeComponent>();
 		for (auto [entity, meshComp, transform, treeComp] : meshView.each()) {
-			Trasform absoluteTransform = GameObject(entity, this).getAbsoluteTransform();
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, absoluteTransform.position);
-			model = glm::rotate(model, glm::radians(absoluteTransform.rotation.x), glm::vec3(1, 0, 0));
-			model = glm::rotate(model,glm::radians( absoluteTransform.rotation.y), glm::vec3(0, 1, 0));
-			model = glm::rotate(model,glm::radians( absoluteTransform.rotation.z), glm::vec3(0, 0, 1));
-			model = glm::scale(model, absoluteTransform.scale);
-			Render::getInstance()->addMeshRender(&meshComp, model);
+			Transform absoluteTransform = GameObject(entity, this).getAbsoluteTransform();
+
+			Render::getInstance()->addMeshRender(&meshComp, absoluteTransform.getModelMatrix());
 		}
 	}
 	void Scene::destroyEntities()
@@ -95,8 +90,8 @@ namespace OnYuu {
 		Render::getInstance()->BeginScene(editorCamera, renderTarget);
 		for (auto [entity, background] : backgroundView.each()) {
 			RenderMeshComponent backgroundMeshComp;
-			backgroundMeshComp.mesh = AssetManager::instance().getMeshPtr("squareMesh");
-			backgroundMeshComp.materialID = background.materialID;
+			backgroundMeshComp.setMesh(AssetManager::instance().getMeshPtr("squareMesh"));	
+			backgroundMeshComp.setMaterialID(background.materialID);
 			Render::getInstance()->addMeshRender(&backgroundMeshComp, glm::mat4(1.0f));
 			break;
 		}
@@ -141,9 +136,9 @@ namespace OnYuu {
 			Render::getInstance()->setSkyBox(&skybox);
 			break;
 		}
-		auto lightView = reg->view<LightComponent, Trasform>();
+		auto lightView = reg->view<LightComponent, Transform>();
 		for (auto [entity, lightComp, transform] : lightView.each()) {
-			Render::getInstance()->addLight(lightComp, transform.position);
+			Render::getInstance()->addLight(lightComp, transform.getPosition());
 		}
 
 		sendToRender();
@@ -169,16 +164,16 @@ namespace OnYuu {
 		return results;
 	}
 
-	std::pair<glm::vec3, glm::vec3> getAABB(const RenderMeshComponent& meshComp, const Trasform& transform) {
+	std::pair<glm::vec3, glm::vec3> getAABB(const RenderMeshComponent& meshComp, const Transform& transform) {
 		glm::vec3 minPoint(FLT_MAX);
 		glm::vec3 maxPoint(-FLT_MAX);
-		for (const auto& vertex : meshComp.mesh->position) {
+		for (const auto& vertex : meshComp.getMesh()->position) {
 			glm::vec4 worldVertex = glm::vec4(vertex, 1.0f);
-			worldVertex = glm::translate(glm::mat4(1.0f), transform.position) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.x), glm::vec3(1, 0, 0)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.y), glm::vec3(0, 1, 0)) *
-				glm::rotate(glm::mat4(1.0f), glm::radians(transform.rotation.z), glm::vec3(0, 0, 1)) *
-				glm::scale(glm::mat4(1.0f), transform.scale) *
+			worldVertex = glm::translate(glm::mat4(1.0f), transform.getPosition()) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.getRotation().x), glm::vec3(1, 0, 0)) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.getRotation().y), glm::vec3(0, 1, 0)) *
+				glm::rotate(glm::mat4(1.0f), glm::radians(transform.getRotation().z), glm::vec3(0, 0, 1)) *
+				glm::scale(glm::mat4(1.0f), transform.getScale()) *
 				worldVertex;
 			minPoint = glm::min(minPoint, glm::vec3(worldVertex));
 			maxPoint = glm::max(maxPoint, glm::vec3(worldVertex));
@@ -231,7 +226,7 @@ namespace OnYuu {
 			visited.insert(collider->obj->getID());
 			if (collider->colliteWith({ origin, direction })) {
 				hit = true;
-				float distance = glm::length(collider->obj->getAbsoluteTransform().position - origin);
+				float distance = glm::length(collider->obj->getAbsoluteTransform().getPosition() - origin);
 				if (distance < closestDistance) {
 					closestDistance = distance;
 					closestObject = GameObject(collider->obj->id, this);
@@ -239,13 +234,13 @@ namespace OnYuu {
 			}
 		}
 
-		for (auto&& [entity, meshComp, transform] : reg->view<RenderMeshComponent, Trasform>().each()) {
+		for (auto&& [entity, meshComp, transform] : reg->view<RenderMeshComponent, Transform>().each()) {
 			if (visited.count(entity)) { continue; }
-			if (!meshComp.mesh) continue; // Skip if mesh is not loaded)
+			if (!meshComp.getMesh()) continue; // Skip if mesh is not loaded)
 			visited.insert(entity);
 			auto [minPoint, maxPoint] = getAABB(meshComp, transform);
 			if (rayBoxIntersection(origin, direction, minPoint, maxPoint)) {
-				float distance = glm::length(transform.position - origin);
+				float distance = glm::length(transform.getPosition() - origin);
 				if (distance < closestDistance) {
 					closestDistance = distance;
 					closestObject = GameObject(entity, this);

@@ -40,17 +40,17 @@ namespace OnYuu {
     void BoxCollider::start() {
         if (obj->hasComponent<RenderMeshComponent>()) {
             auto& renderMeshComp = obj->getComponent<RenderMeshComponent>();
-            if (renderMeshComp.mesh) {
+            if (renderMeshComp.getMesh()) {
                 // Assumiamo che la mesh abbia dati di posizione per determinare width/height
-                if (!renderMeshComp.mesh->position.empty()) {
+                if (!renderMeshComp.getMesh()->position.empty()) {
                     // Calcola min/max in spazio locale
-                    float minX = renderMeshComp.mesh->position[0].x;
-                    float maxX = renderMeshComp.mesh->position[0].x;
-                    float minY = renderMeshComp.mesh->position[0].y;
-                    float maxY = renderMeshComp.mesh->position[0].y;
-                    float minZ = renderMeshComp.mesh->position[0].z;
-                    float maxZ = renderMeshComp.mesh->position[0].z;
-                    for (const auto& pos : renderMeshComp.mesh->position) {
+                    float minX = renderMeshComp.getMesh()->position[0].x;
+                    float maxX = renderMeshComp.getMesh()->position[0].x;
+                    float minY = renderMeshComp.getMesh()->position[0].y;
+                    float maxY = renderMeshComp.getMesh()->position[0].y;
+                    float minZ = renderMeshComp.getMesh()->position[0].z;
+                    float maxZ = renderMeshComp.getMesh()->position[0].z;
+                    for (const auto& pos : renderMeshComp.getMesh()->position) {
                         if (pos.x < minX) minX = pos.x;
                         if (pos.x > maxX) maxX = pos.x;
                         if (pos.y < minY) minY = pos.y;
@@ -85,9 +85,9 @@ namespace OnYuu {
         // =========================
         // Vecchia implementazione AABB (commentata, come richiesto)
         // =========================
-        // Trasform thisTransform = obj->getAbsoluteTransform();
+        // Transform thisTransform = obj->getAbsoluteTransform();
         // glm::mat4 thisMat = thisTransform.getModelMatrix();
-        // Trasform otherTransform = other->obj->getAbsoluteTransform();
+        // Transform otherTransform = other->obj->getAbsoluteTransform();
         // glm::mat4 otherMat = otherTransform.getModelMatrix();
         //
         // glm::vec3 thisCorners[8] = {
@@ -124,10 +124,10 @@ namespace OnYuu {
         // =========================
         // Nuova implementazione SAT (OBB vs OBB)
         // =========================
-        Trasform thisTransform = obj->getAbsoluteTransform();
+        Transform thisTransform = obj->getAbsoluteTransform();
         glm::mat4 thisMat = thisTransform.getModelMatrix();
 
-        Trasform otherTransform = other->obj->getAbsoluteTransform();
+        Transform otherTransform = other->obj->getAbsoluteTransform();
         glm::mat4 otherMat = otherTransform.getModelMatrix();
 
         glm::vec3 thisCenterLocal = (minPoint + maxPoint) * 0.5f;
@@ -227,7 +227,7 @@ namespace OnYuu {
         // =========================
         // Vecchia implementazione (AABB world-space) - commentata come richiesto
         // =========================
-        // Trasform transform = obj->getAbsoluteTransform();
+        // Transform transform = obj->getAbsoluteTransform();
         // glm::mat4 model = transform.getModelMatrix();
         //
         // glm::vec3 corners[8] = {
@@ -278,7 +278,7 @@ namespace OnYuu {
         // Nuova implementazione: Ray vs OBB
         // Trasformo il raggio in local-space del box e faccio slab test su min/max locali.
         // =========================
-        Trasform transform = obj->getAbsoluteTransform();
+        Transform transform = obj->getAbsoluteTransform();
         glm::mat4 model = transform.getModelMatrix();
         glm::mat4 invModel = glm::inverse(model);
 
@@ -323,10 +323,10 @@ namespace OnYuu {
 
     bool CircleCollider::colliteWith(Ray ray)
     {
-        Trasform transform = obj->getAbsoluteTransform();
-        glm::vec3 center = transform.position;
+        Transform transform = obj->getAbsoluteTransform();
+        glm::vec3 center = transform.getPosition();
 
-        float scaleFactor = std::max({ std::abs(transform.scale.x), std::abs(transform.scale.y), std::abs(transform.scale.z) });
+        float scaleFactor = std::max(std::abs(transform.getScale().x), std::max(std::abs(transform.getScale().y), std::abs(transform.getScale().z)));
         float radiusWorld = radius * scaleFactor;
 
         glm::vec3 m = ray.origin - center;
@@ -357,16 +357,16 @@ namespace OnYuu {
     void CircleCollider::start() {
 		if (obj->hasComponent<RenderMeshComponent>()) {
             auto& renderMeshComp = obj->getComponent<RenderMeshComponent>();
-            if (renderMeshComp.mesh) {
-                if (!renderMeshComp.mesh->position.empty()) {
+            if (renderMeshComp.getMesh()) {
+                if (!renderMeshComp.getMesh()->position.empty()) {
                     // Calcola raggio come distanza massima dal centro ai vertici
                     glm::vec3 center(0.0f);
-                    for (const auto& pos : renderMeshComp.mesh->position) {
+                    for (const auto& pos : renderMeshComp.getMesh()->position) {
                         center += pos;
                     }
-                    center /= static_cast<float>(renderMeshComp.mesh->position.size());
+                    center /= static_cast<float>(renderMeshComp.getMesh()->position.size());
                     float maxDistSq = 0.0f;
-                    for (const auto& pos : renderMeshComp.mesh->position) {
+                    for (const auto& pos : renderMeshComp.getMesh()->position) {
                         float distSq = glm::dot(pos - center, pos - center);
                         if (distSq > maxDistSq) {
                             maxDistSq = distSq;
@@ -382,12 +382,12 @@ namespace OnYuu {
     // CircleCollider::collideWith(BoxCollider*)
     // Placeholder: implementare collisione cerchio-box (invocare algoritmo con punto pi? vicino).
     bool CircleCollider::collideWith(BoxCollider* other) {
-        Trasform circleTransform = obj->getAbsoluteTransform();
-        glm::vec3 circleCenterWorld = circleTransform.position;
-        float circleScale = std::max({ std::abs(circleTransform.scale.x), std::abs(circleTransform.scale.y), std::abs(circleTransform.scale.z) });
+        Transform circleTransform = obj->getAbsoluteTransform();
+        glm::vec3 circleCenterWorld = circleTransform.getPosition();
+        float circleScale = std::max(std::abs(circleTransform.getScale().x), std::max(std::abs(circleTransform.getScale().y), std::abs(circleTransform.getScale().z)));
         float radiusWorld = radius * circleScale;
 
-        Trasform boxTransform = other->obj->getAbsoluteTransform();
+        Transform boxTransform = other->obj->getAbsoluteTransform();
         glm::mat4 boxModel = boxTransform.getModelMatrix();
         glm::mat4 invBoxModel = glm::inverse(boxModel);
 
@@ -408,14 +408,14 @@ namespace OnYuu {
     // CircleCollider::collideWith(CircleCollider*)
     // Placeholder: implementare collisione cerchio-cerchio (distance centers <= sum radii).
     bool CircleCollider::collideWith(CircleCollider* other) {
-        Trasform thisTransform = obj->getAbsoluteTransform();
-        Trasform otherTransform = other->obj->getAbsoluteTransform();
+        Transform thisTransform = obj->getAbsoluteTransform();
+        Transform otherTransform = other->obj->getAbsoluteTransform();
 
-        glm::vec3 thisCenter = thisTransform.position;
-        glm::vec3 otherCenter = otherTransform.position;
+        glm::vec3 thisCenter = thisTransform.getPosition();
+        glm::vec3 otherCenter = otherTransform.getPosition();
 
-        float thisScale = std::max({ std::abs(thisTransform.scale.x), std::abs(thisTransform.scale.y), std::abs(thisTransform.scale.z) });
-        float otherScale = std::max({ std::abs(otherTransform.scale.x), std::abs(otherTransform.scale.y), std::abs(otherTransform.scale.z) });
+        float thisScale = std::max(std::abs(thisTransform.getScale().x), std::max(std::abs(thisTransform.getScale().y), std::abs(thisTransform.getScale().z)));
+        float otherScale = std::max(std::abs(otherTransform.getScale().x), std::max(std::abs(otherTransform.getScale().y), std::abs(otherTransform.getScale().z)));
 
         float r1 = radius * thisScale;
         float r2 = other->radius * otherScale;

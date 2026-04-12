@@ -137,8 +137,8 @@ namespace OnYuu {
 				}
 
 				// rd.renderMesh->mesh è ora std::shared_ptr<Mesh>
-				if (!rd.renderMesh || !rd.renderMesh->mesh) continue;
-				Mesh* mesh = rd.renderMesh->mesh.get();
+				if (!rd.renderMesh || !rd.renderMesh->getMesh()) continue;
+				Mesh* mesh = rd.renderMesh->getMesh().get();
 				if (!mesh) continue;
 
 				if (meshGPUmap.find(mesh) == meshGPUmap.end()) {

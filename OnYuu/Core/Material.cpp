@@ -32,10 +32,6 @@ void Material::bind()
 		return;
 	}
 	shader->useShader();
-	
-	for (auto& [name, _] : alreadySet_) {
-		alreadySet_[name] = false; // Reset all uniforms to not set
-	}
 }
 void Material::apply()
 {

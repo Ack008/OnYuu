@@ -1157,7 +1157,7 @@ namespace OnYuu {
             // Group by mesh
             std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> meshInstances;
             for (const auto& renderData : batch) {
-                meshInstances[renderData.renderMesh->mesh].push_back(renderData.model);
+                meshInstances[renderData.renderMesh->getMesh()].push_back(renderData.model);
             }
 
             auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
@@ -1261,7 +1261,7 @@ namespace OnYuu {
                 imageInfos.push_back(imgInfo);
             }
 
-            descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
+            //descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
         }
 
 

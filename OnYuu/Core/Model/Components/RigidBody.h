@@ -45,7 +45,7 @@ namespace OnYuu {
                 if (_useGravity && !m_isGrounded)
                     acceleration += glm::vec3(0.0f, -GRAVITY_ACCELERATION, 0.0f); // Apply gravity
                 velocity += acceleration * dt;
-                obj->getComponent<Trasform>().position += velocity * dt;
+                obj->getComponent<Transform>().setPosition(obj->getComponent<Transform>().getPosition() + velocity * dt);
                 acceleration = glm::vec3(0.0f); // Reset acceleration after each update
             }
             m_isGrounded = false;
@@ -61,13 +61,13 @@ namespace OnYuu {
 
             BoxCollider& mine = obj->getComponent<BoxCollider>();
             BoxCollider& otherBox = other->obj->getComponent<BoxCollider>();
-            Trasform& mineTransform = obj->getComponent<Trasform>();
-            Trasform& otherTransform = other->obj->getComponent<Trasform>();
+            Transform& mineTransform = obj->getComponent<Transform>();
+            Transform& otherTransform = other->obj->getComponent<Transform>();
 
-            glm::vec3 mineMin = mine.getMinPoint() * mineTransform.scale + mineTransform.position;
-            glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.scale + mineTransform.position;
-            glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.scale + otherTransform.position;
-            glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.scale + otherTransform.position;
+            glm::vec3 mineMin = mine.getMinPoint() * mineTransform.getScale() + mineTransform.getPosition();
+            glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.getScale() + mineTransform.getPosition();
+            glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.getScale() + otherTransform.getPosition();
+            glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.getScale() + otherTransform.getPosition();
 
             // Calcola le penetrazioni su ogni asse
             float overlapX = std::min(mineMax.x, otherMax.x) - std::max(mineMin.x, otherMin.x);
@@ -86,15 +86,15 @@ namespace OnYuu {
             }
             else {
                 // Collisione orizzontale
-                glm::vec3 delta = otherTransform.position - mineTransform.position;
+                glm::vec3 delta = otherTransform.getPosition() - mineTransform.getPosition();
                 normal = glm::vec3((delta.x > 0.0f) ? -1.0f : 1.0f, 0.0f, 0.0f);
             }
-            if (glm::dot(normal, otherTransform.position - mineTransform.position) > 0.0f)
+            if (glm::dot(normal, otherTransform.getPosition() - mineTransform.getPosition()) > 0.0f)
                 normal = -normal;
 
             // --- RISOLUZIONE DELLA PENETRAZIONE (push-out) ---
             float penetration = std::min(overlapX, overlapY);
-            mineTransform.position += normal * (penetration + 0.001f);
+            mineTransform.setPosition(mineTransform.getPosition() + normal * (penetration + 0.001f));
 
             // --- RIMBALZO (debounce) ---
             // Proietta la velocità sulla normale e inverte con il coefficiente di rimbalzo
@@ -112,13 +112,13 @@ namespace OnYuu {
 
             BoxCollider& mine = obj->getComponent<BoxCollider>();
             BoxCollider& otherBox = other->obj->getComponent<BoxCollider>();
-            Trasform& mineTransform = obj->getComponent<Trasform>();
-            Trasform& otherTransform = other->obj->getComponent<Trasform>();
+            Transform& mineTransform = obj->getComponent<Transform>();
+            Transform& otherTransform = other->obj->getComponent<Transform>();
 
-            glm::vec3 mineMin = mine.getMinPoint() * mineTransform.scale + mineTransform.position;
-            glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.scale + mineTransform.position;
-            glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.scale + otherTransform.position;
-            glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.scale + otherTransform.position;
+            glm::vec3 mineMin = mine.getMinPoint() * mineTransform.getScale() + mineTransform.getPosition();
+            glm::vec3 mineMax = mine.getMaxPoint() * mineTransform.getScale() + mineTransform.getPosition();
+            glm::vec3 otherMin = otherBox.getMinPoint() * otherTransform.getScale() + otherTransform.getPosition();
+            glm::vec3 otherMax = otherBox.getMaxPoint() * otherTransform.getScale() + otherTransform.getPosition();
 
             // Calcola le penetrazioni su ogni asse
             float overlapX = std::min(mineMax.x, otherMax.x) - std::max(mineMin.x, otherMin.x);
@@ -142,7 +142,7 @@ namespace OnYuu {
 
             // --- RISOLUZIONE DELLA PENETRAZIONE (push-out) ---
             float penetration = std::min(overlapX, overlapY);
-            mineTransform.position += normal * (penetration + 0.001f);
+            mineTransform.setPosition(mineTransform.getPosition() + normal * (penetration + 0.001f));
 
             // --- RIMBALZO (debounce) ---
             // Proietta la velocità sulla normale e inverte con il coefficiente di rimbalzo

@@ -73,7 +73,7 @@ namespace OnYuu {
 			auto camera = m_EditorLayer->m_editorCamera.getCamera();
 			glm::mat4 cameraView =  camera->getViewMatrix();
 			glm::mat4 cameraProjection = camera->getProjectionMatrix();
-			auto& tc = selectedObject.getComponent<Trasform>();
+			auto& tc = selectedObject.getComponent<Transform>();
 			glm::mat4 modelMatrix = tc.getModelMatrix();
 			ImGuizmo::OPERATION currentOperation = ImGuizmo::OPERATION::TRANSLATE;
 			switch (m_currentGizmoOperation) {
@@ -114,13 +114,13 @@ namespace OnYuu {
 
 				// Translate e Scale: decomposizione completa va bene
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(modelMatrix), translation, rotation, scale);
-				tc.position = { translation[0], translation[1], translation[2] };
-				tc.scale = { scale[0], scale[1], scale[2] };
+				tc.setPosition({ translation[0], translation[1], translation[2] });
+				tc.setScale({ scale[0], scale[1], scale[2] });
 
 				// Rotation: accumula il delta invece di ridecomporre
 				float dT[3], dR[3], dS[3];
 				ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(deltaMatrix), dT, dR, dS);
-				tc.rotation += glm::vec3(dR[0], dR[1], dR[2]);
+				tc.setRotation(tc.getRotation() + glm::vec3(dR[0], dR[1], dR[2]));
 			}
 
 				

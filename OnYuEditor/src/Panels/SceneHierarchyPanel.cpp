@@ -223,9 +223,9 @@ namespace OnYuu {
                         GameObject obj = m_Context->createEntity();
                         obj.getComponent<TagComponent>().tag = tag;
                         auto& rmc = obj.addComponent<RenderMeshComponent>();
-                        rmc.mesh = AssetManager::instance().getMeshPtr(meshKey);
-                        rmc.materialID = "default";
-                        rmc.renderingType = RenderingTypeEnum::TRIANGLE;
+                        rmc.setMesh(AssetManager::instance().getMeshPtr(meshKey));
+                        rmc.setMaterialID("default");
+                        rmc.setRenderingType(RenderingTypeEnum::TRIANGLE);
 
                     }
                     };
@@ -368,17 +368,17 @@ namespace OnYuu {
 				child.setFather(entity);
                 child.getComponent<TagComponent>().tag = "New Sphere";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
-                rmc.mesh = AssetManager::instance().getMeshPtr("sphere");
-                rmc.materialID = "default";
-				rmc.renderingType = RenderingTypeEnum::TRIANGLE;
+                rmc.setMesh(AssetManager::instance().getMeshPtr("sphere"));
+                rmc.setMaterialID("default");
+				rmc.setRenderingType(RenderingTypeEnum::TRIANGLE);
             }
             if (ImGui::MenuItem("Create cube ")) {
                 GameObject child = m_Context->createEntity();
                 child.setFather(entity);
                 child.getComponent<TagComponent>().tag = "New Cube";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
-                rmc.mesh = AssetManager::instance().getMeshPtr("cube");
-                rmc.materialID = "default";
+                rmc.setMesh(AssetManager::instance().getMeshPtr("cube"));
+                rmc.setMaterialID("default");
             }
 
             if (ImGui::MenuItem("Create quad ")) {
@@ -386,8 +386,8 @@ namespace OnYuu {
                 child.setFather(entity);
                 child.getComponent<TagComponent>().tag = "New Quad";
                 auto& rmc = child.addComponent<RenderMeshComponent>();
-                rmc.mesh = AssetManager::instance().getMeshPtr("quad");
-                rmc.materialID = "default";
+                rmc.setMesh(AssetManager::instance().getMeshPtr("quad"));
+                rmc.setMaterialID("default");
 			}
 
             ImGui::PushStyleColor(ImGuiCol_Text, Theme::Danger);
@@ -399,10 +399,11 @@ namespace OnYuu {
         }
 
         if (opened) {
-            for (auto child : entity.getComponent<TreeComponent>().obj)
+            auto& children = entity.getComponent<TreeComponent>().obj;
+            for (std::size_t i = 0; i < children.size(); ++i)
             {
-                DrawEntityNode(child);
-			}
+                DrawEntityNode(children[i]);
+            }
             ImGui::TreePop();
         }
 
@@ -597,11 +598,17 @@ namespace OnYuu {
         ImGui::Spacing();
 
         // ── Transform ──────────────────────────────────────────────────────────
-        DrawComponent<Trasform>("\xef\x81\xb6", "Transform", entity, [](auto& c)
+        DrawComponent<Transform>("\xef\x81\xb6", "Transform", entity, [](auto& c)
             {
-                DrawVec3Control("Position", c.position);
-                DrawVec3Control("Rotation", c.rotation);
-                DrawVec3Control("Scale", c.scale, 1.0f);
+                glm::vec3 position = c.getPosition();
+                glm::vec3 rotation = c.getRotation();
+                glm::vec3 scale = c.getScale();
+                DrawVec3Control("Position", position);
+                DrawVec3Control("Rotation", rotation);
+                DrawVec3Control("Scale", scale, 1.0f);
+                c.setPosition(position);
+                c.setRotation(rotation);
+                c.setScale(scale);
             }, { 0.55f, 0.88f, 0.45f, 1.f });
 
         // ── Cameras ────────────────────────────────────────────────────────────
@@ -623,14 +630,15 @@ namespace OnYuu {
                 // Mesh row
                 ImGui::TextColored(Theme::TextDim, "Mesh");
                 ImGui::SameLine(96.f);
-                if (c.mesh) {
+                if (c.getMesh()) {
                     BadgeText("  Loaded  ", { 0.22f,0.55f,0.28f,1.f });
                     ImGui::SameLine();
                     ImGui::PushStyleColor(ImGuiCol_Button, Theme::Danger);
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Theme::DangerHover);
                     if (ImGui::SmallButton("Unload")) {
-                        c.mesh = nullptr;
-                        c.materialID = "";
+                        c.setMesh(nullptr);
+                        c.setMaterialID("");
+                        c.setRenderingType(RenderingTypeEnum::TRIANGLE);    
                     }
                     ImGui::PopStyleColor(2);
                 }
@@ -640,25 +648,24 @@ namespace OnYuu {
                     if (ImGui::SmallButton("Load")) { /* TODO */ }
                 }
 
-                if (!c.mesh) return;
+                if (!c.getMesh()) return;
 
                 ImGui::Spacing();
 
                 // Rendering type
                 const char* rtLabel =
-                    c.renderingType == RenderingTypeEnum::TRIANGLE ? "Triangle" :
-                    c.renderingType == RenderingTypeEnum::LINE ? "Line" :
-                    c.renderingType == RenderingTypeEnum::TRIANGLE_FAN ? "Triangle Fan" :
-                    c.renderingType == RenderingTypeEnum::TRIANGLE_STRIP ? "Triangle Strip" : "Unknown";
-
+                    c.getRenderingType() == RenderingTypeEnum::TRIANGLE ? "Triangle" :
+                    c.getRenderingType() == RenderingTypeEnum::LINE ? "Line" :
+                    c.getRenderingType() == RenderingTypeEnum::TRIANGLE_FAN ? "Triangle Fan" :
+                    c.getRenderingType() == RenderingTypeEnum::TRIANGLE_STRIP ? "Triangle Strip" : "Unknown";
                 ImGui::TextColored(Theme::TextDim, "Topology");
                 ImGui::SameLine(80.f);
                 ImGui::SetNextItemWidth(-1.f);
                 if (ImGui::BeginCombo("##RenderingType", rtLabel))
                 {
                     auto sel = [&](const char* label, RenderingTypeEnum val) {
-                        bool s = c.renderingType == val;
-                        if (ImGui::Selectable(label, s)) c.renderingType = val;
+                        bool s = c.getRenderingType() == val;
+                        if (ImGui::Selectable(label, s)) c.setRenderingType(val);
                         if (s) ImGui::SetItemDefaultFocus();
                         };
                     sel("Triangle", RenderingTypeEnum::TRIANGLE);
@@ -672,7 +679,7 @@ namespace OnYuu {
                 ImGui::Spacing();
                 ImGui::Button( "Material");
                 ImGui::SameLine(150.f);
-                if (c.materialID.empty()) {
+                if (c.getMaterialID().empty()) {
                     BadgeText("  None  ", { 0.45f,0.20f,0.20f,1.f });
                     // DRAG AND DROP TARGET
                     if (ImGui::BeginDragDropTarget())
@@ -695,7 +702,7 @@ namespace OnYuu {
 
                                 if (AssetManager::instance().createMaterialFromMetadata(materialKey))
                                 {
-                                    c.materialID = materialKey;
+                                    c.setMaterialID(materialKey);
                                 }
                             }
                             else
@@ -707,7 +714,7 @@ namespace OnYuu {
                     }
                     return;
                 }
-                BadgeText(c.materialID.c_str(), {0.22f,0.45f,0.65f,1.f});
+                BadgeText(c.getMaterialID().c_str(), {0.22f,0.45f,0.65f,1.f});
                 // DRAG AND DROP TARGET
                 if (ImGui::BeginDragDropTarget())
                 {
@@ -729,7 +736,7 @@ namespace OnYuu {
 
                             if (AssetManager::instance().createMaterialFromMetadata(materialKey))
                             {
-                                c.materialID = materialKey;
+                                c.setMaterialID(materialKey);
                             }
                         }
                         else
@@ -744,7 +751,7 @@ namespace OnYuu {
                 ImGui::SetNextItemWidth(-1.f);
                 if (ImGui::BeginCombo("##MaterialValues", "\xef\x83\xa6  Material Properties"))
                 {
-                    auto  mat = AssetManager::instance().getMaterialPtr(c.materialID);
+                    auto  mat = AssetManager::instance().getMaterialPtr(c.getMaterialID());
                     auto& uniforms = mat->getUniforms();
                     for (auto& [name, value] : uniforms)
                     {
