@@ -187,10 +187,16 @@ namespace OnYuu {
 
     bool VulkanRender::initializeInstance() {
         vkb::InstanceBuilder builder;
+#ifdef DEBUG
+
+        bool enableValidation = true;
+#else
+		bool enableValidation = false;
+#endif // DEBUG
 
         auto instRet = builder
             .set_app_name("OnYuu Engine")
-            .request_validation_layers(true)
+            .request_validation_layers(enableValidation)
             .use_default_debug_messenger()
             .require_api_version(1, 3, 0)
             .build();
@@ -1044,6 +1050,9 @@ namespace OnYuu {
             updateSceneDescriptors(static_cast<int>(i));
         }
 
+        // Finalize all indirect buffers once per frame
+        indirectDrawManager_->finalizeAll(currentFrame_);
+
         // Update materials
         std::unordered_set<std::shared_ptr<Material>> usedMaterials;
         for (const auto& scene : renderScenes) {
@@ -1201,9 +1210,6 @@ namespace OnYuu {
             }
         }
 
-        // Finalize all indirect buffers
-        indirectDrawManager_->finalizeAll(currentFrame_);
-
         // Upload model matrices
         if (!allModelMatrices.empty()) {
             sceneRes.modelMatrixSsbos[currentFrame_]->setData(
@@ -1219,8 +1225,7 @@ namespace OnYuu {
 
         // Ensure the material has a fresh view of its uniforms/textures before we
         // read the texture list for descriptor updates.
-        material->apply();
-        material->bind();
+      
 
         // Initialize resources if needed
         if (matRes.descriptorSets.empty()) {
@@ -1242,7 +1247,6 @@ namespace OnYuu {
                     matRes.ubos[i]->getVulkanBuffer(), uboSize);
             }
         }
-
         const auto& textures = material->getTextures();
         if (!textures.empty() && !matRes.descriptorSets.empty()) {
             std::vector<VkDescriptorImageInfo> imageInfos;
@@ -1259,6 +1263,7 @@ namespace OnYuu {
 
             descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
         }
+
 
         // Update material properties - only update UBO data, NOT descriptor sets
         auto shader = static_cast<VulkanShader*>(material->getShader().get());

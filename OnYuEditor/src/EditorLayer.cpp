@@ -67,7 +67,9 @@ void EditorLayer::onImGuiRender()
 		}
 		ImGui::EndMainMenuBar();
 	}
-
+	ImGui::Begin("Stats");
+	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+	ImGui::End();
 	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
     // because it would be confusing to have two docking targets within each others.
     ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
