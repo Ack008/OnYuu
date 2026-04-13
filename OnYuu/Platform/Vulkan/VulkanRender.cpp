@@ -1261,7 +1261,7 @@ namespace OnYuu {
                 imageInfos.push_back(imgInfo);
             }
 
-            //descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
+            descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
         }
 
 

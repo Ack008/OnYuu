@@ -270,7 +270,7 @@ namespace OnYuu {
                     std::filesystem::path shaderPath = ImGuiFileDialog::Instance()->GetFilePathName();
                     auto metaShader = AssetManager::instance().addShader(shaderPath.string());
                     if (metaShader && metaShader->getShader() && !pendingImportedMeshPath.empty()) {
-                        GameObject importedRoot = MeshImporter::instance().importMesh(pendingImportedMeshPath.string(), m_Context.get(), metaShader->getShader());
+                        GameObject importedRoot = MeshImporter::instance().importMesh(pendingImportedMeshPath.string(), m_Context.get(), shaderPath.string());
                         if (importedRoot) {
                             m_SelectionContext = importedRoot;
                         }

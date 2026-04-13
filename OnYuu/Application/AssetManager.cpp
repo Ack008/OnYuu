@@ -771,7 +771,7 @@ void vertexMain()
             }
         }
 
-        addMaterial(materialName, material)->set("color", glm::vec4(1,0,1,1));
+        addMaterial(materialName, material);
         return true;
     }
 

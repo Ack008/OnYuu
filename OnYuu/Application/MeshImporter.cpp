@@ -13,7 +13,7 @@ namespace OnYuu {
 		static MeshImporter mgr;
 		return mgr;
 	}
-	GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, std::shared_ptr<Shader> shader)
+	GameObject MeshImporter::importMesh(const std::string& filePath, Scene* scene_, std::string shaderID)
 	{
 		std::vector<GameObject> mymesh;
 		Assimp::Importer importer;
@@ -60,12 +60,12 @@ namespace OnYuu {
 			std::string name = fileStem + "_" + meshBaseName + "_" + std::to_string(nm);
 
 			mymesh[nm].getComponent<TagComponent>().tag = name;
-			std::shared_ptr<Material> mat = AssetManager::instance().addMaterial(name, std::make_shared<Material>(shader));
+			std::shared_ptr<Material> mat = AssetManager::instance().addMaterial(name, std::make_shared<Material>(shaderID));
 			// Read mtl file vertex data
 
 			if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_AMBIENT, color))
 			{
-				mat->set("material.ambient", glm::vec3(color.r, color.g, color.b));
+				mat->set("ambient", glm::vec3(color.r, color.g, color.b));
 			}
 			else
 			{
@@ -73,24 +73,24 @@ namespace OnYuu {
 			}
 			if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_DIFFUSE, color))
 			{
-				mat->set("material.diffuse", glm::vec3(color.r, color.g, color.b));
+				mat->set("diffuse", glm::vec3(color.r, color.g, color.b));
 			}
 			else
 			{
-				mat->set("material.diffuse", glm::vec3(1.0, 0.2, 0.1));
+				mat->set("diffuse", glm::vec3(1.0, 0.2, 0.1));
 			}
 			if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_SPECULAR, color))
 			{
-				mat->set("material.specular", glm::vec3(color.r, color.g, color.b));
+				mat->set("specular", glm::vec3(color.r, color.g, color.b));
 			}
 			else
 			{
 				printf("Errore in specular \n");
-				mat->set("material.specular", glm::vec3(0.5, 0.5, 0.5));
+				mat->set("specular", glm::vec3(0.5, 0.5, 0.5));
 			}
 			if (aiReturn_SUCCESS == material->Get(AI_MATKEY_SHININESS_STRENGTH, value))
 			{
-				mat->set("material.shininess", value);
+				mat->set("shininess", value);
 			}
 			else
 			{

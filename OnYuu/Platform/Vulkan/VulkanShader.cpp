@@ -7,6 +7,11 @@
 #include "spirv_cross/spirv_glsl.hpp"
 #include <iostream>
 #include <shaderc/shaderc.hpp>
+#ifdef _DEBUG
+#define LOG(x) std::cout << x
+#else
+#define LOG(x)
+#endif
 namespace OnYuu {
 	std::vector<char> compileToSPIRV_char(const std::string& source, shaderc_shader_kind kind) {
 		shaderc::Compiler compiler;
@@ -59,7 +64,7 @@ namespace OnYuu {
 	{
 		for (const auto& [name, offset] : uniformData)
 		{
-			std::cout << "Uniform: " << name << " Offset: " << offset << "\n";
+			LOG( "Uniform: " << name << " Offset: " << offset << "\n");
 		}
 
 	}
@@ -99,19 +104,19 @@ namespace OnYuu {
 		{
 			uint32_t set = glsl.get_decoration(ub.id, spv::DecorationDescriptorSet);
 			uint32_t binding = glsl.get_decoration(ub.id, spv::DecorationBinding);
-			std::cout << "SPIR-V UBO: name=\"" << ub.name << "\" set=" << set << " binding=" << binding
-				<< " type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n";
+			LOG( "SPIR-V UBO: name=\"" << ub.name << "\" set=" << set << " binding=" << binding
+				<< " type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n");
 
 			if (set == 1)
 			{
-				std::cout << "UBO: name=\"" << ub.name << "\" type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n";
+				LOG( "UBO: name=\"" << ub.name << "\" type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n");
 
 				// usa base_type_id se presente: è il struct reale che contiene i nomi dei membri
 				uint32_t inspect_id = ub.base_type_id ? ub.base_type_id : ub.type_id;
 				auto type = glsl.get_type(inspect_id);
-				std::cout << "  member count = " << type.member_types.size() << "\n";
+				LOG( "  member count = " << type.member_types.size() << "\n");
 				size_t bufferSize = glsl.get_declared_struct_size(type);
-				std::cout << "Buffer size = " << bufferSize << " bytes\n";
+				LOG( "Buffer size = " << bufferSize << " bytes\n");
 				uniformBuffer.resize(bufferSize, 0);
 				for (uint32_t member_index = 0; member_index < type.member_types.size(); ++member_index)
 				{
@@ -119,7 +124,7 @@ namespace OnYuu {
 					auto member_type = glsl.get_type(member_type_id);
 					std::string member_name = glsl.get_member_name(inspect_id, member_index); // <-- usa inspect_id
 					size_t offset = glsl.type_struct_member_offset(type, member_index);
-					std::cout << "  Membro " << member_index
+					LOG("  Membro " << member_index
 						<< " nome: \"" << member_name << "\""
 						<< " type_id=" << member_type_id
 						<< " basetype=" << static_cast<int>(member_type.basetype)
@@ -128,7 +133,7 @@ namespace OnYuu {
 						<< " array dims=" << member_type.array.size()
 						<< " nested members=" << member_type.member_types.size()
 						<< " offset=" << offset
-						<< "\n";
+						<< "\n");
 					uniformData[member_name] = offset;
 					// aggiorno la size dei material
 
@@ -140,7 +145,7 @@ namespace OnYuu {
 						auto nested_type = glsl.get_type(nested_id);
 						for (uint32_t n = 0; n < nested_type.member_types.size(); ++n)
 						{
-							std::cout << "    nested [" << n << "] name=\"" << glsl.get_member_name(nested_id, n) << "\"\n";
+							LOG("    nested [" << n << "] name=\"" << glsl.get_member_name(nested_id, n) << "\"\n");
 						}
 					}
 					// Calcola la dimensione del buffer materiale
@@ -159,7 +164,7 @@ namespace OnYuu {
 		if (initialized)
 		{
 			
-			std::cout << "Destroying VulkanShader\n";
+			LOG( "Destroying VulkanShader\n");
 			// Distruzione dei moduli shader
 			if (vertexShaderModule != VK_NULL_HANDLE) {
 				vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, vertexShaderModule, nullptr);
@@ -188,7 +193,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, 16 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 
 	}
@@ -201,7 +206,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, &value, sizeof(int));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 
 	}
@@ -214,7 +219,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, &value, sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 
@@ -226,7 +231,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, 2 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 
@@ -238,7 +243,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, 3 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG("Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 
@@ -250,7 +255,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, 4 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG("Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 
@@ -262,7 +267,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, 9 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 
@@ -274,7 +279,7 @@ namespace OnYuu {
 			std::memcpy(uniformBuffer.data() + offset, value, count * 16 * sizeof(float));
 		}
 		else {
-			std::cerr << "Warning: uniform '" << name << "' not found in shader.\n";
+			LOG( "Warning: uniform '" << name << "' not found in shader.\n");
 		}
 	}
 

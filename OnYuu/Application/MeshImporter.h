@@ -14,6 +14,6 @@ public:
 	// Importa un modello 3D da file e crea un GameObject con MeshComponent.
 	// 'filePath' è il percorso del file del modello.
 	// Ritorna il GameObject creato.
-	GameObject importMesh(const std::string& filePath, Scene* scene_, std::shared_ptr<Shader> shader);
+	GameObject importMesh(const std::string& filePath, Scene* scene_, std::string shaderID);
 };
 } // namespace OnYuu
