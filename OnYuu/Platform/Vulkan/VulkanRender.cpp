@@ -1170,7 +1170,6 @@ namespace OnYuu {
             if (!vulkanShader) continue;
 
             const uint32_t singleMaterialSize = static_cast<uint32_t>(vulkanShader->getUniformBuffer().size() * sizeof(uint8_t));
-            if (singleMaterialSize == 0) continue;
 
             bool hasNewMaterialSlot = false;
             for (const auto& mat : materials) {
@@ -1185,10 +1184,7 @@ namespace OnYuu {
                 }
             }
 
-            if (!hasNewMaterialSlot && !isOneMaterialDirty(materials)) {
-                continue;
-            }
-
+          
             std::vector<uint8_t> materialData(SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, 0);
             uint32_t maxUsedIndex = 0;
             bool hasAnyMaterial = false;

@@ -728,7 +728,7 @@ layout(set = 0,binding = 2) uniform LightBindings {
 struct ObjectData {
     mat4 model;
     uint materialIndex;
-    
+    uint texturesCount;
 };
 // SSBO globale
 layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
