@@ -72,7 +72,6 @@ namespace OnYuu {
 		static API getAPI() {
 			return api;
 		}
-	public:
 		void static init() {
 			s_instance = create();
 		}
@@ -84,6 +83,7 @@ namespace OnYuu {
 		// Mappa che associa Mesh (dati CPU) alla struttura che gestisce le risorse
 		// GPU (VBO, IBO, VAO, ecc.). Questo permette di riutilizzare buffer GPU
 		// quando più mesh condividono la stessa geometria.
+		bool SceneMaterialChanged = false;
 	private:
 		glm::mat4 cameraMatrix;
 		Camera* currentCamera = nullptr;

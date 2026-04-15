@@ -11,7 +11,7 @@
 #include <iostream>
 #include <array>
 #include <unordered_set>
-
+#define SUPPORTED_MATERIALS_PER_SHADER 5000
 namespace OnYuu {
 
     namespace {
@@ -46,26 +46,26 @@ namespace OnYuu {
         if (!initializeInstance()) {
             throw std::runtime_error("Failed to initialize Vulkan instance");
         }
-        LOG( << "✓ Instance created\n");
+        LOG( << "? Instance created\n");
 
         // STEP 2: Surface
         if (!initializeSurface()) {
             throw std::runtime_error("Failed to initialize surface");
         }
-        LOG( << "✓ Surface created\n");
+        LOG( << "? Surface created\n");
 
         // STEP 3: Device
         device_ = std::make_unique<VulkanDevice>();
         if (!device_->initialize(instance_, surface_)) {
             throw std::runtime_error("Failed to initialize Vulkan device");
         }
-        LOG( << "✓ Device created\n");
+        LOG( << "? Device created\n");
 
         // STEP 4: Allocator (BEFORE swapchain for depth buffer)
         if (!initializeAllocator()) {
             throw std::runtime_error("Failed to initialize VMA allocator");
         }
-        LOG( << "✓ VMA allocator created\n");
+        LOG( << "? VMA allocator created\n");
 
         // STEP 5: Swapchain TEMPORANEA (per ottenere il format)
         swapchain_ = std::make_unique<VulkanSwapchain>(device_.get());
@@ -75,26 +75,26 @@ namespace OnYuu {
         if (!swapchain_->create(surface_, renderPass_, depthImageView_, swapConfig)) {
             throw std::runtime_error("Failed to create temporary swapchain");
         }
-        LOG( << "✓ Temporary swapchain created (format: " << swapchain_->getFormat() << ")\n");
+        LOG( << "? Temporary swapchain created (format: " << swapchain_->getFormat() << ")\n");
 
         // STEP 6: Depth resources (usa extent dalla swapchain)
         if (!createDepthResources()) {
             throw std::runtime_error("Failed to create depth resources");
         }
-        LOG( << "✓ Depth resources created\n");
+        LOG( << "? Depth resources created\n");
 
         // STEP 7: Render pass (USA il format dalla swapchain!)
         if (!createRenderPass()) {
             throw std::runtime_error("Failed to create render pass");
         }
-        LOG( << "✓ Render pass created\n");
+        LOG( << "? Render pass created\n");
 
         // STEP 8: Ricrea swapchain CON render pass
         swapchain_->shutdown(); // Distruggi temporanea
         if (!swapchain_->create(surface_, renderPass_, depthImageView_, swapConfig)) {
             throw std::runtime_error("Failed to create final swapchain");
         }
-        LOG( << "✓ Final swapchain created with " << swapchain_->getImageCount() << " images\n");
+        LOG( << "? Final swapchain created with " << swapchain_->getImageCount() << " images\n");
 
         uint32_t frameCount = swapchain_->getImageCount();
         // STEP 12: Descriptor manager
@@ -102,26 +102,26 @@ namespace OnYuu {
         if (!descriptorManager_->initialize()) {
             throw std::runtime_error("Failed to initialize descriptor manager");
         }
-        LOG( << "✓ Descriptor manager initialized\n");
+        LOG( "Descriptor manager initialized\n");
         // STEP 9: Descriptor layouts
         if (!createDescriptorLayouts()) {
             throw std::runtime_error("Failed to create descriptor layouts");
         }
-        LOG( << "✓ Descriptor layouts created\n");
+        LOG( "Descriptor layouts created\n");
 
         // STEP 10: Command manager
         commandManager_ = std::make_unique<VulkanCommandManager>(device_.get());
         if (!commandManager_->initialize(device_->getGraphicsQueueFamily(), frameCount)) {
             throw std::runtime_error("Failed to initialize command manager");
         }
-        LOG( << "✓ Command manager initialized (" << frameCount << " buffers)\n");
+        LOG( "Command manager initialized (" << frameCount << " buffers)\n");
 
         // STEP 11: Sync manager
         syncManager_ = std::make_unique<VulkanSyncManager>(device_.get());
         if (!syncManager_->initialize(MAX_FRAMES_IN_FLIGHT, frameCount)) {
             throw std::runtime_error("Failed to initialize sync manager");
         }
-        LOG( << "✓ Sync manager initialized (" << MAX_FRAMES_IN_FLIGHT << " frames)\n");
+        LOG( " Sync manager initialized(" << MAX_FRAMES_IN_FLIGHT << " frames)\n");
 
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(swapchain_->getImageCount());
@@ -153,13 +153,13 @@ namespace OnYuu {
 
         // STEP 13: Pipeline manager
         pipelineManager_ = std::make_unique<VulkanPipelineManager>(device_.get());
-        LOG( << "✓ Pipeline manager initialized\n");
+        LOG("Pipeline manager initialized\n");
 
         // STEP 14: Geometry pool e indirect draw
         geometryPool_ = std::make_shared<GeometryPool>(allocator_, this, 128 * 1024 * 1024);
         indirectDrawManager_ = std::make_shared<IndirectDrawManager>(allocator_, MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            LOG(<< "Frame " << i << " - Image Available Semaphore: " << imageAvailableSemaphores[i]
+            LOG("Frame " << i << " - Image Available Semaphore: " << imageAvailableSemaphores[i]
                 << ", In Flight Fence: " << inFlightFences[i] << "\n");
         }
         for (size_t i = 0; i < swapchain_->getImageCount(); i++) {
@@ -168,7 +168,7 @@ namespace OnYuu {
         for (size_t i = 0; i < imagesInFlight.size(); i++) {
             LOG(<< "Swapchain Image " << i << " - In Flight Fence: " << imagesInFlight[i] << "\n");
         }
-        LOG( << "✓ Geometry pool and indirect draw manager initialized\n");
+        LOG( << "Geometry pool and indirect draw manager initialized\n");
 
         LOG( << "=== VulkanRender Initialization Complete ===\n\n");
 
@@ -253,7 +253,7 @@ namespace OnYuu {
 
         // Color attachment
         VkAttachmentDescription colorAttachment{};
-        colorAttachment.format = swapchainFormat; // ← USA FORMAT DALLA SWAPCHAIN!
+        colorAttachment.format = swapchainFormat; // ? USA FORMAT DALLA SWAPCHAIN!
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -423,7 +423,7 @@ namespace OnYuu {
         // Binding 0: Material properties UBO
         VkDescriptorSetLayoutBinding materialBinding{};
         materialBinding.binding = 0;
-        materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        materialBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         materialBinding.descriptorCount = 1;
         materialBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         materialBindings.push_back(materialBinding);
@@ -548,7 +548,7 @@ namespace OnYuu {
 
         LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
         
-        // ✅ STEP 0: Processa le invalidazioni differite dal frame precedente
+        // ? STEP 0: Processa le invalidazioni differite dal frame precedente
         if (!pendingMaterialInvalidations_.empty()) {
             LOG(<< "  0. Processing " << pendingMaterialInvalidations_.size() << " pending material invalidations...\n");
             device_->waitIdle();
@@ -571,7 +571,7 @@ namespace OnYuu {
                 }
             }
             pendingMaterialInvalidations_.clear();
-            LOG(<< "     ✓ Pending invalidations processed\n");
+            LOG(<< "     ? Pending invalidations processed\n");
         }
         
         vkWaitForFences(device_->getDevice(), 1, &inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
@@ -635,7 +635,7 @@ namespace OnYuu {
             std::cerr << " Failed to begin command buffer!\n";
             return;
         }
-        isFrameRecording_ = true; // ← Frame è in recording
+        isFrameRecording_ = true; // ? Frame è in recording
         LOG( << "  Command buffer recording started\n");
 
 		// Step 6: Begin render pass
@@ -660,7 +660,7 @@ namespace OnYuu {
             for (int index : indices) {
                 LOG( << "       Rendering scene " << index << " to target...\n");
                 renderScene(cmd, index);
-                LOG( << "         ✓ Scene rendered to target\n");
+                LOG( << "         ? Scene rendered to target\n");
 			}
             endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
 			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -672,7 +672,7 @@ namespace OnYuu {
         for (int index : swapChainRenderedScenes) {
             LOG( << "       Rendering scene " << index << " to swapchain...\n");
             renderScene(cmd, index);
-            LOG( << "         ✓ Scene rendered to swapchain\n");
+            LOG( << "         ? Scene rendered to swapchain\n");
 		}
 
         // Step 7: Render scenes
@@ -682,7 +682,7 @@ namespace OnYuu {
         else {
             LOG( << "  7. Rendering " << renderScenes.size() << " scene(s)...\n");
             //renderScene(cmd, static_cast<int>(i));
-            LOG( << "     ✓ All scenes rendered\n");
+            LOG( << "     ? All scenes rendered\n");
         }
 
         if (frameNumber % 60 == 0) {
@@ -702,19 +702,19 @@ namespace OnYuu {
         LOG(<< "  1. Ending render pass...\n");
         //endRenderPass(cmd);
         endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
-        LOG(<< "     ✓ Render pass ended\n");
+        LOG(<< "     ? Render pass ended\n");
         sceneTarget.clear();
         swapChainRenderedScenes.clear();
         
         // Step 2: End command buffer
         LOG(<< "  2. Ending command buffer...\n");
         if (!commandManager_->end(currentFrame_)) {
-            std::cerr << "     ✗ Failed to end command buffer!\n";
-            isFrameRecording_ = false; // ← Frame non è più in recording
+            std::cerr << "     ? Failed to end command buffer!\n";
+            isFrameRecording_ = false; // ? Frame non è più in recording
             return;
         }
-        isFrameRecording_ = false; // ← Frame non è più in recording
-        LOG(<< "     ✓ Command buffer recording ended\n");
+        isFrameRecording_ = false; // ? Frame non è più in recording
+        LOG(<< "     ? Command buffer recording ended\n");
 
         const auto& frameSync = syncManager_->getFrameSync(currentFrame_);
         const auto& imageSync = syncManager_->getImageSync(imageIndex_);
@@ -723,7 +723,7 @@ namespace OnYuu {
         LOG(<< "  3. Submitting to graphics queue...\n");
         VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame_] };
         VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[imageIndex_] };
-        // ✅ USE IMAGE SYNC!
+        // ? USE IMAGE SYNC!
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
         VkSubmitInfo submitInfo{};
@@ -739,10 +739,10 @@ namespace OnYuu {
         // Segnala sia frame fence che image fence
         VkResult submitResult = vkQueueSubmit(device_->getGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame_]);
         if (submitResult != VK_SUCCESS) {
-            std::cerr << "     ✗ Failed to submit draw command buffer! Result: " << submitResult << "\n";
+            std::cerr << "     ? Failed to submit draw command buffer! Result: " << submitResult << "\n";
             return;
         }
-        LOG(<< "     ✓ Command buffer submitted\n");
+        LOG(<< "     ? Command buffer submitted\n");
 
         // Step 5: Present
         LOG(<< "  5. Presenting image " << imageIndex_ << "...\n");
@@ -753,20 +753,20 @@ namespace OnYuu {
             swapchainNeedsRecreate_ = true;
         }
         else if (result != VK_SUCCESS) {
-            std::cerr << "     ✗ Failed to present! Result: " << result << "\n";
+            std::cerr << "     ? Failed to present! Result: " << result << "\n";
         }
         else {
             if (hasFramebufferResize()) {
                 LOG(<< "     ! Framebuffer size changed, scheduling swapchain recreate\n");
                 swapchainNeedsRecreate_ = true;
             }
-            LOG(<< "     ✓ Image presented successfully\n");
+            LOG(<< "     ? Image presented successfully\n");
         }
 
         // Step 6: Advance frame
         uint32_t oldFrame = currentFrame_;
         currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
-        LOG(<< "  6. Advanced frame: " << oldFrame << " → " << currentFrame_ << "\n");
+        LOG(<< "  6. Advanced frame: " << oldFrame << " ? " << currentFrame_ << "\n");
 
         // Step 7: Clear scenes
         renderScenes.clear();
@@ -943,12 +943,12 @@ namespace OnYuu {
 
     void VulkanRender::renderScene(VkCommandBuffer cmd, int sceneIndex) {
         if (sceneIndex < 0 || sceneIndex >= static_cast<int>(renderScenes.size())) {
-            LOG( << "       [renderScene] Invalid scene index: " << sceneIndex << "\n");
+            LOG( "[renderScene] Invalid scene index: " << sceneIndex << "\n");
             return;
         }
 
         RenderScene& scene = renderScenes[sceneIndex];
-        LOG( << "       [renderScene] Scene has " << scene.batches.size() << " batches\n");
+        LOG( "[renderScene] Scene has " << scene.batches.size() << " batches\n");
 
         auto& sceneRes = sceneResources_[sceneIndex];
 
@@ -957,19 +957,55 @@ namespace OnYuu {
             return;
         }
 
-        int batchNum = 0;
+		// Raggruppa i batch per pipeline (shader + rendering type + formati di attachment)
+		std::unordered_map<PipelineKey, std::unordered_map<BatchCouple, std::vector<BatchRender::RenderData>, BatchCoupleHash>, PipelineKeyHash> shadersBatches;
         for (const auto& [key, batch] : scene.batches) {
-            batchNum++;
+            PipelineKey pipelineKey{ 
+                key.first->getShader(), 
+                key.second,
+                activeColorFormat_,
+                activeDepthFormat_
+			};
+			shadersBatches[pipelineKey][key].insert(shadersBatches[pipelineKey][key].end(), batch.begin(), batch.end());
+		}
+
+        for (const auto& [pipelineKey, batchesMap] : shadersBatches) {
+            VkPipeline pipeline = getOrCreatePipeline(pipelineKey);
+            if (pipeline == VK_NULL_HANDLE) continue;
+
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
+
+            VkBuffer vertexBuffers[] = { geometryPool_->getVertexBuffer() };
+            VkDeviceSize offsets[] = { 0 };
+            vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
+            vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+            std::array<VkDescriptorSet, 2> descriptorSets = {
+                sceneRes.globalDescriptorSets[currentFrame_],
+                shaderResources_[pipelineKey.shader].materialDescriptorSets[currentFrame_]
+            };
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+                0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+
+            // ✅ UN SOLO DRAW per tutto lo shader — FUORI dal loop materiale
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(
+                sceneIndex, pipelineKey.shader, toPrimitiveTopology(pipelineKey.renderingType)
+            );
+            if (!indirectBuffer->isEmpty()) {
+                indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
+            }
+            // ← nessun loop per materiale qui, il materialIndex è già nell'SSBO per istanza
+        }
+        /*
+        // Raggruppa i batch per pipeline (shader + rendering type + formati di attachment)
+        std::unordered_map<VkPipeline, std::vector<std::pair<std::shared_ptr<Material>, RenderingTypeEnum>>> pipelineGroups;
+
+        for (const auto& [key, batch] : scene.batches) {
+            if (batch.empty()) continue;
+
             auto material = key.first;
             auto renderingType = key.second;
-
-            LOG( << "       [renderScene] Batch " << batchNum << ": "
-                << batch.size() << " instances\n");
-
-            if (batch.empty()) {
-                LOG( << "         - Empty batch, skipping\n");
-                continue;
-            }
 
             // Get pipeline
             PipelineKey pipelineKey{ 
@@ -978,61 +1014,76 @@ namespace OnYuu {
                 activeColorFormat_,
                 activeDepthFormat_
             };
-            VkPipeline pipeline = getOrCreatePipeline(pipelineKey, material);
+            VkPipeline pipeline = getOrCreatePipeline(pipelineKey);
 
             if (pipeline == VK_NULL_HANDLE) {
-                std::cerr << "         ✗ Failed to get pipeline!\n";
+                std::cerr << "         ? Failed to get pipeline!\n";
                 continue;
             }
 
-            LOG( << "         - Pipeline: " << pipeline << "\n");
-
-            // Bind pipeline
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-            // Bind descriptors
-            VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
-
-            if (materialResources_.find(material) == materialResources_.end()) {
-                LOG( << "         ⚠ Material resources not yet initialized, initializing now...\n");
-                updateMaterialDescriptors(material);
-            }
-
-            if (materialResources_.find(material) == materialResources_.end()) {
-                std::cerr << "         ✗ Material resources still not available!\n";
-                continue;
-            }
-
-            std::array<VkDescriptorSet, 2> descriptorSets = {
-                sceneRes.globalDescriptorSets[currentFrame_],
-                materialResources_[material].descriptorSets[currentFrame_]
-            };
-
-            LOG( << "         - Binding descriptor sets: global="
-                << descriptorSets[0] << ", material=" << descriptorSets[1] << "\n");
-
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
-                0, descriptorSets.size(), descriptorSets.data(),
-                0, nullptr);
-
-            // Bind geometry
-            VkBuffer vertexBuffers[] = { geometryPool_->getVertexBuffer() };
-            VkDeviceSize offsets[] = { 0 };
-            vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-            // Draw
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
-            if (!indirectBuffer->isEmpty()) {
-                LOG( << "         - Executing indirect draw ("
-                    << indirectBuffer->getDrawCount() << " draws)\n");
-                indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
-            }
-            else {
-                LOG( << "         - Indirect buffer is empty\n");
-            }
+            pipelineGroups[pipeline].push_back(key);
         }
 
+        // Bind geometry una sola volta perché condivisa tramite geometryPool_
+        VkBuffer vertexBuffers[] = { geometryPool_->getVertexBuffer() };
+        VkDeviceSize offsets[] = { 0 };
+        vkCmdBindVertexBuffers(cmd, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+        int batchNum = 0;
+        
+        for (const auto& [pipeline, keys] : pipelineGroups) {
+            LOG( << "         - Binding pipeline: " << pipeline << "\n");
+            
+            // Bind pipeline
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
+
+            // Iterate per materiale che usa questa pipeline
+            for (const auto& key : keys) {
+                batchNum++;
+                auto material = key.first;
+                auto renderingType = key.second;
+                const auto& batch = scene.batches.at(key);
+
+                LOG( << "       [renderScene] Batch " << batchNum << ": "
+                    << batch.size() << " instances\n");
+
+                if (materialResources_.find(material) == materialResources_.end()) {
+                    LOG( << "         ? Material resources not yet initialized, initializing now...\n");
+                    updateMaterialDescriptors(material);
+                }
+
+                if (materialResources_.find(material) == materialResources_.end()) {
+                    std::cerr << "         ? Material resources still not available!\n";
+                    continue;
+                }
+
+                std::array<VkDescriptorSet, 2> descriptorSets = {
+                    sceneRes.globalDescriptorSets[currentFrame_],
+                    materialResources_[material].descriptorSets[currentFrame_]
+                };
+
+                LOG( << "         - Binding descriptor sets: global="
+                    << descriptorSets[0] << ", material=" << descriptorSets[1] << "\n");
+
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+                    0, descriptorSets.size(), descriptorSets.data(),
+                    0, nullptr);
+
+                // Draw
+                auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material->getShader(), toPrimitiveTopology(renderingType));
+                if (!indirectBuffer->isEmpty()) {
+                    LOG( << "         - Executing indirect draw ("
+                        << indirectBuffer->getDrawCount() << " draws)\n");
+                    indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
+                }
+                else {
+                    LOG( << "         - Indirect buffer is empty\n");
+                }
+            }
+        }
+        */
         // commands are reset once per frame in updateAllDescriptorSets()
     }
 
@@ -1044,6 +1095,7 @@ namespace OnYuu {
         LOG( << "     [updateAllDescriptorSets] Updating for "
             << renderScenes.size() << " scenes\n");
 
+        updateMaterialsData();
         indirectDrawManager_->resetAll();
 
         for (size_t i = 0; i < renderScenes.size(); ++i) {
@@ -1053,26 +1105,104 @@ namespace OnYuu {
         // Finalize all indirect buffers once per frame
         indirectDrawManager_->finalizeAll(currentFrame_);
 
-        // Update materials
-        std::unordered_set<std::shared_ptr<Material>> usedMaterials;
+        
+    }
+    std::vector<uint8_t> VulkanRender::getMaterialDataForShader(const std::shared_ptr<Material>& material, const std::shared_ptr<VulkanShader>& shader) {
+        // Per semplicità, assumiamo che getDataForShader ritorni già un blob di dati pronto per essere copiato nello storage buffer
+        material->bind();
+        material->apply();
+		return shader->getUniformBuffer(); // Questo dovrebbe essere un blob di dati con i valori dei parametri del materiale per questo shader
+	}
+    bool VulkanRender::isOneMaterialDirty(std::vector<std::shared_ptr<Material>> materials) {
+        for (const auto& material : materials) {
+            if (material->isDirty()) {
+                return true;
+            }
+        }
+        return false;
+	}
+    void VulkanRender::updateMaterialsData()
+    {
+        std::unordered_map<std::shared_ptr<Shader>, std::vector<std::shared_ptr<Material>>> shaderToMaterials;
         for (const auto& scene : renderScenes) {
             for (const auto& [key, batch] : scene.batches) {
-                usedMaterials.insert(key.first);
+                auto material = key.first;
+                auto shader = material->getShader();
+                shaderToMaterials[shader].push_back(material);
             }
-        }
-
-        LOG( << "     [updateAllDescriptorSets] Updating "
-            << usedMaterials.size() << " materials\n");
-
-        for (const auto& material : usedMaterials) {
-            // Skip materials that haven't been initialized yet
-            // (they will be initialized on first use)
-            if (materialResources_.find(material) != materialResources_.end()) {
-                material->apply();
-                material->bind();
+		}
+		// per ogni shader vedo se è già stata creata la struct ShaderRescource, altrimenti la creo e la popolo con i dati di tutti i materiali che usano quello shader
+        for (const auto& [shader, materials] : shaderToMaterials) {
+            if (shaderResources_.find(shader) == shaderResources_.end()) {
+                // enumerate all shader 's materials
+                shaderResources_[shader] = ShaderResources();
+                uint32_t i = 0;
+                for (const auto& mat : materials) {
+                    shaderResources_[shader].materialIndices[mat] = { i++, mat->getTextures().size()};
+				}
+                auto& shaderRes = shaderResources_[shader];
+                // creo i descriptors set
+                shaderRes.materialDescriptorSets = descriptorManager_->allocateSets(materialDescriptorLayout_, MAX_FRAMES_IN_FLIGHT);
+			    // creo lo storage buffer con i dati di tutti i materiali che usano questo shader
+                shaderRes.materials.reserve(MAX_FRAMES_IN_FLIGHT);
+			    std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
+                uint32_t singleMaterialSize = vulkanShader->getUniformBuffer().size() * sizeof(uint8_t);
+                for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+                    shaderRes.materials.push_back(std::make_shared<VulkanStorageBuffer>(
+                        0, SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, allocator_
+				    ));
+                }
             }
-            updateMaterialDescriptors(material);
-        }
+		}
+		// Ora aggiorno i dati di tutti i materiali per ogni shader
+
+        for (const auto& [shader, materials] : shaderToMaterials) {
+            auto& shaderRes = shaderResources_[shader];
+			if (!isOneMaterialDirty(materials)) {
+                std::cout << "skipped\n";
+                continue;
+            }
+            std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
+            uint32_t singleMaterialSize = vulkanShader->getUniformBuffer().size() * sizeof(uint8_t);
+            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+                std::vector<uint8_t> materialData(SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, 0);
+                for (size_t j = 0; j < materials.size() && j < SUPPORTED_MATERIALS_PER_SHADER; ++j) {
+                    const auto& mat = materials[j];
+                    const auto& matData = getMaterialDataForShader(mat, vulkanShader);
+                    std::memcpy(materialData.data() + j * singleMaterialSize, matData.data(), singleMaterialSize);
+                }
+                shaderRes.materials[i]->setData(materialData.data(), materialData.size(), BufferUsage::DYNAMIC);
+                // Update descriptor set
+                auto set = shaderRes.materialDescriptorSets[i];
+                descriptorManager_->updateBuffer(set, 0,
+                    shaderRes.materials[i]->getVulkanBuffer(), materials.size() * singleMaterialSize,
+                    0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
+            }
+			std::vector<std::shared_ptr<Texture>> textures;
+            for (const auto& mat : materials) {
+                for (const auto& tex : mat->getTextures()) {
+					textures.push_back(tex);
+                }
+			}
+
+            std::vector<VkDescriptorImageInfo> imageInfos;
+            imageInfos.reserve(textures.size());
+
+            for (const auto& tex : textures) {
+                auto vkTex = static_cast<VulkanTexture*>(tex.get());
+                VkDescriptorImageInfo imgInfo{};
+                imgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imgInfo.imageView = vkTex->getImageView();
+                imgInfo.sampler = vkTex->getSampler();
+                imageInfos.push_back(imgInfo);
+            }
+            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+
+                descriptorManager_->updateImages(shaderRes.materialDescriptorSets[i], 1, imageInfos);
+            }
+
+            
+		}
     }
 
     void VulkanRender::updateSceneDescriptors(int sceneIndex) {
@@ -1153,6 +1283,7 @@ namespace OnYuu {
         for (const auto& [key, batch] : scene.batches) {
             auto material = key.first;
             auto renderingType = key.second;
+			uint32_t materialIndex = shaderResources_[material->getShader()].materialIndices[material].index;
 
             // Group by mesh
             std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> meshInstances;
@@ -1160,13 +1291,12 @@ namespace OnYuu {
                 meshInstances[renderData.renderMesh->getMesh()].push_back(renderData.model);
             }
 
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material->getShader(), toPrimitiveTopology(renderingType));
 
             // For each mesh, create indirect command
             for (const auto& [meshPtr, matrices] : meshInstances) {
                 geometryPool_->updateMeshUsage(meshPtr, frameNumber);
                 uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
-
                 // Add all model matrices
                 for (const auto& mat : matrices) {
                     allModelMatrices.push_back({ mat });
@@ -1264,7 +1394,6 @@ namespace OnYuu {
             descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
         }
 
-
         // Update material properties - only update UBO data, NOT descriptor sets
         auto shader = static_cast<VulkanShader*>(material->getShader().get());
         const auto& uniformData = shader->getUniformBuffer();
@@ -1278,8 +1407,8 @@ namespace OnYuu {
         }
     }
 
-    VkPipeline VulkanRender::getOrCreatePipeline(const PipelineKey& key,
-    std::shared_ptr<Material> material) {
+    VkPipeline VulkanRender::getOrCreatePipeline(const PipelineKey& key
+ ) {
     auto it = pipelineCache_.find(key);
     if (it != pipelineCache_.end()) {
         return it->second;
@@ -1346,7 +1475,7 @@ namespace OnYuu {
     VkPushConstantRange pushConstant{};
     pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     pushConstant.offset = 0;
-    pushConstant.size = sizeof(glm::mat4);
+    pushConstant.size = sizeof(MaterialIndex);
     config.pushConstants = { pushConstant };
 
     config.renderPass = VK_NULL_HANDLE;
@@ -1517,11 +1646,11 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
 
         LOG( << "VulkanRender: Beginning shutdown...\n");
 
-        // ✅ STEP 1: Wait for all GPU operations
+        // ? STEP 1: Wait for all GPU operations
         device_->waitIdle();
-        LOG( << "  ✓ GPU idle\n");
+        LOG( << "  ? GPU idle\n");
 
-        // ✅ STEP 2: Free descriptor sets FIRST (before destroying resources they reference)
+        // ? STEP 2: Free descriptor sets FIRST (before destroying resources they reference)
         LOG( << "  Freeing descriptor sets...\n");
         for (auto& [sceneIdx, res] : sceneResources_) {
             if (!res.globalDescriptorSets.empty()) {
@@ -1536,12 +1665,12 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
                 res.descriptorSets.clear();
             }
         }
-        LOG( << "  ✓ Descriptor sets freed\n");
+        LOG( << "  ? Descriptor sets freed\n");
 
-        // ✅ STEP 3: Cleanup geometry resources (VMA allocations!)
+        // ? STEP 3: Cleanup geometry resources (VMA allocations!)
         LOG( << "  Cleaning up geometry pool...\n");
 
-        // ✅ FIX: Shutdown PooledMeshGPU objects before clearing
+        // ? FIX: Shutdown PooledMeshGPU objects before clearing
         for (auto& [meshPtr, pooledMesh] : pooledMeshes_) {
             if (pooledMesh) {
                 pooledMesh->shutdown(); // Trigger destructor
@@ -1559,9 +1688,9 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             geometryPool_->shutdown();
             geometryPool_.reset();
         }
-        LOG( << "  ✓ Geometry pool cleaned\n");
+        LOG( << "  ? Geometry pool cleaned\n");
 
-        // ✅ STEP 4: Cleanup scene UBO/SSBO resources
+        // ? STEP 4: Cleanup scene UBO/SSBO resources
         LOG( << "  Cleaning up scene resources...\n");
         for (auto& [sceneIdx, res] : sceneResources_) {
             for (auto& ssbo : res.modelMatrixSsbos) {
@@ -1580,9 +1709,9 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             res.cameraUbos.clear();
         }
         sceneResources_.clear();
-        LOG( << "  ✓ Scene resources cleaned\n");
+        LOG( << "  ? Scene resources cleaned\n");
 
-        // ✅ STEP 5: Cleanup material UBO resources
+        // ? STEP 5: Cleanup material UBO resources
         LOG( << "  Cleaning up material resources...\n");
         for (auto& [mat, res] : materialResources_) {
             for (auto& ubo : res.ubos) {
@@ -1591,10 +1720,10 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             res.ubos.clear();
         }
         materialResources_.clear();
-        LOG( << "  ✓ Material resources cleaned\n");
+        LOG( << "  ? Material resources cleaned\n");
 		device_->waitIdle();
 
-        // ✅ STEP 6: Cleanup pipelines
+        // ? STEP 6: Cleanup pipelines
         LOG( << "  Cleaning up pipelines...\n");
         for (auto& [key, pipeline] : pipelineCache_) {
             if (pipeline != VK_NULL_HANDLE) {
@@ -1605,14 +1734,14 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             }
         }
         pipelineCache_.clear();
-        LOG( << "  ✓ Pipelines cleaned\n");
+        LOG( << "  ? Pipelines cleaned\n");
 
-        // ✅ STEP 7: Cleanup descriptor layouts
+        // ? STEP 7: Cleanup descriptor layouts
         LOG( << "  Cleaning up descriptor layouts...\n");
         cleanupDescriptorLayouts();
-        LOG( << "  ✓ Descriptor layouts cleaned\n");
+        LOG( << "  ? Descriptor layouts cleaned\n");
 
-        // ✅ STEP 8: Shutdown managers (in reverse order of creation)
+        // ? STEP 8: Shutdown managers (in reverse order of creation)
         LOG( << "  Shutting down pipeline manager...\n");
         if (pipelineManager_) {
             pipelineManager_->shutdown();
@@ -1647,15 +1776,15 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             commandManager_.reset();
         }
 
-        // ✅ STEP 9: Shutdown swapchain (contains framebuffers using depth image!)
+        // ? STEP 9: Shutdown swapchain (contains framebuffers using depth image!)
         LOG( << "  Shutting down swapchain...\n");
         if (swapchain_) {
             swapchain_->shutdown();
             swapchain_.reset();
         }
-        LOG( << "  ✓ Swapchain shutdown\n");
+        LOG( << "  ? Swapchain shutdown\n");
 
-        // ✅ STEP 10: Cleanup depth resources and render pass
+        // ? STEP 10: Cleanup depth resources and render pass
         LOG( << "  Cleaning up depth resources and render pass...\n");
         cleanupDepthResources();
 
@@ -1663,13 +1792,13 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             device_->getDispatch().destroyRenderPass(renderPass_, nullptr);
             renderPass_ = VK_NULL_HANDLE;
         }
-        LOG( << "  ✓ Depth and render pass cleaned\n");
+        LOG( << "  ? Depth and render pass cleaned\n");
 
-        // ✅ STEP 11: Verify allocator is empty and destroy it
+        // ? STEP 11: Verify allocator is empty and destroy it
         LOG( << "  Destroying VMA allocator...\n");
         if (allocator_ != VK_NULL_HANDLE) {
 #ifdef _DEBUG
-            // ✅ DEBUG: Print allocator stats before destroying
+            // ? DEBUG: Print allocator stats before destroying
             VmaBudget budgets[VK_MAX_MEMORY_HEAPS];
             vmaGetHeapBudgets(allocator_, budgets);
 
@@ -1685,16 +1814,16 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             vmaDestroyAllocator(allocator_);
             allocator_ = VK_NULL_HANDLE;
         }
-        LOG( << "  ✓ VMA allocator destroyed\n");
+        LOG( << "  ? VMA allocator destroyed\n");
 
-        // ✅ STEP 12: Shutdown device
+        // ? STEP 12: Shutdown device
         LOG( << "  Shutting down device...\n");
         if (device_) {
             device_->shutdown();
             device_.reset();
         }
 
-        // ✅ STEP 13: Cleanup surface and instance
+        // ? STEP 13: Cleanup surface and instance
         LOG( << "  Cleaning up surface and instance...\n");
         if (surface_ != VK_NULL_HANDLE) {
             vkb::destroy_surface(instance_, surface_);
@@ -1706,7 +1835,7 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             instance_ = {};
         }
 
-        LOG( << "VulkanRender: Shutdown complete ✓\n");
+        LOG( << "VulkanRender: Shutdown complete ?\n");
     }
 
 } // namespace OnYuu

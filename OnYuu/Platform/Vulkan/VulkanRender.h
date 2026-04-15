@@ -4,6 +4,7 @@
 #else
 #define LOG(X)
 #endif
+#include "VulkanShader.h"
 #include "Render/BatchRenderer.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapchain.h"
@@ -171,6 +172,25 @@ namespace OnYuu {
         // Deferred deletion per materiali invalidati durante il frame
         std::vector<std::shared_ptr<class Material>> pendingMaterialInvalidations_;
 
+
+        // ========================================================================
+		// PER -SHADER RESOURCES ( overriding materiali, se necessario)
+        // ========================================================================
+        struct MaterialIndex {
+            uint32_t index; 
+            size_t textureCount; // Numero di texture usate dal materiale, per gestione array di sampler
+		};
+        struct ShaderResources {
+			std::vector<VkDescriptorSet> materialDescriptorSets; // uno per frame
+			std::vector<std::shared_ptr<VulkanStorageBuffer>> materials; // uno per frame
+			std::unordered_map<std::shared_ptr<class Material>, MaterialIndex, std::hash<std::shared_ptr<class Material>>> materialIndices; // Mappa per tracciare l'indice di ogni materiale nello storage buffer dello shader
+            
+		};
+
+		std::unordered_map<std::shared_ptr<class Shader>, ShaderResources> shaderResources_;
+
+        std::vector<uint8_t> getMaterialDataForShader(const std::shared_ptr<Material>& material, const std::shared_ptr<VulkanShader>& shader);
+        bool isOneMaterialDirty(std::vector<std::shared_ptr<Material>> materials);
         // ========================================================================
         // PIPELINE CACHE
         // ========================================================================
@@ -237,7 +257,7 @@ namespace OnYuu {
             alignas(16) LightData lights[125];
         };
 
-        struct CameraBufferData {
+        struct CameraBufferData {   
             alignas(16) glm::mat4 projection;
             alignas(16) glm::mat4 view;
             alignas(16) glm::vec4 cameraPosition;
@@ -245,6 +265,9 @@ namespace OnYuu {
 
         struct ModelMatrixData {
             glm::mat4 model;
+			//uint32_t materialIndex; // Indice del materiale nello storage buffer dello shader
+			//float padding[3]; // Padding per allineamento a 16 byte
+
         };
 
         // ========================================================================
@@ -261,6 +284,7 @@ namespace OnYuu {
         // RENDERING METHODS
         // ========================================================================
         void updateAllDescriptorSets();
+        void updateMaterialsData();
         void updateSceneDescriptors(int sceneIndex);
         void updateMaterialDescriptors(std::shared_ptr<class Material> material);
 
@@ -271,8 +295,7 @@ namespace OnYuu {
         void renderScene(VkCommandBuffer cmd, int sceneIndex);
 
         // Pipeline management
-        VkPipeline getOrCreatePipeline(const PipelineKey& key,
-            std::shared_ptr<class Material> material);
+        VkPipeline getOrCreatePipeline(const PipelineKey& key);
 
         // ========================================================================
         // HELPER METHODS

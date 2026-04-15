@@ -407,10 +407,10 @@ bool VulkanVisitor::isSampler(const std::string& name) {
 void VulkanVisitor::visit(VariableExpr* expr) {
     const auto mapped = fragmentTypeMapping.find(expr->name);
     if (isSampler(expr->name)) {
-        output += "textures[nonuniformEXT(material." + getOrCreateRandomName(expr->name) + ")]";
+        output += "textures[nonuniformEXT(matInfo.materialIndex * matInfo.texturesCount + materials[matInfo.materialIndex]." + getOrCreateRandomName(expr->name) + ")]";
         return;
     }
-    std::string prefix = isUniform(expr->name) ? "material." : "";
+    std::string prefix = isUniform(expr->name) ? "materials[matInfo.materialIndex]." : "";
     output += prefix + (mapped != fragmentTypeMapping.end() ? mapped->second : getOrCreateRandomName(expr->name));
 }
 
@@ -620,15 +620,24 @@ layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
         }
         output += "};\n";
     }
-    output += "layout(set = 1, binding = 0) uniform MaterialBuffer {";
+    output += "struct MaterialData {";
     for (const auto& uniform : shader.uniforms) {
         uniformNames[uniform.name] = uniform;
         std::string type = uniform.isSampler ? "int" : getTransformedType(uniform.type);
         output += type + " " + getOrCreateRandomName(uniform.name) +
             (uniform.arraySize >= 0 ? "[" + std::to_string(uniform.arraySize) + "]" : "") + ";\n";
     }
-    output += "} material;\n";
+    output += "};\n";
 
+    output += "layout(set = 1, binding = 0) readonly buffer MaterialBuffer {\n";
+	output += "    MaterialData materials[];\n";
+    output += "};\n";
+    output += R"(
+layout(push_constant) uniform PushConstants {
+    uint materialIndex;
+    uint texturesCount;
+} matInfo;
+)";
     output += "layout(set = 1, binding = 1) uniform sampler2D textures[];\n";
     for (const auto& global : shader.globalVariables) {
         output += getTransformedType(global.type) + " " + getOrCreateRandomName(global.name);

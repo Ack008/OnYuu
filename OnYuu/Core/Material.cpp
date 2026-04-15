@@ -23,6 +23,8 @@ void Material::set(const std::string& name, const UniformValue& value)
 {
 	uniforms_[name] = value;
 	alreadySet_[name] = false; // Mark as not set
+	dirty = true;
+	
 }
 void Material::bind()
 {
@@ -38,6 +40,7 @@ void Material::bind()
 }
 void Material::apply()
 {
+	dirty = false; // Assume that after applying, the material is no longer dirty until a new change is made
 	auto shader = getShader();
 	if (!shader)
 	{

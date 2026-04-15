@@ -50,12 +50,12 @@ namespace OnYuu {
 
     struct SceneMaterialKey {
         int sceneIndex = -1;
-        std::shared_ptr<Material> material;
+        std::shared_ptr<Shader> shader;
         VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
         bool operator==(const SceneMaterialKey& other) const {
             return sceneIndex == other.sceneIndex
-                && material.get() == other.material.get()
+                && shader.get() == other.shader.get()
                 && topology == other.topology;
         }
     };
@@ -63,7 +63,7 @@ namespace OnYuu {
     struct SceneMaterialKeyHash {
         size_t operator()(const SceneMaterialKey& key) const {
             size_t h1 = std::hash<int>{}(key.sceneIndex);
-            size_t h2 = std::hash<void*>{}(key.material.get());
+            size_t h2 = std::hash<void*>{}(key.shader.get());
             size_t h3 = std::hash<uint32_t>{}(static_cast<uint32_t>(key.topology));
             size_t h = h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
             return h ^ (h3 + 0x9e3779b9 + (h << 6) + (h >> 2));
@@ -78,7 +78,7 @@ namespace OnYuu {
 
         std::shared_ptr<IndirectDrawBuffer> getOrCreateBuffer(
             int sceneIndex,
-            std::shared_ptr<Material> material,
+            std::shared_ptr<Shader> shader,
             VkPrimitiveTopology topology
         );
 

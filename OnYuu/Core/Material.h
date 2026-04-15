@@ -36,6 +36,8 @@ public:
 	// Bind del materiale se necessario (es. bind di texture). Qui può essere
 	// effettuato anche il set del programma shader.
 	void bind();
+
+	bool isDirty() { return dirty; }
 	std::shared_ptr<Shader> getShader() const;
 
 	/*
@@ -56,6 +58,7 @@ public:
 	const std::vector<std::shared_ptr<Texture>>& getTextures() const { return textures_; }
 
 private:
+	bool dirty = true; // Indica se il materiale ha subito modifiche che richiedono un aggiornamento
 	std::string shaderID; // Identificatore dello shader, utile per debug o editor
 	std::shared_ptr<Shader> shader_;
 	// Mappa dei uniform da applicare allo shader

@@ -14,7 +14,7 @@ public:
 		void begin();
 		void end();
 private:
-	void vulkanInit(VkDevice device);
-	VkDescriptorPool imguiDescriptorPool;
+	bool vulkanInit(VkDevice device);
+	VkDescriptorPool imguiDescriptorPool = VK_NULL_HANDLE;
 };
 } // namespace OnYuu

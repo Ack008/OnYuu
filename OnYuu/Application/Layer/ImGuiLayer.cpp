@@ -10,6 +10,7 @@
 #include "Platform/Vulkan/VulkanRender.h"
 #include "ImGuizmo/ImGuizmo.h"
 #include <iostream>
+#include <stdexcept>
 namespace OnYuu {
 	void ImGuiLayer::onUpdate(float deltaTime) {
 
@@ -51,7 +52,9 @@ namespace OnYuu {
 			init_info.QueueFamily = vulkanRender->getQueueFamily();
 			init_info.Queue = vulkanRender->getGraphicQueue();
 			init_info.PipelineCache = VK_NULL_HANDLE;
-			vulkanInit(vulkanRender->getInit().device);
+			if (!vulkanInit(vulkanRender->getInit().device)) {
+				throw std::runtime_error("ImGui Vulkan descriptor pool creation failed");
+			}
 			init_info.DescriptorPool = imguiDescriptorPool;
 			init_info.MinImageCount = vulkanRender->getInit().swapchain.image_count;
 			init_info.ImageCount = vulkanRender->getInit().swapchain.image_count;
@@ -75,7 +78,9 @@ namespace OnYuu {
 			init_info.PipelineInfoForViewports.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 
-			ImGui_ImplVulkan_Init(&init_info);
+			if (!ImGui_ImplVulkan_Init(&init_info)) {
+				throw std::runtime_error("ImGui_ImplVulkan_Init failed");
+			}
 
 		}
 
@@ -171,9 +176,14 @@ namespace OnYuu {
 
 	}
 
-	void ImGuiLayer::vulkanInit(VkDevice device)
+	bool ImGuiLayer::vulkanInit(VkDevice device)
 	{
-		imguiDescriptorPool;
+		if (device == VK_NULL_HANDLE) {
+			imguiDescriptorPool = VK_NULL_HANDLE;
+			return false;
+		}
+
+		imguiDescriptorPool = VK_NULL_HANDLE;
 
 		VkDescriptorPoolSize pool_sizes[] =
 		{
@@ -197,7 +207,8 @@ namespace OnYuu {
 		pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 
-		vkCreateDescriptorPool(device, &pool_info, nullptr, &imguiDescriptorPool);
+		const VkResult result = vkCreateDescriptorPool(device, &pool_info, nullptr, &imguiDescriptorPool);
+		return result == VK_SUCCESS && imguiDescriptorPool != VK_NULL_HANDLE;
 	}
 
 } // namespace OnYuu
