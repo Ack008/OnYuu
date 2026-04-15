@@ -264,8 +264,9 @@ namespace OnYuu {
         };
 
         struct ModelMatrixData {
-            glm::mat4 model;
-			//uint32_t materialIndex; // Indice del materiale nello storage buffer dello shader
+            alignas(16) glm::mat4 model;
+			 uint32_t materialIndex; // Indice del materiale nello storage buffer dello shader
+			 uint32_t textureCount; // Numero di texture usate dal materiale, per gestione array di sampler
 			//float padding[3]; // Padding per allineamento a 16 byte
 
         };

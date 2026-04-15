@@ -1124,66 +1124,110 @@ namespace OnYuu {
     void VulkanRender::updateMaterialsData()
     {
         std::unordered_map<std::shared_ptr<Shader>, std::vector<std::shared_ptr<Material>>> shaderToMaterials;
+        std::unordered_map<std::shared_ptr<Shader>, std::unordered_set<std::shared_ptr<Material>>> uniqueMaterialsPerShader;
+
         for (const auto& scene : renderScenes) {
             for (const auto& [key, batch] : scene.batches) {
                 auto material = key.first;
                 auto shader = material->getShader();
-                shaderToMaterials[shader].push_back(material);
+                if (!shader || !material) continue;
+
+                if (uniqueMaterialsPerShader[shader].insert(material).second) {
+                    shaderToMaterials[shader].push_back(material);
+                }
             }
-		}
-		// per ogni shader vedo se è già stata creata la struct ShaderRescource, altrimenti la creo e la popolo con i dati di tutti i materiali che usano quello shader
+        }
+
+        // Initialize per-shader resources if needed
         for (const auto& [shader, materials] : shaderToMaterials) {
-            if (shaderResources_.find(shader) == shaderResources_.end()) {
-                // enumerate all shader 's materials
-                shaderResources_[shader] = ShaderResources();
-                uint32_t i = 0;
-                for (const auto& mat : materials) {
-                    shaderResources_[shader].materialIndices[mat] = { i++, mat->getTextures().size()};
-				}
-                auto& shaderRes = shaderResources_[shader];
-                // creo i descriptors set
+            auto& shaderRes = shaderResources_[shader];
+            if (shaderRes.materialDescriptorSets.empty()) {
                 shaderRes.materialDescriptorSets = descriptorManager_->allocateSets(materialDescriptorLayout_, MAX_FRAMES_IN_FLIGHT);
-			    // creo lo storage buffer con i dati di tutti i materiali che usano questo shader
+
                 shaderRes.materials.reserve(MAX_FRAMES_IN_FLIGHT);
-			    std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
-                uint32_t singleMaterialSize = vulkanShader->getUniformBuffer().size() * sizeof(uint8_t);
+                std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
+                if (!vulkanShader) {
+                    continue;
+                }
+
+                uint32_t singleMaterialSize = static_cast<uint32_t>(vulkanShader->getUniformBuffer().size() * sizeof(uint8_t));
+                if (singleMaterialSize == 0) {
+                    continue;
+                }
+
                 for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
                     shaderRes.materials.push_back(std::make_shared<VulkanStorageBuffer>(
                         0, SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, allocator_
 				    ));
                 }
             }
-		}
-		// Ora aggiorno i dati di tutti i materiali per ogni shader
+        }
 
+        // Update material slots and upload data
         for (const auto& [shader, materials] : shaderToMaterials) {
             auto& shaderRes = shaderResources_[shader];
-			if (!isOneMaterialDirty(materials)) {
-                std::cout << "skipped\n";
+            std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
+            if (!vulkanShader) continue;
+
+            const uint32_t singleMaterialSize = static_cast<uint32_t>(vulkanShader->getUniformBuffer().size() * sizeof(uint8_t));
+            if (singleMaterialSize == 0) continue;
+
+            bool hasNewMaterialSlot = false;
+            for (const auto& mat : materials) {
+                auto it = shaderRes.materialIndices.find(mat);
+                if (it == shaderRes.materialIndices.end()) {
+                    uint32_t newIndex = static_cast<uint32_t>(shaderRes.materialIndices.size());
+                    shaderRes.materialIndices[mat] = { newIndex, mat->getTextures().size() };
+                    hasNewMaterialSlot = true;
+                }
+                else {
+                    it->second.textureCount = mat->getTextures().size();
+                }
+            }
+
+            if (!hasNewMaterialSlot && !isOneMaterialDirty(materials)) {
                 continue;
             }
-            std::shared_ptr<VulkanShader> vulkanShader = std::dynamic_pointer_cast<VulkanShader>(shader);
-            uint32_t singleMaterialSize = vulkanShader->getUniformBuffer().size() * sizeof(uint8_t);
+
+            std::vector<uint8_t> materialData(SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, 0);
+            uint32_t maxUsedIndex = 0;
+            bool hasAnyMaterial = false;
+
+            for (const auto& mat : materials) {
+                auto indexIt = shaderRes.materialIndices.find(mat);
+                if (indexIt == shaderRes.materialIndices.end()) continue;
+
+                const uint32_t slot = indexIt->second.index;
+                if (slot >= SUPPORTED_MATERIALS_PER_SHADER) continue;
+
+                const auto matData = getMaterialDataForShader(mat, vulkanShader);
+                if (matData.empty()) continue;
+
+                const size_t copySize = std::min(matData.size(), static_cast<size_t>(singleMaterialSize));
+                std::memcpy(materialData.data() + static_cast<size_t>(slot) * singleMaterialSize, matData.data(), copySize);
+
+                maxUsedIndex = std::max(maxUsedIndex, slot);
+                hasAnyMaterial = true;
+            }
+
+            const VkDeviceSize visibleRange = hasAnyMaterial
+                ? static_cast<VkDeviceSize>(static_cast<size_t>(maxUsedIndex + 1) * singleMaterialSize)
+                : static_cast<VkDeviceSize>(singleMaterialSize);
+
             for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
-                std::vector<uint8_t> materialData(SUPPORTED_MATERIALS_PER_SHADER * singleMaterialSize, 0);
-                for (size_t j = 0; j < materials.size() && j < SUPPORTED_MATERIALS_PER_SHADER; ++j) {
-                    const auto& mat = materials[j];
-                    const auto& matData = getMaterialDataForShader(mat, vulkanShader);
-                    std::memcpy(materialData.data() + j * singleMaterialSize, matData.data(), singleMaterialSize);
-                }
                 shaderRes.materials[i]->setData(materialData.data(), materialData.size(), BufferUsage::DYNAMIC);
-                // Update descriptor set
                 auto set = shaderRes.materialDescriptorSets[i];
                 descriptorManager_->updateBuffer(set, 0,
-                    shaderRes.materials[i]->getVulkanBuffer(), materials.size() * singleMaterialSize,
+                    shaderRes.materials[i]->getVulkanBuffer(), visibleRange,
                     0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
             }
-			std::vector<std::shared_ptr<Texture>> textures;
+
+            std::vector<std::shared_ptr<Texture>> textures;
             for (const auto& mat : materials) {
                 for (const auto& tex : mat->getTextures()) {
-					textures.push_back(tex);
+                    textures.push_back(tex);
                 }
-			}
+            }
 
             std::vector<VkDescriptorImageInfo> imageInfos;
             imageInfos.reserve(textures.size());
@@ -1196,13 +1240,11 @@ namespace OnYuu {
                 imgInfo.sampler = vkTex->getSampler();
                 imageInfos.push_back(imgInfo);
             }
-            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 
+            for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
                 descriptorManager_->updateImages(shaderRes.materialDescriptorSets[i], 1, imageInfos);
             }
-
-            
-		}
+        }
     }
 
     void VulkanRender::updateSceneDescriptors(int sceneIndex) {
@@ -1283,7 +1325,7 @@ namespace OnYuu {
         for (const auto& [key, batch] : scene.batches) {
             auto material = key.first;
             auto renderingType = key.second;
-			uint32_t materialIndex = shaderResources_[material->getShader()].materialIndices[material].index;
+            uint32_t materialIndex = shaderResources_[material->getShader()].materialIndices[material].index;
 
             // Group by mesh
             std::unordered_map<std::shared_ptr<Mesh>, std::vector<glm::mat4>> meshInstances;
@@ -1299,7 +1341,7 @@ namespace OnYuu {
                 uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
                 // Add all model matrices
                 for (const auto& mat : matrices) {
-                    allModelMatrices.push_back({ mat });
+                    allModelMatrices.push_back({ mat, materialIndex, static_cast<uint32_t>(material->getTextures().size()) });
                 }
 
                 // Upload mesh if needed
@@ -1334,7 +1376,7 @@ namespace OnYuu {
                 cmd.firstIndex = drawInfo.firstIndex;
                 cmd.vertexOffset = drawInfo.vertexOffset;
                 cmd.firstInstance = firstInstance;
-                
+
 
                 indirectBuffer->addDrawCommand(cmd);
             }
@@ -1355,7 +1397,7 @@ namespace OnYuu {
 
         // Ensure the material has a fresh view of its uniforms/textures before we
         // read the texture list for descriptor updates.
-      
+
 
         // Initialize resources if needed
         if (matRes.descriptorSets.empty()) {
@@ -1555,7 +1597,7 @@ void VulkanRender::cleanupDescriptorLayouts() {
     }
 }
 
-void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
+    void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
 {
     if (!shader || !device_ || !device_->isValid()) {
         return;
@@ -1577,6 +1619,23 @@ void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
         }
     }
 
+    auto shaderResIt = shaderResources_.find(shader);
+    if (shaderResIt != shaderResources_.end()) {
+        auto& shaderRes = shaderResIt->second;
+        if (descriptorManager_ && !shaderRes.materialDescriptorSets.empty()) {
+            descriptorManager_->freeSets(shaderRes.materialDescriptorSets);
+            shaderRes.materialDescriptorSets.clear();
+        }
+        for (auto& ssbo : shaderRes.materials) {
+            if (ssbo) {
+                ssbo->shutdown();
+            }
+        }
+        shaderRes.materials.clear();
+        shaderRes.materialIndices.clear();
+        shaderResources_.erase(shaderResIt);
+    }
+
     std::vector<std::shared_ptr<Material>> materialsToInvalidate;
     materialsToInvalidate.reserve(materialResources_.size());
     for (const auto& [mat, res] : materialResources_) {
@@ -1587,7 +1646,7 @@ void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
 
     // Se il frame è in recording, differisci le invalidazioni
     if (isFrameRecording_) {
-        LOG(<< "Shader invalidation: " << materialsToInvalidate.size() 
+        LOG(<< "Shader invalidation: " << materialsToInvalidate.size()
             << " materials deferred to next frame\n");
         for (const auto& mat : materialsToInvalidate) {
             pendingMaterialInvalidations_.push_back(mat);
@@ -1635,6 +1694,12 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
         }
     }
     res.ubos.clear();
+
+    auto shader = material->getShader();
+    auto shaderResIt = shaderResources_.find(shader);
+    if (shaderResIt != shaderResources_.end()) {
+        shaderResIt->second.materialIndices.erase(material);
+    }
 
     materialResources_.erase(it);
 }
@@ -1729,7 +1794,7 @@ void VulkanRender::invalidateMaterial(const std::shared_ptr<Material>& material)
             if (pipeline != VK_NULL_HANDLE) {
                 pipelineManager_->destroyPipeline(pipeline);
             }
-			if (key.shader) {
+			if ( key.shader) {
 				key.shader->shutdown();
             }
         }

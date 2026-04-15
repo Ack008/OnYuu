@@ -407,10 +407,10 @@ bool VulkanVisitor::isSampler(const std::string& name) {
 void VulkanVisitor::visit(VariableExpr* expr) {
     const auto mapped = fragmentTypeMapping.find(expr->name);
     if (isSampler(expr->name)) {
-        output += "textures[nonuniformEXT(matInfo.materialIndex * matInfo.texturesCount + materials[matInfo.materialIndex]." + getOrCreateRandomName(expr->name) + ")]";
+        output += "textures[nonuniformEXT(vMaterialIndex * vTexturesCount + materials[vMaterialIndex]." + getOrCreateRandomName(expr->name) + ")]";
         return;
     }
-    std::string prefix = isUniform(expr->name) ? "materials[matInfo.materialIndex]." : "";
+    std::string prefix = isUniform(expr->name) ? "materials[vMaterialIndex]." : "";
     output += prefix + (mapped != fragmentTypeMapping.end() ? mapped->second : getOrCreateRandomName(expr->name));
 }
 
@@ -538,14 +538,21 @@ layout(set = 0,binding = 2) uniform LightBindings {
 
 
 // SSBO globale
+struct ObjectData {
+    mat4 model;
+    uint materialIndex;
+    uint texturesCount;
+};
 layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
-    mat4 models[];
+    ObjectData objects[];
 } modelMatrices;
 
 layout(location = 0) out vec3 vWorldPos;
 layout(location = 1) out vec4 vColor;
 layout(location = 2) out vec2 vUV;
 layout(location = 3) out vec3 vNormal;
+layout(location = 4) flat out uint vMaterialIndex;
+layout(location = 5) flat out uint vTexturesCount;
 )";
 
     for (const auto& structPair : shader.structs) {
@@ -582,6 +589,8 @@ void VulkanVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
     output += "layout(location = 3) in vec3 vNormal;\n";
     output += "layout(location = 2) in vec2 vUV;\n";
     output += "layout(location = 1) in vec4 vColor;\n";
+    output += "layout(location = 4) flat in uint vMaterialIndex;\n";
+    output += "layout(location = 5) flat in uint vTexturesCount;\n";
     output += "layout(location = 0) out vec4 fragColor;\n";
     output += R"(
 layout(set = 0,binding = 1) uniform CameraUniform {
@@ -602,10 +611,14 @@ layout(set = 0,binding = 2) uniform LightBindings {
 
 } lights;
 
-
+struct ObjectData {
+    mat4 model;
+    uint materialIndex;
+    uint texturesCount;
+};
 // SSBO globale
 layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
-    mat4 models[];
+    ObjectData objects[];
 } modelMatrices;
 )";
 
@@ -712,14 +725,22 @@ layout(set = 0,binding = 2) uniform LightBindings {
 
 
 // SSBO globale
+struct ObjectData {
+    mat4 model;
+    uint materialIndex;
+    
+};
+// SSBO globale
 layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
-    mat4 models[];
+    ObjectData objects[];
 } modelMatrices;
 
 layout(location = 0) out vec3 vWorldPos;
 layout(location = 1) out vec4 vColor;
 layout(location = 2) out vec2 vUV;
 layout(location = 3) out vec3 vNormal;
+layout(location = 4) flat out uint vMaterialIndex;
+layout(location = 5) flat out uint vTexturesCount;
 
 
 
@@ -734,12 +755,14 @@ layout( push_constant ) uniform ModelCostant{
         mat4 model;
 }model;
 void main() {
-    mat4 u_model = modelMatrices.models[gl_InstanceIndex];
+    mat4 u_model = modelMatrices.objects[gl_InstanceIndex].model;
     vColor = aColor;
     vUV = aTexCoord;
     vNormal = vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);;
     vWorldPos = (u_model *vec4(aPos, 1.0)).xyz;
-    gl_Position = camera.proj *  camera.view * modelMatrices.models[gl_InstanceIndex] *vec4(vWorldPos, 1.0);
+    vMaterialIndex = modelMatrices.objects[gl_InstanceIndex].materialIndex;
+    vTexturesCount = modelMatrices.objects[gl_InstanceIndex].texturesCount;
+    gl_Position = camera.proj *  camera.view * modelMatrices.objects[gl_InstanceIndex].model *vec4(vWorldPos, 1.0);
 })";
 }
 
@@ -791,19 +814,27 @@ void VulkanVisitor::injectVertexVaryingInitialization() {
     bool hasNormalInit = vertexShaderCode_.find("vNormal =") != std::string::npos;
     bool hasUVInit = vertexShaderCode_.find("vUV =") != std::string::npos;
     bool hasColorInit = vertexShaderCode_.find("vColor =") != std::string::npos;
+    bool hasMaterialIndexInit = vertexShaderCode_.find("vMaterialIndex =") != std::string::npos;
+    bool hasTexturesCountInit = vertexShaderCode_.find("vTexturesCount =") != std::string::npos;
 
     std::string injectedCode;
     if (!hasWorldPosInit) {
-        injectedCode += "\n     vWorldPos = (modelMatrices.models[gl_InstanceIndex] *vec4(aPos, 1.0)).xyz;";
+        injectedCode += "\n     vWorldPos = (modelMatrices.objects[gl_InstanceIndex].model *vec4(aPos, 1.0)).xyz;";
     }
     if (!hasNormalInit) {
-        injectedCode += "\n    vNormal = mat3(transpose(inverse(modelMatrices.models[gl_InstanceIndex]))) * normalize(aNormal);";
+        injectedCode += "\n    vNormal = mat3(transpose(inverse(modelMatrices.objects[gl_InstanceIndex].model))) * normalize(aNormal);";
     }
     if (!hasUVInit) {
         injectedCode += "\n    vUV = aTexCoord;";
     }
     if (!hasColorInit) {
         injectedCode += "\n    vColor = aColor;";
+    }
+    if (!hasMaterialIndexInit) {
+        injectedCode += "\n    vMaterialIndex = modelMatrices.objects[gl_InstanceIndex].materialIndex;";
+    }
+    if (!hasTexturesCountInit) {
+        injectedCode += "\n    vTexturesCount = modelMatrices.objects[gl_InstanceIndex].texturesCount;";
     }
 
     if (!injectedCode.empty()) {
