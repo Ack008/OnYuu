@@ -2,6 +2,13 @@
 #include <vector>
 #include "OpenGLShader.h"
 #pragma warning(disable:4996)
+#ifdef _DEBUG
+#define LOG(x) std::cout << x
+#else 
+#define LOG(x)
+
+#endif // _DEBUG
+
 namespace OnYuu {
 
 	OpenGLShader::OpenGLShader(const char* vertexfilename, const char* fragmentfilename, bool isSource )
@@ -28,17 +35,17 @@ namespace OnYuu {
 				continue;
 			}
 			uniformLocationCache[name] = location;
-			std::cout << "Uniform " << name << " at location " << location << " size: " << size << std::endl;
+			LOG("Uniform " << name << " at location " << location << " size: " << size << std::endl);
 			switch (type) {
-			case GL_FLOAT: std::cout << " Type: FLOAT " << std::endl; break;
-			case GL_FLOAT_VEC2: std::cout << " Type: VEC2 " << std::endl; break;
-			case GL_FLOAT_VEC3: std::cout << " Type: VEC3 " << std::endl; break;
-			case GL_FLOAT_VEC4: std::cout << " Type: VEC4 " << std::endl; break;
-			case GL_INT: std::cout << " Type: INT " << std::endl; break;
-			case GL_BOOL: std::cout << " Type: BOOL " << std::endl; break;
-			case GL_FLOAT_MAT3: std::cout << " Type: MAT3 " << std::endl; break;
-			case GL_FLOAT_MAT4: std::cout << " Type: MAT4 " << std::endl; break;
-			default: std::cout << " Type: OTHER " << std::endl; break;
+			case GL_FLOAT: LOG(" Type: FLOAT " << std::endl); break;
+			case GL_FLOAT_VEC2: LOG(" Type: VEC2 " << std::endl); break;
+			case GL_FLOAT_VEC3: LOG(" Type: VEC3 " << std::endl); break;
+			case GL_FLOAT_VEC4: LOG(" Type: VEC4 " << std::endl); break;
+			case GL_INT: LOG(" Type: INT " << std::endl); break;
+			case GL_BOOL: LOG(" Type: BOOL " << std::endl); break;
+			case GL_FLOAT_MAT3: LOG(" Type: MAT3 " << std::endl); break;
+			case GL_FLOAT_MAT4: LOG(" Type: MAT4 " << std::endl); break;
+			default: LOG(" Type: OTHER " << std::endl); break;
 			}
 			delete[] name;
 		}
@@ -141,7 +148,7 @@ namespace OnYuu {
 			return uniformLocationCache[name];
 		GLint location = glGetUniformLocation(shader, name.c_str());
 		if (location == -1)
-			std::cout << "Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+			LOG("Warning: uniform '" << name << "' doesn't exist!" << std::endl);
 		uniformLocationCache[name] = location;
 		return location;
 	}
@@ -153,7 +160,7 @@ namespace OnYuu {
 			glUniform1i(loc, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformFloat(const char* name, float value)
@@ -163,7 +170,7 @@ namespace OnYuu {
 			glUniform1f(loc, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformVec2(const char* name, const float* value)
@@ -173,7 +180,7 @@ namespace OnYuu {
 			glUniform2fv(loc, 1, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformVec3(const char* name, const float* value)
@@ -183,7 +190,7 @@ namespace OnYuu {
 			glUniform3fv(loc, 1, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformVec4(const char* name, const float* value)
@@ -193,7 +200,7 @@ namespace OnYuu {
 			glUniform4fv(loc, 1, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformMat3(const char* name, const float* value)
@@ -203,7 +210,7 @@ namespace OnYuu {
 			glUniformMatrix3fv(loc, 1, GL_FALSE, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 	void OpenGLShader::setUniformMat4(const char* name, const float* value, int count)
@@ -213,7 +220,7 @@ namespace OnYuu {
 			glUniformMatrix4fv(loc, count, GL_FALSE, value);
 		}
 		else {
-			std::cout << "Uniform " << name << " not found!" << std::endl;
+			LOG("Uniform " << name << " not found!" << std::endl);
 		}
 	}
 
