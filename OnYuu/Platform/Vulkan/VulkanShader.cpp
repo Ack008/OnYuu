@@ -16,7 +16,7 @@ namespace OnYuu {
 	std::vector<char> compileToSPIRV_char(const std::string& source, shaderc_shader_kind kind) {
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
-		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
+		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
 
 		auto result = compiler.CompileGlslToSpv(source, kind, "shader.glsl", options);
 
@@ -28,10 +28,11 @@ namespace OnYuu {
 		}
 
 		// Reinterpreta i uint32_t come bytes
-		const char* begin = reinterpret_cast<const char*>(result.cbegin());
-		const char* end = reinterpret_cast<const char*>(result.cend());
+		size_t size_in_bytes = (result.cend() - result.cbegin()) * sizeof(uint32_t);
+		std::vector<char> buffer(size_in_bytes);
+		std::memcpy(buffer.data(), result.cbegin(), size_in_bytes);
 
-		return { begin, end };
+		return buffer;
 	}
 	std::vector<char> VulkanShader::readFile(const char* filename)
 	{
@@ -95,8 +96,8 @@ namespace OnYuu {
 		std::vector<uint32_t> spirv_binary(vertShaderCode.size() / 4);
 		std::memcpy(spirv_binary.data(), vertShaderCode.data(), vertShaderCode.size());
 
-		// Costruisci il CompilerGLSL passando il vector<uint32_t> (usando std::move per evitare copie)
-		spirv_cross::Compiler glsl(std::move(spirv_binary));
+		// Costruisci il CompilerGLSL passando puntatore e dimensione per evitare problemi di ABI e heap di std::vector tra diverse versioni del Vulkan SDK
+		spirv_cross::Compiler glsl(spirv_binary.data(), spirv_binary.size());
 		spirv_cross::ShaderResources resources = glsl.get_shader_resources();
 		uint32_t targetSet = 2;   // oppure 3
 		size_t materialBufferSize = 0;

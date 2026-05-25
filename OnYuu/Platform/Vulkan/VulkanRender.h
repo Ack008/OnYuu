@@ -35,6 +35,10 @@ namespace OnYuu {
 
         // Override BatchRender interface
         void BeginFrame() override;
+        void renderOnSwapChain(VkCommandBuffer cmd);
+        void renderOnTarget(VkCommandBuffer cmd);
+        void acquireImageAndBeginFrame(bool& retFlag);
+        void pendingMaterialHandling();
         void submit() override;
         void invalidateShader(const std::shared_ptr<Shader>& shader) override;
         void invalidateMaterial(const std::shared_ptr<Material>& material) override;

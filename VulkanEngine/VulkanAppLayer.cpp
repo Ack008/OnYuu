@@ -59,8 +59,8 @@ void VulkanAppLayer::onAttach()
 	camera->setPosition(glm::vec3(0.0f, 0.0f, 10.0f));
 	//shader2 = Shader::create("Asset/VkShader/generated-ver.o", "Asset/VkShader/generated-frag.o");
 
-	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>("default_shader"));
-	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>("default_shader"));
+	auto mat = AssetManager::instance().addMaterial("default_material", std::make_shared<Material>("default"));
+	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>("default"));
 
 
 	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));

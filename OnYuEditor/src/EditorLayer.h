@@ -15,6 +15,7 @@ public:
 	virtual void onUpdate(float deltaTime) override;
 	virtual void onEvent(/*Event& event*/) override;
 	virtual void onImGuiRender() override;
+	void createMainMenu();
 	virtual void onAttach() override;
 	virtual void onDetach() override;
 

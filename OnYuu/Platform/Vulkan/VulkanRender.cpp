@@ -82,6 +82,7 @@ namespace OnYuu {
             throw std::runtime_error("Failed to create depth resources");
         }
         LOG( << "✓ Depth resources created\n");
+        LOG( << "✓ Depth resources created\n");
 
         // STEP 7: Render pass (USA il format dalla swapchain!)
         if (!createRenderPass()) {
@@ -549,31 +550,83 @@ namespace OnYuu {
         LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
         
         // ✅ STEP 0: Processa le invalidazioni differite dal frame precedente
-        if (!pendingMaterialInvalidations_.empty()) {
-            LOG(<< "  0. Processing " << pendingMaterialInvalidations_.size() << " pending material invalidations...\n");
-            device_->waitIdle();
-            
-            for (const auto& material : pendingMaterialInvalidations_) {
-                auto it = materialResources_.find(material);
-                if (it != materialResources_.end()) {
-                    auto& res = it->second;
-                    if (descriptorManager_ && !res.descriptorSets.empty()) {
-                        descriptorManager_->freeSets(res.descriptorSets);
-                        res.descriptorSets.clear();
-                    }
-                    for (auto& ubo : res.ubos) {
-                        if (ubo) {
-                            ubo->shutdown();
-                        }
-                    }
-                    res.ubos.clear();
-                    materialResources_.erase(it);
-                }
-            }
-            pendingMaterialInvalidations_.clear();
-            LOG(<< "     ✓ Pending invalidations processed\n");
-        }
+        pendingMaterialHandling();
         
+        bool retFlag;
+        acquireImageAndBeginFrame(retFlag);
+        if (retFlag) return;
+
+       
+   
+
+
+        // Step 4: Update descriptors
+        updateAllDescriptorSets();
+
+        // Step 5: Begin command buffer
+        VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
+        commandManager_->reset(currentFrame_);
+
+        if (!commandManager_->begin(currentFrame_)) {
+            std::cerr << " Failed to begin command buffer!\n";
+            return;
+        }
+        isFrameRecording_ = true; // ← Frame è in recording
+
+		//beginRenderPass(cmd);
+        for (size_t i = 0; i < renderScenes.size(); ++i) {
+            if (renderScenes[i].target) {
+                sceneTarget[renderScenes[i].target].push_back(i);
+            }
+            else {
+				swapChainRenderedScenes.push_back(i);
+            }
+        }
+        renderOnTarget(cmd);
+        renderOnSwapChain(cmd);
+
+        
+
+        if (frameNumber % 60 == 0) {
+            geometryPool_->collectGarbage(frameNumber, 180); // Rimuovi mesh non usate da 3 secondi
+        }
+    }
+
+    void VulkanRender::renderOnSwapChain(VkCommandBuffer cmd)
+    {
+        activeColorFormat_ = swapchain_->getFormat();
+        activeDepthFormat_ = depthFormat_;
+        beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_, true, VK_IMAGE_LAYOUT_UNDEFINED);
+        for (int index : swapChainRenderedScenes) {
+            LOG(<< "       Rendering scene " << index << " to swapchain...\n");
+            renderScene(cmd, index);
+            LOG(<< "         ✓ Scene rendered to swapchain\n");
+        }
+    }
+
+    void VulkanRender::renderOnTarget(VkCommandBuffer cmd)
+    {
+        for (const auto& [target, indices] : sceneTarget) {
+            LOG(<< "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
+            auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
+            activeColorFormat_ = vulkanTarget->getColorFormat();
+            activeDepthFormat_ = vulkanTarget->getDepthFormat();
+            const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
+            beginRendering(cmd, vulkanTarget->getColorImage(currentFrame_), vulkanTarget->getColorImageView(currentFrame_), vulkanTarget->getDepthImage(currentFrame_), vulkanTarget->getDepthImageView(currentFrame_), vulkanTarget->getExtent(), vulkanTarget->getDepthFormat(), false, targetOldLayout);
+            vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+            for (int index : indices) {
+                LOG(<< "       Rendering scene " << index << " to target...\n");
+                renderScene(cmd, index);
+                LOG(<< "         ✓ Scene rendered to target\n");
+            }
+            endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
+            vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        }
+    }
+
+    void VulkanRender::acquireImageAndBeginFrame(bool& retFlag)
+    {
+        retFlag = true;
         vkWaitForFences(device_->getDevice(), 1, &inFlightFences[currentFrame_], VK_TRUE, UINT64_MAX);
 
         if (swapchainNeedsRecreate_ || hasFramebufferResize()) {
@@ -584,7 +637,7 @@ namespace OnYuu {
         }
 
         // Step 2: Acquire image
-        LOG( << "  2. Acquiring swapchain image...\n");
+        LOG(<< "  2. Acquiring swapchain image...\n");
         VkResult result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
 
@@ -613,80 +666,34 @@ namespace OnYuu {
 
         imagesInFlight[imageIndex_] = inFlightFences[currentFrame_];
         vkResetFences(device_->getDevice(), 1, &inFlightFences[currentFrame_]);
+        retFlag = false;
+    }
 
-        if (renderScenes.size() > 1 && renderScenes[0].batches.size() > 0) {
-            std::cout << "cazzo";
-        }
-        
-   
+    void VulkanRender::pendingMaterialHandling()
+    {
+        if (!pendingMaterialInvalidations_.empty()) {
+            LOG(<< "  0. Processing " << pendingMaterialInvalidations_.size() << " pending material invalidations...\n");
+            device_->waitIdle();
 
-
-        // Step 4: Update descriptors
-        LOG( << "  4. Updating descriptor sets...\n");
-        updateAllDescriptorSets();
-        LOG( << "  Descriptors updated\n");
-
-        // Step 5: Begin command buffer
-        LOG( << "  5. Recording command buffer...\n");
-        VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
-        commandManager_->reset(currentFrame_);
-
-        if (!commandManager_->begin(currentFrame_)) {
-            std::cerr << " Failed to begin command buffer!\n";
-            return;
-        }
-        isFrameRecording_ = true; // ← Frame è in recording
-        LOG( << "  Command buffer recording started\n");
-
-		// Step 6: Begin render pass
-		LOG( << "  6. Beginning render pass...\n");
-		//beginRenderPass(cmd);
-        for (size_t i = 0; i < renderScenes.size(); ++i) {
-            if (renderScenes[i].target) {
-                sceneTarget[renderScenes[i].target].push_back(i);
+            for (const auto& material : pendingMaterialInvalidations_) {
+                auto it = materialResources_.find(material);
+                if (it != materialResources_.end()) {
+                    auto& res = it->second;
+                    if (descriptorManager_ && !res.descriptorSets.empty()) {
+                        descriptorManager_->freeSets(res.descriptorSets);
+                        res.descriptorSets.clear();
+                    }
+                    for (auto& ubo : res.ubos) {
+                        if (ubo) {
+                            ubo->shutdown();
+                        }
+                    }
+                    res.ubos.clear();
+                    materialResources_.erase(it);
+                }
             }
-            else {
-				swapChainRenderedScenes.push_back(i);
-            }
-        }
-		for (const auto& [target, indices] : sceneTarget) {
-            LOG( << "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
-			auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
-            activeColorFormat_ = vulkanTarget->getColorFormat();
-            activeDepthFormat_ = vulkanTarget->getDepthFormat();
-			const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
-			beginRendering(cmd, vulkanTarget->getColorImage(currentFrame_), vulkanTarget->getColorImageView(currentFrame_), vulkanTarget->getDepthImage(currentFrame_), vulkanTarget->getDepthImageView(currentFrame_), vulkanTarget->getExtent(), vulkanTarget->getDepthFormat(), false, targetOldLayout);
-			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-            for (int index : indices) {
-                LOG( << "       Rendering scene " << index << " to target...\n");
-                renderScene(cmd, index);
-                LOG( << "         ✓ Scene rendered to target\n");
-			}
-            endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
-			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        }
-        activeColorFormat_ = swapchain_->getFormat();
-        activeDepthFormat_ = depthFormat_;
-		beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_, true, VK_IMAGE_LAYOUT_UNDEFINED);
-
-        for (int index : swapChainRenderedScenes) {
-            LOG( << "       Rendering scene " << index << " to swapchain...\n");
-            renderScene(cmd, index);
-            LOG( << "         ✓ Scene rendered to swapchain\n");
-		}
-
-        // Step 7: Render scenes
-        if (renderScenes.empty()) {
-            LOG( << "  7. No scenes to render (renderScenes is empty)\n");
-        }
-        else {
-            LOG( << "  7. Rendering " << renderScenes.size() << " scene(s)...\n");
-            //renderScene(cmd, static_cast<int>(i));
-            LOG( << "     ✓ All scenes rendered\n");
-        }
-
-        if (frameNumber % 60 == 0) {
-            geometryPool_->collectGarbage(frameNumber, 180); // Rimuovi mesh non usate da 3 secondi
+            pendingMaterialInvalidations_.clear();
+            LOG(<< "     ✓ Pending invalidations processed\n");
         }
     }
 
@@ -943,17 +950,14 @@ namespace OnYuu {
 
     void VulkanRender::renderScene(VkCommandBuffer cmd, int sceneIndex) {
         if (sceneIndex < 0 || sceneIndex >= static_cast<int>(renderScenes.size())) {
-            LOG( << "       [renderScene] Invalid scene index: " << sceneIndex << "\n");
             return;
         }
 
         RenderScene& scene = renderScenes[sceneIndex];
-        LOG( << "       [renderScene] Scene has " << scene.batches.size() << " batches\n");
 
         auto& sceneRes = sceneResources_[sceneIndex];
 
         if (sceneRes.globalDescriptorSets.empty()) {
-            LOG( << "       [renderScene] No global descriptor sets, skipping\n");
             return;
         }
 
