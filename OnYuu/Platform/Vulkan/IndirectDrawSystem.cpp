@@ -66,9 +66,6 @@ namespace OnYuu {
 
         needsUpdate = false;
 
-#ifdef _DEBUG
-        std::cout << "Finalized indirect buffer: " << currentDrawCount << " draws\n";
-#endif
     }
 
     void IndirectDrawBuffer::reset() {
@@ -89,10 +86,6 @@ namespace OnYuu {
             sizeof(VkDrawIndexedIndirectCommand)
         );
 
-#ifdef _DEBUG
-        std::cout << "Executed multi draw indirect: " << currentDrawCount
-            << " draws in ONE call\n";
-#endif
     }
 
     void IndirectDrawBuffer::shutdown() {

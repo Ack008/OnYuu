@@ -84,3 +84,48 @@ bool OnYuu::MaterialFileWriter::writeMaterialToFile(const std::string& path, con
 	materialFile << materialJson.dump(4);
 	return static_cast<bool>(materialFile);
 }
+
+bool OnYuu::MaterialFileWriter::createMaterial(const std::string& materialPath, const std::string& shaderPath, const std::string& materialId, const std::string& shaderId)
+{
+
+	nlohmann::json materialJson;
+
+	materialJson["shaderName"] = shaderId;
+	materialJson["sourcePath"] = shaderPath;
+	materialJson["version"] = 1u;
+	materialJson["params"] = nlohmann::json::object();
+	materialJson["textures"] = nlohmann::json::object();
+	auto shader = AssetManager::instance().getShaderPtr(shaderId);
+	if (!shader) {
+		// Try loading from shaderPath
+		shader = AssetManager::instance().addShader(shaderPath);
+		
+	}
+	if (shader) {
+		for (const auto& [uniformName, uniformType] : shader->getUniformNameTypeMap()) {
+			if (isTextureLikeType(uniformType)) {
+				materialJson["textures"][uniformName] = "";
+				continue;
+			}
+
+			auto defaultValue = defaultValueForType(uniformType);
+			if (!defaultValue.is_null()) {
+				materialJson["params"][uniformName] = {
+					{ "type", toMaterialTypeName(uniformType) },
+					{ "value", defaultValue }
+				};
+			}
+		}
+	}
+	else {
+		std::cout << "Failed to find shader with ID '" << shaderId << "'. Creating material with empty params and textures.\n";
+	}
+
+	std::ofstream materialFile(materialPath);
+	if (!materialFile.is_open()) {
+		return false;
+	}
+
+	materialFile << materialJson.dump(4);
+	return static_cast<bool>(materialFile);
+}

@@ -143,6 +143,9 @@
     <ClCompile Include="src\EditorCamera.cpp" />
     <ClCompile Include="src\EditorLayer.cpp" />
     <ClCompile Include="src\Helpers\MaterialFileWriter.cpp" />
+    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.cpp" />
+    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingShaderState.cpp" />
+    <ClCompile Include="src\MaterialEditorState\MaterialEditingState.cpp" />
     <ClCompile Include="src\Panels\ContentBrowsingPanel.cpp" />
     <ClCompile Include="src\Panels\SceneHierarchyPanel.cpp" />
     <ClCompile Include="src\Panels\ViewportPanel.cpp" />
@@ -156,9 +159,15 @@
     <ClInclude Include="src\EditorCamera.h" />
     <ClInclude Include="src\EditorLayer.h" />
     <ClInclude Include="src\Helpers\MaterialFileWriter.h" />
+    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.h" />
+    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingShaderState.h" />
+    <ClInclude Include="src\MaterialCreationStateMachines\IdleState.h" />
+    <ClInclude Include="src\MaterialEditorState\MaterialEditingState.h" />
     <ClInclude Include="src\Panels\ContentBrowsingPanel.h" />
     <ClInclude Include="src\Panels\SceneHierarchyPanel.h" />
     <ClInclude Include="src\Panels\ViewportPanel.h" />
+    <ClInclude Include="src\StateMachine\State.h" />
+    <ClInclude Include="src\StateMachine\StateMachine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

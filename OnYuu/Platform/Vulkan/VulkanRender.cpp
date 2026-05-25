@@ -547,7 +547,6 @@ namespace OnYuu {
     void VulkanRender::BeginFrame() {
         frameNumber++;
 
-        LOG( << "\n=== BeginFrame #" << frameNumber_ << " (currentFrame=" << currentFrame_ << ") ===\n");
         
         // ✅ STEP 0: Processa le invalidazioni differite dal frame precedente
         pendingMaterialHandling();
@@ -598,16 +597,13 @@ namespace OnYuu {
         activeDepthFormat_ = depthFormat_;
         beginRendering(cmd, swapchain_->getFrame(imageIndex_).image, swapchain_->getFrame(imageIndex_).view, depthImage_, depthImageView_, swapchain_->getExtent(), depthFormat_, true, VK_IMAGE_LAYOUT_UNDEFINED);
         for (int index : swapChainRenderedScenes) {
-            LOG(<< "       Rendering scene " << index << " to swapchain...\n");
             renderScene(cmd, index);
-            LOG(<< "         ✓ Scene rendered to swapchain\n");
         }
     }
 
     void VulkanRender::renderOnTarget(VkCommandBuffer cmd)
     {
         for (const auto& [target, indices] : sceneTarget) {
-            LOG(<< "     - Target: " << target << " with " << indices.size() << " scene(s)\n");
             auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
             activeColorFormat_ = vulkanTarget->getColorFormat();
             activeDepthFormat_ = vulkanTarget->getDepthFormat();
@@ -615,9 +611,7 @@ namespace OnYuu {
             beginRendering(cmd, vulkanTarget->getColorImage(currentFrame_), vulkanTarget->getColorImageView(currentFrame_), vulkanTarget->getDepthImage(currentFrame_), vulkanTarget->getDepthImageView(currentFrame_), vulkanTarget->getExtent(), vulkanTarget->getDepthFormat(), false, targetOldLayout);
             vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
             for (int index : indices) {
-                LOG(<< "       Rendering scene " << index << " to target...\n");
                 renderScene(cmd, index);
-                LOG(<< "         ✓ Scene rendered to target\n");
             }
             endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
             vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -637,7 +631,6 @@ namespace OnYuu {
         }
 
         // Step 2: Acquire image
-        LOG(<< "  2. Acquiring swapchain image...\n");
         VkResult result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
 
 
@@ -701,33 +694,27 @@ namespace OnYuu {
         static int submitNumber = 0;
         submitNumber++;
 
-        LOG(<< "=== Submit #" << submitNumber << " ===\n");
 
         VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
 
         // Step 1: End render pass
-        LOG(<< "  1. Ending render pass...\n");
         //endRenderPass(cmd);
         endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
-        LOG(<< "     ✓ Render pass ended\n");
         sceneTarget.clear();
         swapChainRenderedScenes.clear();
         
         // Step 2: End command buffer
-        LOG(<< "  2. Ending command buffer...\n");
         if (!commandManager_->end(currentFrame_)) {
             std::cerr << "     ✗ Failed to end command buffer!\n";
             isFrameRecording_ = false; // ← Frame non è più in recording
             return;
         }
         isFrameRecording_ = false; // ← Frame non è più in recording
-        LOG(<< "     ✓ Command buffer recording ended\n");
 
         const auto& frameSync = syncManager_->getFrameSync(currentFrame_);
         const auto& imageSync = syncManager_->getImageSync(imageIndex_);
 
         // Step 3: Submit to graphics queue
-        LOG(<< "  3. Submitting to graphics queue...\n");
         VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame_] };
         VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[imageIndex_] };
         // ✅ USE IMAGE SYNC!
@@ -749,10 +736,8 @@ namespace OnYuu {
             std::cerr << "     ✗ Failed to submit draw command buffer! Result: " << submitResult << "\n";
             return;
         }
-        LOG(<< "     ✓ Command buffer submitted\n");
 
         // Step 5: Present
-        LOG(<< "  5. Presenting image " << imageIndex_ << "...\n");
         VkResult result = swapchain_->present(device_->getPresentQueue(), imageIndex_, renderFinishedSemaphores[imageIndex_]);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
@@ -773,17 +758,13 @@ namespace OnYuu {
         // Step 6: Advance frame
         uint32_t oldFrame = currentFrame_;
         currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
-        LOG(<< "  6. Advanced frame: " << oldFrame << " → " << currentFrame_ << "\n");
 
         // Step 7: Clear scenes
         renderScenes.clear();
-        LOG(<< "  7. Cleared render scenes\n");
-        LOG(<< "=== Submit Complete ===\n\n");
     }
 
 	void VulkanRender::beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat, bool isSwapchain, VkImageLayout colorOldLayout)
 	{
-		LOG( << "     [beginRendering] Starting...\n");
 
 		VkImageMemoryBarrier colorBarrier{};
 		colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -869,11 +850,9 @@ namespace OnYuu {
 		scissor.extent = extent;
 		vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-		LOG( << "     [beginRendering] Viewport & scissor set\n");
 	}
 
     void VulkanRender::beginRenderPass(VkCommandBuffer cmd) {
-        LOG( << "     [beginRenderPass] Starting...\n");
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -889,12 +868,6 @@ namespace OnYuu {
         renderPassInfo.clearValueCount = clearValues.size();
         renderPassInfo.pClearValues = clearValues.data();
 
-        LOG( << "     [beginRenderPass] Framebuffer: " << renderPassInfo.framebuffer
-            << ", Extent: " << renderPassInfo.renderArea.extent.width << "x"
-            << renderPassInfo.renderArea.extent.height << "\n");
-        LOG( << "     [beginRenderPass] Clear color: R=" << clearValues[0].color.float32[0]
-            << " G=" << clearValues[0].color.float32[1]
-            << " B=" << clearValues[0].color.float32[2] << "\n");
 
         vkCmdBeginRenderPass(cmd, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -913,7 +886,6 @@ namespace OnYuu {
         scissor.extent = swapchain_->getExtent();
         vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-        LOG( << "     [beginRenderPass] Viewport & scissor set\n");
     }
 
     void VulkanRender::endRenderPass(VkCommandBuffer cmd) {
@@ -967,8 +939,6 @@ namespace OnYuu {
             auto material = key.first;
             auto renderingType = key.second;
 
-            LOG( << "       [renderScene] Batch " << batchNum << ": "
-                << batch.size() << " instances\n");
 
             if (batch.empty()) {
                 LOG( << "         - Empty batch, skipping\n");
@@ -989,7 +959,6 @@ namespace OnYuu {
                 continue;
             }
 
-            LOG( << "         - Pipeline: " << pipeline << "\n");
 
             // Bind pipeline
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -1012,8 +981,6 @@ namespace OnYuu {
                 materialResources_[material].descriptorSets[currentFrame_]
             };
 
-            LOG( << "         - Binding descriptor sets: global="
-                << descriptorSets[0] << ", material=" << descriptorSets[1] << "\n");
 
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
                 0, descriptorSets.size(), descriptorSets.data(),
@@ -1028,8 +995,6 @@ namespace OnYuu {
             // Draw
             auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
             if (!indirectBuffer->isEmpty()) {
-                LOG( << "         - Executing indirect draw ("
-                    << indirectBuffer->getDrawCount() << " draws)\n");
                 indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
             }
             else {
@@ -1045,8 +1010,6 @@ namespace OnYuu {
     // ============================================================================
 
     void VulkanRender::updateAllDescriptorSets() {
-        LOG( << "     [updateAllDescriptorSets] Updating for "
-            << renderScenes.size() << " scenes\n");
 
         indirectDrawManager_->resetAll();
 
@@ -1065,8 +1028,6 @@ namespace OnYuu {
             }
         }
 
-        LOG( << "     [updateAllDescriptorSets] Updating "
-            << usedMaterials.size() << " materials\n");
 
         for (const auto& material : usedMaterials) {
             // Skip materials that haven't been initialized yet
@@ -1132,7 +1093,6 @@ namespace OnYuu {
             cameraData.view = scene.activeCamera->getViewMatrix();
             cameraData.cameraPosition = glm::vec4(scene.activeCamera->getPosition(), 1.0f);
 
-            LOG( << "       [updateSceneDescriptors] Camera updated\n");
         }
         else {
             LOG( << "       [updateSceneDescriptors] WARNING: No active camera!\n");

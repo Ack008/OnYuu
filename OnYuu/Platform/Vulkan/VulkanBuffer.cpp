@@ -280,10 +280,6 @@ namespace OnYuu {
 				chunkHashes[i] = newHash;
 				anyChunkChanged = true;
 
-#ifdef _DEBUG
-				std::cout << "Updated chunk " << i << "/" << numChunks
-					<< " (offset: " << offset << ", size: " << chunkSize << ")\n";
-#endif
 			}
 		}
 
@@ -292,10 +288,5 @@ namespace OnYuu {
 			usedSize = size;
 		}
 
-#ifdef _DEBUG
-		if (!anyChunkChanged) {
-			std::cout << "VulkanStorageBuffer: No chunks changed, skipped memcpy\n";
-		}
-#endif
 	}
 } // namespace OnYuu

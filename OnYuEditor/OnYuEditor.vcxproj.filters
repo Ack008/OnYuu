@@ -36,6 +36,15 @@
     <ClCompile Include="src\Helpers\MaterialFileWriter.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingShaderState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MaterialEditorState\MaterialEditingState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EditorLayer.h">
@@ -54,6 +63,24 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="src\Helpers\MaterialFileWriter.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StateMachine\StateMachine.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StateMachine\State.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MaterialCreationStateMachines\IdleState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingShaderState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MaterialEditorState\MaterialEditingState.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
