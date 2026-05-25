@@ -31,7 +31,7 @@ namespace OnYuu {
                 }
             }
 
-            BatchCouple couple = std::make_pair(material, mesh->getRenderingType());
+            BatchCouple couple = std::make_pair(mesh->getMaterialID(), mesh->getRenderingType());
             renderScenes.back().meshRenders.push_back(RenderData{ mesh,model });
             renderScenes.back().batches[couple].push_back(RenderData{ mesh,model });
         }

@@ -119,16 +119,12 @@ namespace OnYuu {
 
         auto normalizeKey = [&](const std::filesystem::path& p) {
             std::filesystem::path keyPath = p;
-            if (keyPath.extension() == ".mat") {
-                keyPath.replace_extension();
-            }
-            return keyPath.generic_string();
+           
+            return keyPath.string();
         };
 
         std::filesystem::path candidate = assetsRoot / requested;
-        if (candidate.extension() != ".mat") {
-            candidate.replace_extension(".mat");
-        }
+        
 
         if (std::filesystem::exists(candidate)) {
             outFilePath = candidate;
@@ -136,7 +132,7 @@ namespace OnYuu {
             return true;
         }
 
-        const std::string requestedStem = requested.stem().string();
+        const std::string requestedStem = requested.string();
         if (requestedStem.empty()) {
             return false;
         }
@@ -729,6 +725,7 @@ namespace OnYuu {
                         std::string materialKey;
                         if (ResolveMaterialAssetPath(payloadMaterial, materialPath, materialKey))
                         {
+                            std::cout << "[SceneHierarchyPanel] Resolved material asset '" << payloadMaterial << "' to '" << materialPath.string() << "' with key '" << materialKey << "'" << std::endl;
                             if (!AssetManager::instance().getMaterialMetadata(materialKey))
                             {
                                 AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), materialKey);

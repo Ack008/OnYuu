@@ -947,12 +947,12 @@ namespace OnYuu {
 
             // Get pipeline
             PipelineKey pipelineKey{ 
-                material->getShader(), 
+                AssetManager::instance().getMaterialPtr(material)->getShader(),
                 renderingType,
                 activeColorFormat_,
                 activeDepthFormat_
             };
-            VkPipeline pipeline = getOrCreatePipeline(pipelineKey, material);
+            VkPipeline pipeline = getOrCreatePipeline(pipelineKey, AssetManager::instance().getMaterialPtr(material));
 
             if (pipeline == VK_NULL_HANDLE) {
                 std::cerr << "         ✗ Failed to get pipeline!\n";
@@ -965,20 +965,20 @@ namespace OnYuu {
 
             // Bind descriptors
             VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
-
-            if (materialResources_.find(material) == materialResources_.end()) {
+			auto materialPtr = AssetManager::instance().getMaterialPtr(material);
+            if (materialResources_.find(materialPtr) == materialResources_.end()) {
                 LOG( << "         ⚠ Material resources not yet initialized, initializing now...\n");
-                updateMaterialDescriptors(material);
+                updateMaterialDescriptors(materialPtr);
             }
 
-            if (materialResources_.find(material) == materialResources_.end()) {
+            if (materialResources_.find(materialPtr) == materialResources_.end()) {
                 std::cerr << "         ✗ Material resources still not available!\n";
                 continue;
             }
 
             std::array<VkDescriptorSet, 2> descriptorSets = {
                 sceneRes.globalDescriptorSets[currentFrame_],
-                materialResources_[material].descriptorSets[currentFrame_]
+                materialResources_[materialPtr].descriptorSets[currentFrame_]
             };
 
 
@@ -993,7 +993,7 @@ namespace OnYuu {
             vkCmdBindIndexBuffer(cmd, geometryPool_->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
             // Draw
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, materialPtr, toPrimitiveTopology(renderingType));
             if (!indirectBuffer->isEmpty()) {
                 indirectBuffer->executeMultiDrawIndirect(cmd, currentFrame_);
             }
@@ -1024,7 +1024,7 @@ namespace OnYuu {
         std::unordered_set<std::shared_ptr<Material>> usedMaterials;
         for (const auto& scene : renderScenes) {
             for (const auto& [key, batch] : scene.batches) {
-                usedMaterials.insert(key.first);
+                usedMaterials.insert(AssetManager::instance().getMaterialPtr(key.first));
             }
         }
 
@@ -1124,7 +1124,7 @@ namespace OnYuu {
                 meshInstances[renderData.renderMesh->getMesh()].push_back(renderData.model);
             }
 
-            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, material, toPrimitiveTopology(renderingType));
+            auto indirectBuffer = indirectDrawManager_->getOrCreateBuffer(sceneIndex, AssetManager::instance().getMaterialPtr(material) , toPrimitiveTopology(renderingType));
 
             // For each mesh, create indirect command
             for (const auto& [meshPtr, matrices] : meshInstances) {

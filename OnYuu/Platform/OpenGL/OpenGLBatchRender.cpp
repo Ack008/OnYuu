@@ -123,17 +123,17 @@ namespace OnYuu {
 		auto batches = scene.batches;
 		for (const auto& pair : batches) {
 			const BatchCouple& key = pair.first;
-
+			auto material = AssetManager::instance().getMaterial(key.first);
 			// Usa lo shader
-			if (key.first) {
-				key.first->bind();
-				key.first->apply();
+			if (material) {
+				material->bind();
+				material->apply();
 				// Imposta la matrice della camera
 			}
 			for (RenderData rd : pair.second) {
-				if (key.first) {
-					key.first->set("u_model", rd.model);
-					key.first->apply();
+				if (material) {
+					material->set("u_model", rd.model);
+					material->apply();
 				}
 
 				// rd.renderMesh->mesh è ora std::shared_ptr<Mesh>

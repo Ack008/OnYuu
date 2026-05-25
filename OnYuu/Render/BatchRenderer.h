@@ -12,12 +12,11 @@
 #include "Core/Model/Components/Camera.h"
 namespace OnYuu {
 
-    typedef std::pair<std::shared_ptr<Material>, RenderingTypeEnum> BatchCouple;
+    typedef std::pair<std::string, RenderingTypeEnum> BatchCouple;
     struct BatchCoupleHash {
         std::size_t operator()(const BatchCouple& bc) const noexcept {
             // Hash sul puntatore interno dello shared_ptr (indirizzo oggetto)
-            Material* raw = bc.first ? bc.first.get() : nullptr;
-            std::size_t h1 = std::hash<Material*>{}(raw);
+            std::size_t h1 = std::hash<std::string>{}(bc.first);
             std::size_t h2 = std::hash<int>{}(static_cast<int>(bc.second));
             return h1 ^ (h2 << 1); // semplice combinazione XOR
         }

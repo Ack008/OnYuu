@@ -129,3 +129,10 @@ bool OnYuu::MaterialFileWriter::createMaterial(const std::string& materialPath, 
 	materialFile << materialJson.dump(4);
 	return static_cast<bool>(materialFile);
 }
+
+bool OnYuu::MaterialFileWriter::overwriteMaterialfromJSON(const std::string& materialPath)
+{
+	
+	
+	return false;
+}

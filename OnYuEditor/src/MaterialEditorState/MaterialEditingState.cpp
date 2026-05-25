@@ -158,13 +158,17 @@ void MaterialEditingState::onExit()
 	std::ofstream ofs(m_materialPath);
 	if (ofs.is_open()) {
 		ofs << root.dump(4);
+		ofs.flush();
+		ofs.close();
 	} else {
 		std::cerr << "Error: Could not open file for writing: " << m_materialPath << std::endl;
 	}
-	if (auto mat = AssetManager::instance().getMaterialPtr(m_materialId)) {
+	auto mat = AssetManager::instance().getMaterialPtr(m_materialId);
+	if (mat) {
+	std::cout << "Updating material in AssetManager: " << m_materialId << " " << m_materialPath << std::endl;
 		AssetManager::instance().importMaterialMetadataFromJson(m_materialPath.string(), m_materialId);
-		AssetManager::instance().removeMaterial(m_materialId); // Remove old material to force reload with new metadata
-		 
+		AssetManager::instance().createMaterialFromMetadata(m_materialId);
+
 	}
 }
 
