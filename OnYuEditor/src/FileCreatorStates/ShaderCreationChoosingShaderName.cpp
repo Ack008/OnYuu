@@ -5,7 +5,8 @@ void ShaderFileCreationState::onEnter()
 {
 	shouldClose = false;
 	m_openPopupNextFrame = true;
-	shaderNameBuffer[0] = '\0';
+
+	
 }
 void ShaderFileCreationState::onExit()
 {
@@ -17,9 +18,7 @@ void ShaderFileCreationState::onImGuiRender()
 		m_openPopupNextFrame = false;
 	}
 
-	ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing);
 	ImGui::SetNextWindowSize(ImVec2(700.0f, 260.0f), ImGuiCond_Appearing);
-	ImGui::SetNextWindowFocus();
 	if (ImGui::BeginPopupModal("shader_name", NULL, ImGuiWindowFlags_NoResize)) {
 		ImGui::InputText("Shader Name", shaderNameBuffer, sizeof(shaderNameBuffer));
 		if (ImGui::Button("Close")) {
