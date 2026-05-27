@@ -2,6 +2,10 @@
 OnYuu::VulkanMetaShader::VulkanMetaShader(const std::string& filename, bool isShaderSource)
 	: MetaShader(filename, isShaderSource)
 {
+	if (hasErrors()) {
+		std::cerr << "Errors found in shader source. Check logs for details.\n";
+		return;
+	}
 	vKVisitor = VulkanVisitor(&getSemanticVisitor());
 	vKVisitor.produceShaders(getGLSLVisitor().getShaderInfo());
 	std::cout << "Vertex Shader Code:\n" << vKVisitor.getVertexShaderCode() << std::endl;

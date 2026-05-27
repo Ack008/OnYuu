@@ -17,6 +17,7 @@
 #include <memory>
 #include <unordered_map>
 #include "VulkanBufferPool.h"
+#include "Application/AssetManager.h"
 
 namespace OnYuu {
 
@@ -41,7 +42,8 @@ namespace OnYuu {
         void pendingMaterialHandling();
         void submit() override;
         void invalidateShader(const std::shared_ptr<Shader>& shader) override;
-        void invalidateMaterial(const std::shared_ptr<Material>& material) override;
+            void invalidateShaderByName(const std::string& shaderName) override;
+            void invalidateMaterial(const std::shared_ptr<Material>& material) override;
         void Shutdown() override;
         void setSkyBox(SkyBoxComponent* skybox) override;
         void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;

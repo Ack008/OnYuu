@@ -8,6 +8,7 @@
 #include "Platform/Vulkan/VulkanRenderTarget.h"
 #include "Platform/Vulkan/VulkanBufferPool.h"
 #include "IndirectDrawSystem.h"
+#include "Application/AssetManager.h"
 #include <iostream>
 #include <array>
 #include <unordered_set>
@@ -1398,6 +1399,7 @@ void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
 
     device_->waitIdle();
 
+    // First remove pipelines that reference exactly this shader pointer
     if (pipelineManager_) {
         for (auto it = pipelineCache_.begin(); it != pipelineCache_.end();) {
             if (it->first.shader == shader) {
@@ -1427,6 +1429,75 @@ void VulkanRender::invalidateShader(const std::shared_ptr<Shader>& shader)
         for (const auto& mat : materialsToInvalidate) {
             pendingMaterialInvalidations_.push_back(mat);
         }
+        return;
+    }
+
+    for (const auto& mat : materialsToInvalidate) {
+        invalidateMaterial(mat);
+    }
+}
+
+void VulkanRender::invalidateShaderByName(const std::string& shaderName)
+{
+    if (!device_ || !device_->isValid()) return;
+
+    device_->waitIdle();
+
+    // Erase pipelines where the key's shader (MetaShader) has matching shaderName
+    for (auto it = pipelineCache_.begin(); it != pipelineCache_.end();) {
+        // attempt to get MetaShader name via AssetManager if possible
+        std::string keyName;
+        // We attempt to find a matching name by searching asset manager's mapping
+        // This is best-effort: we get shader pointer and try to find its registered name
+        auto shaderPtr = it->first.shader;
+        if (shaderPtr) {
+            // Ask AssetManager for the registered name for this shader pointer
+            keyName = OnYuu::AssetManager::instance().findShaderNameForShader(shaderPtr);
+        }
+
+        if (!keyName.empty() && keyName == shaderName) {
+            if (it->second != VK_NULL_HANDLE) pipelineManager_->destroyPipeline(it->second);
+            it = pipelineCache_.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // Also invalidate material resources for materials that reference this shaderName
+    std::vector<std::shared_ptr<Material>> materialsToInvalidate;
+    for (const auto& [mat, res] : materialResources_) {
+        if (!mat) continue;
+        bool matches = false;
+
+        // 1) Try to map material's shader pointer to a registered name via AssetManager
+        auto mShaderPtr = mat->getShader();
+        if (mShaderPtr) {
+            auto registeredName = OnYuu::AssetManager::instance().findShaderNameForShader(mShaderPtr);
+            if (!registeredName.empty() && registeredName == shaderName) {
+                matches = true;
+            }
+        }
+
+        // 2) Fallback: try to find the material's name in AssetManager and inspect its metadata
+        if (!matches) {
+            const auto& allMats = OnYuu::AssetManager::instance().getMaterials();
+            for (const auto& [matName, matPtr] : allMats) {
+                if (matPtr == mat) {
+                    const auto* md = OnYuu::AssetManager::instance().getMaterialMetadata(matName);
+                    if (md && md->shaderName == shaderName) {
+                        matches = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (matches) materialsToInvalidate.push_back(mat);
+    }
+
+    if (isFrameRecording_) {
+        for (const auto& mat : materialsToInvalidate) pendingMaterialInvalidations_.push_back(mat);
         return;
     }
 

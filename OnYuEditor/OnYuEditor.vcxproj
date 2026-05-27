@@ -149,6 +149,8 @@
     <ClCompile Include="src\Panels\ContentBrowsingPanel.cpp" />
     <ClCompile Include="src\Panels\SceneHierarchyPanel.cpp" />
     <ClCompile Include="src\Panels\ViewportPanel.cpp" />
+    <ClCompile Include="src\ShaderEditorState\ErrorWindowState.cpp" />
+    <ClCompile Include="src\ShaderEditorState\ShaderEditingState.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OnYuu\OnYuu.vcxproj">
@@ -166,6 +168,8 @@
     <ClInclude Include="src\Panels\ContentBrowsingPanel.h" />
     <ClInclude Include="src\Panels\SceneHierarchyPanel.h" />
     <ClInclude Include="src\Panels\ViewportPanel.h" />
+    <ClInclude Include="src\ShaderEditorState\ErrorWindowState.h" />
+    <ClInclude Include="src\ShaderEditorState\ShaderEditingState.h" />
     <ClInclude Include="src\StateMachine\State.h" />
     <ClInclude Include="src\StateMachine\StateMachine.h" />
   </ItemGroup>

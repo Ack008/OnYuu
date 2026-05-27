@@ -125,6 +125,17 @@ namespace OnYuu {
         return "";
     }
 
+    std::string AssetManager::findShaderNameForShader(const std::shared_ptr<Shader>& shader) const
+    {
+        if (!shader) return "";
+        for (const auto& [shaderName, metaShader] : shaders_) {
+            if (metaShader && metaShader->getShader() == shader) {
+                return shaderName;
+            }
+        }
+        return "";
+    }
+
     std::shared_ptr<Mesh> AssetManager::addMesh(const std::string& name, std::shared_ptr<Mesh> mesh) {
         meshes_[name] = std::move(mesh);
         return meshes_[name];
@@ -169,7 +180,9 @@ namespace OnYuu {
     }
 
     std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) const {
-        auto it = materials_.find(name);
+		std::string normalizedName = name;
+		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        auto it = materials_.find(normalizedName);
         if (it != materials_.end()) {
             return it->second;
         }
@@ -178,7 +191,9 @@ namespace OnYuu {
 
     void AssetManager::removeMaterial(const std::string& name)
     {
-		materials_.erase(name);
+		std::string normalizedName = name;
+		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+		materials_.erase(normalizedName);
     }
 
     Material* AssetManager::getMaterial(const std::string& name) const {
@@ -189,23 +204,27 @@ namespace OnYuu {
 
     void AssetManager::setMaterialMetadata(const std::string& materialName, const MaterialMetadata& metadata)
     {
-        auto oldIt = materialMetadatas_.find(materialName);
+		std::string  normalizedName = materialName;
+		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        auto oldIt = materialMetadatas_.find(normalizedName);
         if (oldIt != materialMetadatas_.end() && !oldIt->second.shaderName.empty()) {
             auto depIt = shaderToMaterials_.find(oldIt->second.shaderName);
             if (depIt != shaderToMaterials_.end()) {
-                depIt->second.erase(materialName);
+                depIt->second.erase(normalizedName);
             }
         }
 
-        materialMetadatas_[materialName] = metadata;
+        materialMetadatas_[normalizedName] = metadata;
         if (!metadata.shaderName.empty()) {
-            shaderToMaterials_[metadata.shaderName].insert(materialName);
+            shaderToMaterials_[metadata.shaderName].insert(normalizedName);
         }
     }
 
     const AssetManager::MaterialMetadata* AssetManager::getMaterialMetadata(const std::string& materialName) const
     {
-        auto it = materialMetadatas_.find(materialName);
+		std::string normalizedName = materialName;
+		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        auto it = materialMetadatas_.find(normalizedName);
         return it != materialMetadatas_.end() ? &it->second : nullptr;
     }
 
@@ -272,30 +291,37 @@ namespace OnYuu {
         return getCubeMapPtr(name).get();
     }
 
-    std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name)
-    {
-        try {
-            auto metaShader = MetaShader::create(name);
-            shaders_[name] = std::move(metaShader);
-            
-            // Also register with shader name (stem) for easier lookup
-            std::string shaderName = std::filesystem::path(name).stem().string();
-            if (shaderName != name) {
-                shaders_[shaderName] = shaders_[name];
-            }
-            
-            rebuildShaderMaterialDependencies();
-            return shaders_[name];
-        } catch (const std::exception& e) {
-            std::cerr << "[AssetManager] Failed to load shader '" << name << "': " << e.what() << std::endl;
-            return nullptr;
+	std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name)
+	{
+		std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
+		std::string normalizedName = name;
+		std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+		try {
+
+			auto metaShader = MetaShader::create(fullPath);
+
+			// Normalize path separators to ensure consistent keys across OS
+
+			// Only add under the requested normalized name
+			shaders_[normalizedName] = std::move(metaShader);
+
+			rebuildShaderMaterialDependencies();
+			return shaders_[normalizedName];
+		} catch (const std::exception& e) {
+			std::cerr << "[AssetManager] Failed to load shader '" << normalizedName << "': " << e.what() << std::endl;
+			return nullptr;
 		}
-       
+
 	}
-    std::shared_ptr<MetaShader> AssetManager::getShaderPtr(const std::string& name) const
-    {
-        auto it = shaders_.find(name);
-        return it != shaders_.end() ? it->second : nullptr;
+	std::shared_ptr<MetaShader> AssetManager::getShaderPtr(const std::string& name) const
+	{
+		std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
+		std::string normalizedName = name;
+		std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+		auto it = shaders_.find(normalizedName);
+		return it != shaders_.end() ? it->second : nullptr;
 	}
 
     std::shared_ptr<Material> AssetManager::loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath)
@@ -333,6 +359,20 @@ namespace OnYuu {
         }
 
         return getMaterialPtr(materialName);
+    }
+
+    void AssetManager::reloadMaterialsUsingShader(const std::string& shaderName)
+    {
+		for (const auto& materialName : getMaterialsUsingShader(shaderName)) {
+			const auto* metadata = getMaterialMetadata(materialName);
+			if (!metadata) {
+				std::cerr << "[AssetManager] reloadMaterialsUsingShader: no metadata found for material '" << materialName << "'\n";
+				continue;
+			}
+			if (!createMaterialFromMetadata(materialName)) {
+				std::cerr << "[AssetManager] reloadMaterialsUsingShader: failed to recreate material '" << materialName << "' from metadata\n";
+			}
+		}
     }
 
     void AssetManager::shutdown() {
@@ -624,9 +664,13 @@ void vertexMain()
 
     bool AssetManager::importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName)
     {
-        std::ifstream in(jsonPath);
+		std::string  normPath = jsonPath;
+		std::replace(normPath.begin(), normPath.end(), '\\', '/');
+		std::string normalMaterialName = materialName;
+		std::replace(normalMaterialName.begin(), normalMaterialName.end(), '\\', '/');
+        std::ifstream in(normPath);
         if (!in.is_open()) {
-            std::cerr << "[AssetManager] importMaterialMetadataFromJson: cannot open file '" << jsonPath << "'\n";
+            std::cerr << "[AssetManager] importMaterialMetadataFromJson: cannot open file '" << normPath << "'\n";
             return false;
         }
 
@@ -636,7 +680,7 @@ void vertexMain()
         }
         catch (const std::exception& e) {
             std::cerr << "[AssetManager] importMaterialMetadataFromJson: invalid json in '"
-                << jsonPath << "' -> " << e.what() << "\n";
+                << normPath << "' -> " << e.what() << "\n";
             return false;
         }
 
@@ -651,15 +695,17 @@ void vertexMain()
                 // Resolve relative to assets directory
                 shaderPath = Project::getInstance().getAssetsPath() / shaderPath;
             }
-            metadata.sourcePath = shaderPath.string();
+            std::string normPath = shaderPath.string();
+            std::replace(normPath.begin(), normPath.end(), '\\', '/');
+            metadata.sourcePath = normPath;
         } else {
-            metadata.sourcePath = jsonPath;
+            metadata.sourcePath = normPath;
         }
         
         metadata.version = j.value("version", 1u);
 
         if (metadata.shaderName.empty()) {
-            std::cerr << "[AssetManager] importMaterialMetadataFromJson: missing 'shaderName' in '" << jsonPath << "'\n";
+            std::cerr << "[AssetManager] importMaterialMetadataFromJson: missing 'shaderName' in '" << normPath << "'\n";
             return false;
         }
 
@@ -670,7 +716,7 @@ void vertexMain()
                     metadata.params[it.key()] = param;
                 }
                 else {
-                    std::cerr << "[AssetManager] importMaterialMetadataFromJson: skipped invalid param '" << it.key() << "' in '" << jsonPath << "'\n";
+                    std::cerr << "[AssetManager] importMaterialMetadataFromJson: skipped invalid param '" << it.key() << "' in '" << normPath << "'\n";
                 }
             }
         }
@@ -683,9 +729,9 @@ void vertexMain()
             }
         }
 
-        std::string resolvedMaterialName = materialName;
+        std::string resolvedMaterialName = normalMaterialName;
         if (resolvedMaterialName.empty()) {
-            resolvedMaterialName = std::filesystem::path(jsonPath).stem().string();
+            resolvedMaterialName = std::filesystem::path(normPath).stem().string();
         }
 
         setMaterialMetadata(resolvedMaterialName, metadata);
@@ -694,35 +740,30 @@ void vertexMain()
 
     bool AssetManager::createMaterialFromMetadata(const std::string& materialName)
     {
-        auto metaIt = materialMetadatas_.find(materialName);
+        std::string normalizedName = materialName;
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        auto metaIt = materialMetadatas_.find(normalizedName);
         if (metaIt == materialMetadatas_.end()) {
-            std::cerr << "[AssetManager] createMaterialFromMetadata: metadata not found for '" << materialName << "'\n";
+            std::cerr << "[AssetManager] createMaterialFromMetadata: metadata not found for '" << normalizedName << "'\n";
             return false;
         }
 
         const MaterialMetadata& metadata = metaIt->second;
 
         std::shared_ptr<MetaShader> shader = getShaderPtr(metadata.shaderName);
-        if (!shader && !metadata.sourcePath.empty()) {
-            // Try loading from source path
-            shader = addShader(metadata.sourcePath);
-            
-            // ✅ Register the shader ALSO with shaderName for future lookups
-            if (shader && metadata.shaderName != metadata.sourcePath) {
-                shaders_[metadata.shaderName] = shader;
-            }
-        }
         if (!shader) {
-            // Last resort: try loading by shaderName directly
-            shader = addShader(metadata.shaderName);
+            std::string normKey = metadata.shaderName;
+            std::replace(normKey.begin(), normKey.end(), '\\', '/');
+            shader = addShader(normKey);
         }
 
         if (!shader) {
-            std::cerr << "[AssetManager] createMaterialFromMetadata: shader not found for material '" << materialName << "'\n";
+            std::cerr << "[AssetManager] createMaterialFromMetadata: shader not found for material '" << normalizedName << "'\n";
             return false;
         }
-
-        auto material = std::make_shared<Material>(metadata.shaderName);
+		std::string normalizedShaderName = metadata.shaderName;
+		std::replace(normalizedShaderName.begin(), normalizedShaderName.end(), '\\', '/');
+        auto material = std::make_shared<Material>(normalizedShaderName);
 
         for (const auto& [paramName, param] : metadata.params) {
             switch (param.type) {
@@ -767,11 +808,11 @@ void vertexMain()
             }
             else {
                 std::cerr << "[AssetManager] createMaterialFromMetadata: texture not found '" << textureRef
-                    << "' for material '" << materialName << "'\n";
+                    << "' for material '" << normalizedName << "'\n";
             }
         }
 
-        addMaterial(materialName, material);
+        addMaterial(normalizedName, material);
         return true;
     }
 

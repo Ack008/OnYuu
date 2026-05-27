@@ -22,12 +22,13 @@ namespace OnYuu {
 			auto tree = parser.translation_unit();
 			if (parser.getNumberOfSyntaxErrors() > 0) {
 				std::cerr << "Errori di sintassi trovati: " << parser.getNumberOfSyntaxErrors() << std::endl;
+				hasSyntaxErrors = true;
 				throw std::runtime_error("Parsing fallito a causa di errori di sintassi.");
 			}
 			// 7. Crea un visitor e visita l'albero di parsing
 			MyGLSLVisitor visitor;
 			visitor.visit(tree);
-			visitor.printAllShaderInfo();
+			//visitor.printAllShaderInfo();
 			glslVisitor = std::move(visitor);
 			// Analisi semantica
 			SemanticVisitor sem;
@@ -37,6 +38,7 @@ namespace OnYuu {
 			this->sem = std::move(sem);
 		}
 		catch (std::exception& e) {
+			
 			std::cerr << "Errore: " << e.what() << std::endl;
 		}
 	}

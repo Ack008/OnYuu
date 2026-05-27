@@ -25,7 +25,7 @@ namespace OnYuu {
 		virtual std::string getUniformName(const std::string& originalName) = 0;
 		virtual std::unordered_map<std::string, std::string> getUniformNameTypeMap() const;
 		virtual void setUniformMat4(const char* name, const float* value, int count) = 0;
-		bool hasErrors() const { return sem.hasErrors(); }
+		bool hasErrors() const { return sem.hasErrors() || hasSyntaxErrors; }
 		static std::shared_ptr<MetaShader> create(const std::string& filename, bool isShaderSource = false);
 		void flushCostants() { if (shader_) shader_->flushCostants(); }
 		void shutdown() { if (shader_) shader_->shutdown(); }
@@ -36,6 +36,7 @@ namespace OnYuu {
 		std::string readFile(const std::string& filename);
 		SemanticVisitor sem;
 		MyGLSLVisitor glslVisitor;
+		bool hasSyntaxErrors = false;
 	private:
 		std::string code;
 		std::shared_ptr<Shader> shader_;

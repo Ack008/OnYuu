@@ -10,13 +10,37 @@ Material::Material(std::string shaderID)
 {
 }
 
+void Material::setShader(std::shared_ptr<Shader> shader)
+{
+	shader_ = std::move(shader);
+	// mark all uniforms as not-set so apply() will re-apply them
+	for (auto& kv : alreadySet_) kv.second = false;
+}
+
+void Material::setShaderByID(const std::string& shaderID)
+{
+	if (this->shaderID != shaderID) {
+		this->shaderID = shaderID;
+		shader_.reset(); // Clear cached shader pointer to force re-resolve
+		for (auto& kv : alreadySet_) kv.second = false; // Mark all uniforms as not-set
+	}
+}
+
 std::shared_ptr<Shader> Material::getShader() const
 {
+	// Prefer resolving the shader via AssetManager using shaderID so that
+	// runtime recompiles/updates propagate automatically to materials.
+	if (!shaderID.empty()) {
+		std::string normID = shaderID;
+		std::replace(normID.begin(), normID.end(), '\\', '/');
+		auto metaShader = AssetManager::instance().getShaderPtr(normID);
+		if (metaShader && metaShader->getShader()) return metaShader->getShader();
+	}
+	// Fallback to any cached shader pointer the material might hold
 	if (shader_) {
 		return shader_;
 	}
-	auto metaShader = AssetManager::instance().getShaderPtr(shaderID);
-	return metaShader ? metaShader->getShader() : nullptr;
+	return nullptr;
 }
 
 void Material::set(const std::string& name, const UniformValue& value)

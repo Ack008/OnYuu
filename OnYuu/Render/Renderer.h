@@ -64,8 +64,9 @@ namespace OnYuu {
 		virtual void EndScene() {}
 		virtual void submit() {}
 		virtual void invalidateShader(const std::shared_ptr<Shader>& shader) {}
-		virtual void invalidateMaterial(const std::shared_ptr<Material>& material) {}
-		virtual void Shutdown() = 0;
+			virtual void invalidateShaderByName(const std::string& shaderName) {}
+			virtual void invalidateMaterial(const std::shared_ptr<Material>& material) {}
+			virtual void Shutdown() = 0;
 		static void setAPI(API renderAPI) {
 			api = renderAPI;
 		}

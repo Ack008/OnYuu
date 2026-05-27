@@ -4,8 +4,8 @@ OnYuu::OpenGLMetaShader::OpenGLMetaShader(const std::string& filename, bool isSh
 {
 	glVisitor = OpenGLVisitor(&getSemanticVisitor());
 	glVisitor.produceShaders(getGLSLVisitor().getShaderInfo());
-	std::cout << "Vertex Shader Code:\n" << glVisitor.getVertexShaderCode() << std::endl;
-	std::cout << "Fragment Shader Code:\n" << glVisitor.getFragmentShaderCode() << std::endl;
+	//std::cout << "Vertex Shader Code:\n" << glVisitor.getVertexShaderCode() << std::endl;
+	//std::cout << "Fragment Shader Code:\n" << glVisitor.getFragmentShaderCode() << std::endl;
 	setShader(Shader::create(glVisitor.getVertexShaderCode().c_str(), glVisitor.getFragmentShaderCode().c_str(),true));
 }
 

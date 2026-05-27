@@ -108,16 +108,22 @@ namespace OnYuu {
         // Load a material from file if not already loaded
         std::shared_ptr<Material> loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath = "");
         
-        // ottieni la mappa delle mesh
-        const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
-            return meshes_;
-        }
-        // ottieni la mappa dei materiali
-        const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
-            return materials_;
-        }
 
-        void shutdown();
+		//Ricarica i materiali che dipendono da uno shader specifico. Utile quando uno shader viene modificato per assicurare che i materiali associati vengano aggiornati.
+		void reloadMaterialsUsingShader(const std::string& shaderName);
+		// ottieni la mappa delle mesh
+		const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
+			return meshes_;
+		}
+		// ottieni la mappa dei materiali
+		const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
+			return materials_;
+		}
+
+		// Trova il nome registrato di una shader dato il suo shared_ptr (vuoto se non trovato)
+		std::string findShaderNameForShader(const std::shared_ptr<Shader>& shader) const;
+
+		void shutdown();
     private:
 
         // Considerare di cancellare copy/move per far rispettare il comportamento singleton.
@@ -139,8 +145,8 @@ namespace OnYuu {
 		void loadQuad();
         void loadPlane();
 		void loadDefaultMaterials();
-		void loadDefaultShaders();
-        std::string findShaderNameForMaterial(const std::shared_ptr<Material>& material) const;
+			void loadDefaultShaders();
+			std::string findShaderNameForMaterial(const std::shared_ptr<Material>& material) const;
 
-    };
+		};
 } // namespace OnYuu

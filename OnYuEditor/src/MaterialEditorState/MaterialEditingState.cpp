@@ -221,18 +221,16 @@ void MaterialEditingState::onImGuiRender()
 				}
 			}
 			ImGui::PopID();
-			if (ImGui::Button("Save")) {
-				m_stateMachine->changeState(new MaterialEditingState(m_stateMachine, m_materialPath, m_materialId));
-				break; // Break to avoid modifying the vector while iterating
-			}
-			if (ImGui::Button("Reset")) {
-				onEnter(); // Reload from file
-				break; // Break to avoid modifying the vector while iterating
-			}
-			if (ImGui::Button("Chiudi")) {
-				m_stateMachine->changeState(new IdleState(m_stateMachine)); // Go back to previous state
-				break; // Break to avoid modifying the vector while iterating
-			}
+			
+		}
+		if (ImGui::Button("Save")) {
+			m_stateMachine->changeState(new MaterialEditingState(m_stateMachine, m_materialPath, m_materialId));
+		}
+		if (ImGui::Button("Reset")) {
+			onEnter(); // Reload from file
+		}
+		if (ImGui::Button("Chiudi")) {
+			m_stateMachine->changeState(new IdleState(m_stateMachine)); // Go back to previous state
 		}
 	}
 	ImGui::End();

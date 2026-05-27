@@ -40,6 +40,8 @@ namespace OnYuu {
 		char m_shaderEditorBuffer[SHADER_BUFFER_SIZE] = {};
 		StateMachine materialCreatorStateMachine;
 		StateMachine materialEditorStateMachine;
+		StateMachine shaderEditorStateMachine;
+
 
 	};
 }

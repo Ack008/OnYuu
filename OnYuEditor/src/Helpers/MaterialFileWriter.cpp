@@ -132,7 +132,86 @@ bool OnYuu::MaterialFileWriter::createMaterial(const std::string& materialPath, 
 
 bool OnYuu::MaterialFileWriter::overwriteMaterialfromJSON(const std::string& materialPath)
 {
-	
-	
-	return false;
+	using json = nlohmann::json;
+
+	std::ifstream in(materialPath);
+	if (!in.is_open()) {
+		std::cerr << "overwriteMaterialfromJSON: cannot open material file '" << materialPath << "'\n";
+		return false;
+	}
+
+	json j;
+	try {
+		in >> j;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "overwriteMaterialfromJSON: invalid json in '" << materialPath << "' -> " << e.what() << "\n";
+		return false;
+	}
+
+	std::string shaderId = j.value("shaderName", std::string{});
+	std::string shaderSource = j.value("sourcePath", std::string{});
+
+	std::shared_ptr<OnYuu::MetaShader> shader;
+	if (!shader && !shaderId.empty()) {
+		shader = OnYuu::AssetManager::instance().getShaderPtr(shaderId);
+		if (!shader) {
+			shader = OnYuu::AssetManager::instance().addShader(shaderId);
+		}
+	}
+
+	if (!shader) {
+		std::cerr << "overwriteMaterialfromJSON: shader not found for material '" << materialPath << "'\n";
+		return false;
+	}
+
+	auto uniformMap = shader->getUniformNameTypeMap();
+
+	json newParams = json::object();
+	json newTextures = json::object();
+
+	json oldParams = j.contains("params") ? j["params"] : json::object();
+	json oldTextures = j.contains("textures") ? j["textures"] : json::object();
+
+	for (const auto& kv : uniformMap) {
+		const std::string& uniformName = kv.first;
+		const std::string& uniformType = kv.second;
+
+		if (isTextureLikeType(uniformType)) {
+			if (oldTextures.contains(uniformName) && oldTextures[uniformName].is_string()) {
+				newTextures[uniformName] = oldTextures[uniformName].get<std::string>();
+			}
+			else {
+				newTextures[uniformName] = "";
+			}
+			continue;
+		}
+
+		std::string matType = toMaterialTypeName(uniformType);
+		if (oldParams.contains(uniformName) && oldParams[uniformName].is_object()
+			&& oldParams[uniformName].value("type", std::string{}) == matType) {
+			newParams[uniformName] = oldParams[uniformName];
+		}
+		else {
+			auto defaultValue = defaultValueForType(uniformType);
+			if (!defaultValue.is_null()) {
+				newParams[uniformName] = {
+					{ "type", matType },
+					{ "value", defaultValue }
+				};
+			}
+		}
+	}
+
+	j["params"] = newParams;
+	j["textures"] = newTextures;
+	j["version"] = j.value("version", 1u) + 1u;
+
+	std::ofstream out(materialPath);
+	if (!out.is_open()) {
+		std::cerr << "overwriteMaterialfromJSON: cannot open material file for writing '" << materialPath << "'\n";
+		return false;
+	}
+	out << j.dump(4);
+	return static_cast<bool>(out);
 }

@@ -9,6 +9,7 @@
 #include "../MaterialCreationStateMachines/ChoosingShaderState.h"
 #include "../MaterialEditorState/MaterialEditingState.h"
 #include "../MaterialCreationStateMachines/IdleState.h"
+#include "../ShaderEditorState/ShaderEditingState.h"
 
 
 namespace OnYuu {
@@ -34,6 +35,7 @@ namespace OnYuu {
 		m_fileIconWrapper = ImGuiTextureWrapper::create(m_fileIcon);
 		materialCreatorStateMachine.changeState(new IdleState(&materialCreatorStateMachine));
 		materialEditorStateMachine.changeState(new IdleState(&materialEditorStateMachine));
+		shaderEditorStateMachine.changeState(new IdleState(&shaderEditorStateMachine));
 	}
 
 	ContentBrowsingPanel::~ContentBrowsingPanel()
@@ -74,10 +76,13 @@ namespace OnYuu {
 			ImGui::ImageButton("##icon", icon->getTextureID(), { thumbnailSize, thumbnailSize });
 
 			if (!entry.is_directory() && path.extension() == ".mat") {
-				const std::string materialId = relativePath.stem().string();
+				const std::string materialId = relativePath.string();
+				// rimpiazza \\ con / per uniformità (e perché ImGui drag-and-drop sembra trattare i percorsi come stringhe normali, non come path)
+				std::string normalizedMaterialId = materialId;
+				std::replace(normalizedMaterialId.begin(), normalizedMaterialId.end(), '\\', '/');
 				if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID)) {
-					ImGui::SetDragDropPayload("ASSET_MATERIAL", materialId.c_str(), materialId.size() + 1);
-					ImGui::Text("Material: %s", materialId.c_str());
+					ImGui::SetDragDropPayload("ASSET_MATERIAL", normalizedMaterialId.c_str(), normalizedMaterialId.size() + 1);
+					ImGui::Text("Material: %s", normalizedMaterialId.c_str());
 					ImGui::EndDragDropSource();
 				}
 			}
@@ -88,11 +93,10 @@ namespace OnYuu {
 					m_currentDirectory /= path.filename();
 				}
 				else if (path.extension() == ".mat") {
-					std::cout << "Opening material editor for " << relativePath.string() << std::endl;
 					materialEditorStateMachine.changeState(new MaterialEditingState(&materialEditorStateMachine, path, relativePath.string()));
 				}
 				else if (path.extension() == ".shader") {
-
+					shaderEditorStateMachine.changeState(new ShaderEditingState(&shaderEditorStateMachine, path, relativePath.string()));
 				}
 			}
 
@@ -109,5 +113,6 @@ namespace OnYuu {
 		ImGui::End();
 		materialCreatorStateMachine.update(0.0f);
 		materialEditorStateMachine.update(0.0f);
+		shaderEditorStateMachine.update(0.0f);
 	}
 }

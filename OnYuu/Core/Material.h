@@ -37,6 +37,10 @@ public:
 	// effettuato anche il set del programma shader.
 	void bind();
 	std::shared_ptr<Shader> getShader() const;
+	// Permette di forzare il puntatore allo shader (utile dopo recompilation)
+	void setShader(std::shared_ptr<Shader> shader);
+	// Permette di forzare lo shader tramite ID (utile per editor o debug)
+	void setShaderByID(const std::string& shaderID);
 
 	/*
 	Pseudocodice (piano dettagliato):

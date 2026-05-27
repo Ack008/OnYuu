@@ -686,6 +686,7 @@ namespace OnYuu {
                             while (!payloadMaterial.empty() && payloadMaterial.back() == '\0') {
                                 payloadMaterial.pop_back();
                             }
+                            std::cout << "[SceneHierarchyPanel] Received drag-and-drop payload for material asset: '" << payloadMaterial << "'" << std::endl;
 
                             std::filesystem::path materialPath;
                             std::string materialKey;
@@ -723,9 +724,9 @@ namespace OnYuu {
 
                         std::filesystem::path materialPath;
                         std::string materialKey;
+						std::cout << "[SceneHierarchyPanel] Received drag-and-drop payload for material asset: '" << payloadMaterial << "'" << std::endl;
                         if (ResolveMaterialAssetPath(payloadMaterial, materialPath, materialKey))
                         {
-                            std::cout << "[SceneHierarchyPanel] Resolved material asset '" << payloadMaterial << "' to '" << materialPath.string() << "' with key '" << materialKey << "'" << std::endl;
                             if (!AssetManager::instance().getMaterialMetadata(materialKey))
                             {
                                 AssetManager::instance().importMaterialMetadataFromJson(materialPath.string(), materialKey);
@@ -749,6 +750,8 @@ namespace OnYuu {
                 if (ImGui::BeginCombo("##MaterialValues", "\xef\x83\xa6  Material Properties"))
                 {
                     auto  mat = AssetManager::instance().getMaterialPtr(c.getMaterialID());
+					// show shader pointer for debugging
+					ImGui::Text("Shader ptr: %p", mat ? mat->getShader().get() : nullptr);
                     auto& uniforms = mat->getUniforms();
                     for (auto& [name, value] : uniforms)
                     {
