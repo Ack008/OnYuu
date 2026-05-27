@@ -5,7 +5,7 @@
 #include "ImGuiFileDialog.h"
 #include "Application/AssetManager.h"
 #include "../Helpers/MaterialFileWriter.h"
-#include "../MaterialCreationStateMachines/IdleState.h"
+#include "../FileCreatorStates/IdleState.h"
 #include "ErrorWindowState.h"
 #include "json/json.hpp"
 #include <filesystem>

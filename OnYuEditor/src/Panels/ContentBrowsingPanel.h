@@ -38,7 +38,7 @@ namespace OnYuu {
 		bool m_shaderEditorOpen = false;
 		static constexpr size_t SHADER_BUFFER_SIZE = 64 * 1024; // 64KB per shader text
 		char m_shaderEditorBuffer[SHADER_BUFFER_SIZE] = {};
-		StateMachine materialCreatorStateMachine;
+		StateMachine fileCreatorMachine;
 		StateMachine materialEditorStateMachine;
 		StateMachine shaderEditorStateMachine;
 

@@ -6,10 +6,11 @@
 #include <fstream>
 #include "json/json.hpp"
 #include "ImGuiFileDialog.h"
-#include "../MaterialCreationStateMachines/ChoosingShaderState.h"
-#include "../MaterialEditorState/MaterialEditingState.h"
-#include "../MaterialCreationStateMachines/IdleState.h"
+#include "../FileCreatorStates/ChoosingShaderState.h"
+#include "../FileCreatorStates/ChoosingMaterialNameState.h"
+#include "../FileCreatorStates/IdleState.h"
 #include "../ShaderEditorState/ShaderEditingState.h"
+#include "../FileCreatorStates/ShaderCreationChoosingShaderName.h"
 
 
 namespace OnYuu {
@@ -18,9 +19,11 @@ namespace OnYuu {
 		if (ImGui::BeginPopupContextWindow())
 		{
 			if (ImGui::MenuItem("Create Material")) {
-				materialCreatorStateMachine.changeState(new ChoosingShaderState(&materialCreatorStateMachine));
+				fileCreatorMachine.changeState(new ChoosingShaderState(&fileCreatorMachine));
 			}
-
+			if (ImGui::MenuItem("Create Shader")) {
+				fileCreatorMachine.changeState(new ShaderFileCreationState(&fileCreatorMachine, m_currentDirectory));
+			}
 			ImGui::EndPopup();
 		}
 		
@@ -33,7 +36,7 @@ namespace OnYuu {
 		m_fileIcon = Texture::createTexture("resources/icons/ContentBrowser/FileIcon.png");
 		m_folderIconWrapper = ImGuiTextureWrapper::create(m_folderIcon);
 		m_fileIconWrapper = ImGuiTextureWrapper::create(m_fileIcon);
-		materialCreatorStateMachine.changeState(new IdleState(&materialCreatorStateMachine));
+		fileCreatorMachine.changeState(new IdleState(&fileCreatorMachine));
 		materialEditorStateMachine.changeState(new IdleState(&materialEditorStateMachine));
 		shaderEditorStateMachine.changeState(new IdleState(&shaderEditorStateMachine));
 	}
@@ -93,7 +96,7 @@ namespace OnYuu {
 					m_currentDirectory /= path.filename();
 				}
 				else if (path.extension() == ".mat") {
-					materialEditorStateMachine.changeState(new MaterialEditingState(&materialEditorStateMachine, path, relativePath.string()));
+					materialEditorStateMachine.changeState(new ChoosingMaterialNameState(&materialEditorStateMachine, path, relativePath.string()));
 				}
 				else if (path.extension() == ".shader") {
 					shaderEditorStateMachine.changeState(new ShaderEditingState(&shaderEditorStateMachine, path, relativePath.string()));
@@ -111,7 +114,7 @@ namespace OnYuu {
 		ImGui::SliderFloat("Thumbnail Size", &thumbnailSize, 16.0f, 256.0f);
 		ImGui::SliderFloat("Padding", &padding, 0.0f, 32.0f);
 		ImGui::End();
-		materialCreatorStateMachine.update(0.0f);
+		fileCreatorMachine.update(0.0f);
 		materialEditorStateMachine.update(0.0f);
 		shaderEditorStateMachine.update(0.0f);
 	}

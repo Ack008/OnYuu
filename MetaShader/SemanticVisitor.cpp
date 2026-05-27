@@ -508,7 +508,22 @@ void SemanticVisitor::analyze(const ShaderInfo& shader) {
             error("Nome funzione in conflitto con simbolo non funzione: '" + fn.name + "'");
         }
     }
-
+	// vedo se c'è una funzione fragmentMain con return type void e zero parametri
+	bool hasFragmentMain = false;
+	for (const auto& fn : shader.functions) {
+		if (fn.name == "fragmentMain") {
+			hasFragmentMain = true;
+			if (fn.returnType != "void") {
+				error("La funzione 'fragmentMain' deve avere return type 'void', ma è dichiarata con '" + fn.returnType + "'");
+			}
+			if (!fn.params.empty()) {
+				error("La funzione 'fragmentMain' deve avere zero parametri, ma ne ha " + std::to_string(fn.params.size()));
+			}
+		}
+	}
+	if (!hasFragmentMain) {
+		error("La funzione 'fragmentMain' è richiesta ma non è stata dichiarata");
+	}
     for (auto& fn : shader.functions) {
         analyzeFunction(fn);
     }

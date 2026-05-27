@@ -6,7 +6,7 @@
 class ChoosingMaterialNameState : public State
 {
 public:
-	ChoosingMaterialNameState(StateMachine* stateMachine,  std::string shaderPath, std::string shaderId) 
+	ChoosingMaterialNameState(StateMachine* stateMachine,  std::filesystem::path shaderPath, std::string shaderId) 
 		: State(stateMachine), m_shaderPath(shaderPath), m_shaderId(shaderId) {}
 	virtual ~ChoosingMaterialNameState() = default;
 	virtual void onEnter() override;

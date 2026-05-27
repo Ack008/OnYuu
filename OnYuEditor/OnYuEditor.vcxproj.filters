@@ -36,10 +36,10 @@
     <ClCompile Include="src\Helpers\MaterialFileWriter.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingShaderState.cpp">
+    <ClCompile Include="src\FileCreatorStates\ChoosingShaderState.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
-    <ClCompile Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.cpp">
+    <ClCompile Include="src\FileCreatorStates\ChoosingMaterialNameState.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="src\MaterialEditorState\MaterialEditingState.cpp">
@@ -49,6 +49,9 @@
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="src\ShaderEditorState\ErrorWindowState.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FileCreatorStates\ShaderCreationChoosingShaderName.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -77,13 +80,13 @@
     <ClInclude Include="src\StateMachine\State.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="src\MaterialCreationStateMachines\IdleState.h">
+    <ClInclude Include="src\FileCreatorStates\IdleState.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingShaderState.h">
+    <ClInclude Include="src\FileCreatorStates\ChoosingShaderState.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
-    <ClInclude Include="src\MaterialCreationStateMachines\ChoosingMaterialNameState.h">
+    <ClInclude Include="src\FileCreatorStates\ChoosingMaterialNameState.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="src\MaterialEditorState\MaterialEditingState.h">
@@ -93,6 +96,9 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="src\ShaderEditorState\ErrorWindowState.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FileCreatorStates\ShaderCreationChoosingShaderName.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
