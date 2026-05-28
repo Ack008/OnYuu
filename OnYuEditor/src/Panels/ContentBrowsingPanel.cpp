@@ -11,6 +11,7 @@
 #include "../FileCreatorStates/IdleState.h"
 #include "../ShaderEditorState/ShaderEditingState.h"
 #include "../FileCreatorStates/ShaderCreationChoosingShaderName.h"
+#include "../MaterialEditorState/MaterialEditingState.h"
 
 
 namespace OnYuu {
@@ -96,7 +97,7 @@ namespace OnYuu {
 					m_currentDirectory /= path.filename();
 				}
 				else if (path.extension() == ".mat") {
-					materialEditorStateMachine.changeState(new ChoosingMaterialNameState(&materialEditorStateMachine, path, relativePath.string()));
+					materialEditorStateMachine.changeState(new MaterialEditingState(&materialEditorStateMachine, path, relativePath.string()));
 				}
 				else if (path.extension() == ".shader") {
 					shaderEditorStateMachine.changeState(new ShaderEditingState(&shaderEditorStateMachine, path, relativePath.string()));

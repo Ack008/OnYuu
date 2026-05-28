@@ -5,6 +5,7 @@
 #include <unordered_set>
 #include <vector>
 #include <variant>
+#include <functional>
 #include "Core/Model/Components/MeshComponent.h"
 #include "Core/Material.h"
 #include "Core/Texture.h"
@@ -44,7 +45,24 @@ namespace OnYuu {
 
     class AssetManager {
     public:
-        struct MaterialParam {
+            using MaterialObserver = std::function<void(const std::string MaterialID, bool /*modified*/)>;
+            // Register observer; returns observer id for later unregister
+            size_t registerOnMaterialCreationObserver(MaterialObserver obs);
+            size_t registerOnMaterialModificationObserver(MaterialObserver obs);
+            size_t registerOnMaterialRemovalObserver(MaterialObserver obs);
+            void unregisterOnMaterialCreationObserver(size_t observerId);
+            void unregisterOnMaterialModificationObserver(size_t observerId);
+            void unregisterOnMaterialRemovalObserver(size_t observerId);
+            void notifyMaterialModified(const std::string& materialId);
+            void notifyMaterialCreated(const std::string& materialId);
+			void notifyMaterialRemoved(const std::string& materialId);
+			// overload per notificare usando un puntatore (es. quando non si conosce o non e rilevante)
+            void notifyMaterialModified(const class Material* material);
+			void notifyMaterialCreated(const class Material* material);
+			void notifyMaterialRemoved(const class Material* material);
+      
+
+            struct MaterialParam {
             enum class Type {
                 Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Bool
             };
@@ -127,14 +145,20 @@ namespace OnYuu {
     private:
 
         // Considerare di cancellare copy/move per far rispettare il comportamento singleton.
-        std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
-        std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
-        std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
+		std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
+		std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
+		std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
 		std::unordered_map<std::string, std::shared_ptr<MetaShader>> shaders_;
-        std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
-        std::unordered_map<std::string, MaterialMetadata> materialMetadatas_;
-        std::unordered_map<std::string, std::unordered_set<std::string>> shaderToMaterials_;
-    private:
+		std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
+		std::unordered_map<std::string, MaterialMetadata> materialMetadatas_;
+		std::unordered_map<std::string, std::unordered_set<std::string>> shaderToMaterials_;
+
+		// Observers for material create/modify events
+		std::vector<MaterialObserver> onMaterialModified_;
+		std::vector<MaterialObserver> onMaterialCreated_;
+		std::vector<MaterialObserver> onMaterialRemoved_;
+
+	private:
         // Disabilita copy e assign per il singleton
         AssetManager(const AssetManager&) = delete;
 		AssetManager& operator=(const AssetManager&) = delete;

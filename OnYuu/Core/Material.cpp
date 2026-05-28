@@ -4,6 +4,7 @@ namespace OnYuu {
 Material::Material(std::shared_ptr<Shader> shader)
 	: shader_(std::move(shader))
 {
+	// notify created via AssetManager when added to manager (AssetManager handles notification)
 }
 Material::Material(std::string shaderID)
 	: shaderID(std::move(shaderID))
@@ -15,6 +16,8 @@ void Material::setShader(std::shared_ptr<Shader> shader)
 	shader_ = std::move(shader);
 	// mark all uniforms as not-set so apply() will re-apply them
 	for (auto& kv : alreadySet_) kv.second = false;
+	// notify modification
+	AssetManager::instance().notifyMaterialModified(this);
 }
 
 void Material::setShaderByID(const std::string& shaderID)
@@ -23,6 +26,7 @@ void Material::setShaderByID(const std::string& shaderID)
 		this->shaderID = shaderID;
 		shader_.reset(); // Clear cached shader pointer to force re-resolve
 		for (auto& kv : alreadySet_) kv.second = false; // Mark all uniforms as not-set
+		AssetManager::instance().notifyMaterialModified(this);
 	}
 }
 
@@ -47,6 +51,8 @@ void Material::set(const std::string& name, const UniformValue& value)
 {
 	uniforms_[name] = value;
 	alreadySet_[name] = false; // Mark as not set
+	// Notify AssetManager that this material was modified so renderers can react
+	AssetManager::instance().notifyMaterialModified(this);
 }
 void Material::bind()
 {
@@ -141,6 +147,6 @@ void Material::apply()
 			}, value);
 		alreadySet_[name] = true;
 	}
-	shader->flushCostants();
+	getShader()->flushCostants();
 }
 } // namespace OnYuu

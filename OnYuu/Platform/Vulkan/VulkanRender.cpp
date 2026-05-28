@@ -175,7 +175,7 @@ namespace OnYuu {
         LOG( << "=== VulkanRender Initialization Complete ===\n\n");
 
 
-       
+		
 
     }
 
@@ -1020,7 +1020,7 @@ namespace OnYuu {
 
         // Finalize all indirect buffers once per frame
         indirectDrawManager_->finalizeAll(currentFrame_);
-
+        /*
         // Update materials
         std::unordered_set<std::shared_ptr<Material>> usedMaterials;
         for (const auto& scene : renderScenes) {
@@ -1038,7 +1038,7 @@ namespace OnYuu {
                 material->bind();
             }
             updateMaterialDescriptors(material);
-        }
+        }*/
     }
 
     void VulkanRender::updateSceneDescriptors(int sceneIndex) {
@@ -1225,8 +1225,9 @@ namespace OnYuu {
                 imgInfo.sampler = vkTex->getSampler();
                 imageInfos.push_back(imgInfo);
             }
-
-            descriptorManager_->updateImages(matRes.descriptorSets[currentFrame_], 1, imageInfos);
+            for (const auto& set : matRes.descriptorSets) {
+                descriptorManager_->updateImages(set, 1, imageInfos);
+            }
         }
 
 
@@ -1354,6 +1355,29 @@ void VulkanRender::setSkyBox(SkyBoxComponent* skybox) {
 
 void VulkanRender::addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) {
     BatchRender::addMeshRender(mesh, model);
+}
+
+void VulkanRender::registeringCallbacks()
+{
+    // registering material callbacks
+    AssetManager::instance().registerOnMaterialCreationObserver([this](const std::string& materialId, bool) {
+        auto material = AssetManager::instance().getMaterialPtr(materialId);
+        material->apply();
+        material->bind();
+        updateMaterialDescriptors(material);
+        });
+    AssetManager::instance().registerOnMaterialModificationObserver([this](const std::string& materialId, bool) {
+        auto material = AssetManager::instance().getMaterialPtr(materialId);
+        material->apply();
+        material->bind();
+        updateMaterialDescriptors(material);
+        });
+    AssetManager::instance().registerOnMaterialRemovalObserver([this](const std::string& materialId, bool) {
+        // In caso di rimozione, potremmo voler pulire eventuali descriptor set associati al materiale
+        // o segnalarlo in qualche modo. Per ora, logghiamo semplicemente l'evento.
+        std::cout << "Material removed: " << materialId << "\n";
+        invalidateMaterial(AssetManager::instance().getMaterialPtr(materialId));
+        });
 }
 
 void VulkanRender::removeCachedMesh(const std::shared_ptr<Mesh>& mesh) {

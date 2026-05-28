@@ -99,7 +99,90 @@ namespace {
 namespace OnYuu {
     AssetManager::AssetManager() {
         loadDefaultAssets();
-    }    
+    }
+
+    size_t AssetManager::registerOnMaterialCreationObserver(MaterialObserver obs)
+    {
+        onMaterialCreated_.push_back(std::move(obs));
+        return onMaterialCreated_.size() - 1;
+    }
+
+    size_t AssetManager::registerOnMaterialModificationObserver(MaterialObserver obs)
+    {
+        onMaterialModified_.push_back(std::move(obs));
+        return onMaterialModified_.size() - 1;
+    }
+
+    size_t AssetManager::registerOnMaterialRemovalObserver(MaterialObserver obs)
+    {
+        onMaterialRemoved_.push_back(std::move(obs));
+        return onMaterialRemoved_.size() - 1;
+    }
+
+	void AssetManager::unregisterOnMaterialCreationObserver(size_t observerId)
+	{
+		if (observerId < onMaterialCreated_.size()) {
+			onMaterialCreated_[observerId] = nullptr;
+		}
+	}
+
+    void AssetManager::notifyMaterialModified(const std::string& materialName)
+    {
+        auto mat = getMaterialPtr(materialName);
+        if (!mat) return;
+     
+		for (auto& obs : onMaterialModified_) {
+			if (obs) obs(materialName, true);
+		}
+    }
+
+    void AssetManager::notifyMaterialCreated(const std::string& materialName)
+    {
+        auto mat = getMaterialPtr(materialName);
+        if (!mat) return;
+		for (auto& obs : onMaterialCreated_) {
+			if (obs) obs(materialName, false);
+		}
+    }
+
+    void AssetManager::notifyMaterialRemoved(const std::string& materialName)
+    {
+        for (auto& obs : onMaterialRemoved_) {
+            if (obs) obs(materialName, false);
+        }
+    }
+
+	void AssetManager::notifyMaterialModified(const Material* material)
+	{
+		if (!material) return;
+		for (auto sharedPtr : materials_) {
+			if (sharedPtr.second.get() == material) {
+				notifyMaterialModified(sharedPtr.first);
+				return;
+			}
+		}
+	}
+	void AssetManager::notifyMaterialCreated(const Material* material)
+	{
+		if (!material) return;
+		for (auto sharedPtr : materials_) {
+			if (sharedPtr.second.get() == material) {
+				notifyMaterialCreated(sharedPtr.first);
+				return;
+			}
+		}
+	}
+	void AssetManager::notifyMaterialRemoved(const Material* material)
+	{
+		if (!material) return;
+		for (auto sharedPtr : materials_) {
+			if (sharedPtr.second.get() == material) {
+				notifyMaterialRemoved(sharedPtr.first);
+				return;
+			}
+		}
+	}
+
     AssetManager& AssetManager::instance() {
         static AssetManager mgr;
         if (mgr.meshes_.empty() || mgr.materials_.empty() || mgr.shaders_.empty()) {
@@ -176,6 +259,9 @@ namespace OnYuu {
             shaderToMaterials_[metadata.shaderName].insert(name);
         }
 
+        // Notify observers that a new material was created/added
+        notifyMaterialCreated(name);
+
         return materials_[name];
     }
 
@@ -193,6 +279,7 @@ namespace OnYuu {
     {
 		std::string normalizedName = name;
 		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+		notifyMaterialRemoved(normalizedName);
 		materials_.erase(normalizedName);
     }
 

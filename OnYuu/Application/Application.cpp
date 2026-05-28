@@ -17,7 +17,10 @@ namespace OnYuu {
 
 		window = Window::create(1280, 720);
 		Input::reset();
+
 		Render::init();
+		AssetManager::instance();
+		Render::getInstance()->registeringCallbacks();
 
 		imGuiLayer = new ImGuiLayer();
 		imGuiLayer->onAttach();

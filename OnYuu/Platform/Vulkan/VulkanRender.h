@@ -47,7 +47,7 @@ namespace OnYuu {
         void Shutdown() override;
         void setSkyBox(SkyBoxComponent* skybox) override;
         void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
-
+		void registeringCallbacks() override;
         // Accessors per i delegate (per uso esterno se necessario)
         VkInstance getVkInstance() const { return instance_.instance; }
         VulkanDevice* getDevice() const { return device_.get(); }
@@ -80,6 +80,7 @@ namespace OnYuu {
                 VkFormat image_format;
             } swapchain;
         };
+        
 
         
 

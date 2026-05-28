@@ -47,6 +47,8 @@ namespace OnYuu {
 		// clear: pulisce le liste di oggetti da disegnare o altre risorse temporanee
 		// BeginFrame: operazioni da eseguire all'inizio di ogni frame di rendering
 		virtual void BeginFrame() = 0;
+		// registering callbacks
+		virtual void registeringCallbacks() = 0;
 
 		// Gestione della matrice della camera (view-projection). Il renderer userà
 		// questa matrice per impostare gli uniform delle shader prima del draw.
