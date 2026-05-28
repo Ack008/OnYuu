@@ -145,6 +145,10 @@
     <ClCompile Include="Render\RenderTarget.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLRenderTarget.cpp" />
     <ClCompile Include="Math\Math.cpp" />
+    <ClCompile Include="Application\ImGuiTextureWrapper.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.cpp" />
+    <ClCompile Include="Platform\Vulkan\VulkanImGuiTextureWrapper.cpp" />
+    <ClCompile Include="Core\ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -237,6 +241,10 @@
     <ClInclude Include="Platform\Vulkan\VulkanRenderTarget.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLRenderTarget.h" />
     <ClInclude Include="Math\Math.h" />
+    <ClInclude Include="Application\ImGuiTextureWrapper.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.h" />
+    <ClInclude Include="Platform\Vulkan\VulkanImGuiTextureWrapper.h" />
+    <ClInclude Include="Core\ThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

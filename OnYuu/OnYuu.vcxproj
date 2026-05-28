@@ -150,6 +150,7 @@
     <ClCompile Include="Core\CubeMap.cpp" />
     <ClCompile Include="Core\MetaShader.cpp" />
     <ClCompile Include="Core\Texture.cpp" />
+    <ClCompile Include="Core\ThreadPool.cpp" />
     <ClCompile Include="Math\Math.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
@@ -231,6 +232,7 @@
     <ClInclude Include="Core\Model\Components\SkyBoxComponent.h" />
     <ClInclude Include="Core\Model\Ray.h" />
     <ClInclude Include="Core\Texture.h" />
+    <ClInclude Include="Core\ThreadPool.h" />
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Platform\API.h" />
     <ClInclude Include="Application\Application.h" />
@@ -370,5 +372,3 @@
     <Error Condition="!Exists('..\packages\glm.1.0.1\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glm.1.0.1\build\native\glm.targets'))" />
   </Target>
 </Project>
-
-

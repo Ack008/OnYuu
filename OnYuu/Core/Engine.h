@@ -62,6 +62,9 @@
 // Camera
 #include "Core/Model/Components/Camera.h"
 
+// thread pool
+#include "Core/ThreadPool.h"
+
 // Debug / tools
 
 // Utility / helpers

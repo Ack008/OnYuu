@@ -18,6 +18,9 @@
 #include <unordered_map>
 #include "VulkanBufferPool.h"
 #include "Application/AssetManager.h"
+#include <shared_mutex>
+#include <Core/ThreadPool.h>
+
 
 namespace OnYuu {
 
@@ -26,6 +29,7 @@ namespace OnYuu {
      * Responsabilità: Orchestrazione dei delegate, rendering loop, gestione risorse alto livello
      */
     class VulkanRender : public BatchRender {
+
     public:
         VulkanRender();
         ~VulkanRender();
@@ -274,9 +278,10 @@ namespace OnYuu {
         void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
         void renderScene(VkCommandBuffer cmd, int sceneIndex);
 
+        void renderBatches(std::unordered_map<OnYuu::BatchCouple, std::vector<OnYuu::BatchRender::RenderData>, OnYuu::BatchCoupleHash>& batchedRenderData, VkCommandBuffer cmd, OnYuu::VulkanRender::SceneResources& sceneRes, int sceneIndex);
+
         // Pipeline management
-        VkPipeline getOrCreatePipeline(const PipelineKey& key,
-            std::shared_ptr<class Material> material);
+        VkPipeline getOrCreatePipeline(const PipelineKey& key);
 
         // ========================================================================
         // HELPER METHODS
@@ -291,10 +296,22 @@ namespace OnYuu {
         // Swapchain recreation
         bool recreateSwapchainResources();
         bool hasFramebufferResize() const;
-        private:
-			size_t materialModifyObserverID_ = -1;
-			size_t materialDeleteObserverID_ = -1;
-			size_t materialCreateObserverID_ = -1;
+    private:
+		size_t materialModifyObserverID_ = -1;
+		size_t materialDeleteObserverID_ = -1;
+		size_t materialCreateObserverID_ = -1;
+		// ========================================================================
+		// MULTITHREADING RESOURCES
+		// ========================================================================
+        struct ThreadResources {
+            VkCommandPool   commandPool;   // risorse Vulkan per thread
+            VkCommandBuffer commandBuffer;
+            // nessun std::thread qui
+        };
+        std::vector<ThreadResources> renderThreads_; // risorse, non thread
+        ThreadPool threadPool_;
+		std::shared_mutex pipelineCacheMutex_;
+		void initThreadResources();
     };
 
 } // namespace OnYuu

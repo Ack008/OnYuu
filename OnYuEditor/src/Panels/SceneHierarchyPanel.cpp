@@ -761,15 +761,40 @@ namespace OnYuu {
                         ImGui::PushID(name.c_str());
                         //ImGui::SetNextItemWidth(-1.f);
                         if (auto* p = std::get_if<int>(&value))
-                            ImGui::DragInt(name.c_str(), p);
+                        {
+                            if(ImGui::DragInt(name.c_str(), p))
+                            {
+                                mat->set(name, *p);
+                            }
+                        }
                         else if (auto* p = std::get_if<float>(&value))
-                            ImGui::DragFloat(name.c_str(), p, 0.01f);
+                        {
+							if (ImGui::DragFloat(name.c_str(), p, 0.01f))
+							{
+								mat->set(name, *p);
+							}
+                        }
                         else if (auto* p = std::get_if<glm::vec2>(&value))
-                            ImGui::DragFloat2(name.c_str(), glm::value_ptr(*p), 0.01f);
+                        {
+                            if (ImGui::DragFloat2(name.c_str(), glm::value_ptr(*p), 0.01f))
+                            {
+                                mat->set(name, *p);
+                            }  
+                        }
                         else if (auto* p = std::get_if<glm::vec3>(&value))
-                            ImGui::ColorEdit3(name.c_str(), glm::value_ptr(*p));
+                        {
+                            if (ImGui::ColorEdit3(name.c_str(), glm::value_ptr(*p)))
+                            {
+                                mat->set(name, *p);
+                            }
+                        }
                         else if (auto* p = std::get_if<glm::vec4>(&value))
-                            ImGui::ColorEdit4(name.c_str(), glm::value_ptr(*p));
+                        {
+                            if (ImGui::ColorEdit4(name.c_str(), glm::value_ptr(*p)))
+                            {
+                                mat->set(name, *p);
+                            }
+                        }
                         else if (std::get_if<glm::mat3>(&value))
                             ImGui::TextColored(Theme::TextDim, "%s  (mat3)", name.c_str());
                         else if (std::get_if<glm::mat4>(&value))

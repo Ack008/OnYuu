@@ -171,6 +171,9 @@ namespace OnYuu {
         }
 
         LOG("✓ Geometry pool and indirect draw manager initialized\n");
+
+		LOG("✓ Main thread resources initialized\n");
+		initThreadResources();
         LOG("=== VulkanRender Initialization Complete ===\n\n");
     }
 
@@ -458,6 +461,29 @@ namespace OnYuu {
         const VkExtent2D extent = swapchain_->getExtent();
         return extent.width != static_cast<uint32_t>(width) ||
             extent.height != static_cast<uint32_t>(height);
+    }
+
+    void VulkanRender::initThreadResources()
+    {
+        uint32_t threadCount = std::thread::hardware_concurrency();
+        renderThreads_.resize(threadCount);
+
+        for (auto& rt : renderThreads_) {
+            VkCommandPoolCreateInfo poolInfo{};
+            poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            poolInfo.queueFamilyIndex = device_->getGraphicsQueueFamily();
+            poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+            vkCreateCommandPool(device_->getDevice(), &poolInfo, nullptr, &rt.commandPool);
+
+            VkCommandBufferAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.commandPool = rt.commandPool;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY; // ← secondary!
+            allocInfo.commandBufferCount = 1;
+
+            vkAllocateCommandBuffers(device_->getDevice(), &allocInfo, &rt.commandBuffer);
+        }
     }
 
     bool VulkanRender::recreateSwapchainResources() {
@@ -916,8 +942,14 @@ namespace OnYuu {
         if (sceneRes.globalDescriptorSets.empty()) {
             return;
         }
+        auto batchedRenderData = scene.batches;
 
-        for (const auto& [key, batch] : scene.batches) {
+        renderBatches(batchedRenderData, cmd, sceneRes, sceneIndex);
+    }
+
+    void VulkanRender::renderBatches(std::unordered_map<OnYuu::BatchCouple, std::vector<OnYuu::BatchRender::RenderData>, OnYuu::BatchCoupleHash>& batchedRenderData, VkCommandBuffer cmd, OnYuu::VulkanRender::SceneResources& sceneRes, int sceneIndex)
+    {
+        for (const auto& [key, batch] : batchedRenderData) {
             auto material = key.first;
             auto renderingType = key.second;
 
@@ -932,7 +964,7 @@ namespace OnYuu {
                 activeColorFormat_,
                 activeDepthFormat_
             };
-            VkPipeline pipeline = getOrCreatePipeline(pipelineKey, AssetManager::instance().getMaterialPtr(material));
+            VkPipeline pipeline = getOrCreatePipeline(pipelineKey);
 
             if (pipeline == VK_NULL_HANDLE) {
                 std::cerr << "✗ Failed to get pipeline!\n";
@@ -943,16 +975,6 @@ namespace OnYuu {
 
             VkPipelineLayout layout = pipelineManager_->getLayout(pipeline);
             auto materialPtr = AssetManager::instance().getMaterialPtr(material);
-            if (materialResources_.find(materialPtr) == materialResources_.end()) {
-                LOG("⚠ Material resources not yet initialized, initializing now...\n");
-                updateMaterialDescriptors(materialPtr);
-            }
-
-            if (materialResources_.find(materialPtr) == materialResources_.end()) {
-                std::cerr << "✗ Material resources still not available!\n";
-                continue;
-            }
-
             std::array<VkDescriptorSet, 2> descriptorSets = {
                 sceneRes.globalDescriptorSets[currentFrame_],
                 materialResources_[materialPtr].descriptorSets[currentFrame_]
@@ -1187,14 +1209,22 @@ namespace OnYuu {
         }
     }
 
-    VkPipeline VulkanRender::getOrCreatePipeline(const PipelineKey& key,
-        std::shared_ptr<Material> material)
+    VkPipeline VulkanRender::getOrCreatePipeline(const PipelineKey& key)
     {
+        {
+            std::shared_lock<std::shared_mutex> readLock(pipelineCacheMutex_);
+            auto it = pipelineCache_.find(key);
+            if (it != pipelineCache_.end()) {
+                return it->second;
+            }
+
+        }
+        std::unique_lock<std::shared_mutex> writeLock(pipelineCacheMutex_);
+        // Double-check: un altro thread potrebbe averla creata nel frattempo
         auto it = pipelineCache_.find(key);
         if (it != pipelineCache_.end()) {
             return it->second;
-        }
-
+        }   
         auto shader = static_cast<VulkanShader*>(key.shader.get());
 
         VulkanPipelineManager::PipelineConfig config =
@@ -1305,6 +1335,7 @@ namespace OnYuu {
     {
         materialCreateObserverID_ = AssetManager::instance().registerOnMaterialCreationObserver(
             [this](const std::string& materialId, bool) {
+				LOG (<< "Material created: " << materialId << "\n");
                 auto material = AssetManager::instance().getMaterialPtr(materialId);
                 material->apply();
                 material->bind();
@@ -1319,6 +1350,7 @@ namespace OnYuu {
             });
 
         materialModifyObserverID_ = AssetManager::instance().registerOnMaterialModificationObserver(
+            
             [this](const std::string& materialId, bool) {
                 auto material = AssetManager::instance().getMaterialPtr(materialId);
                 material->apply();
@@ -1328,7 +1360,6 @@ namespace OnYuu {
                 // di questo materiale. Differisci l'aggiornamento al prossimo BeginFrame,
                 // dove il fence garantisce che la GPU abbia finito.
                 if (isFrameRecording_) {
-                    LOG("Material modification deferred (frame is recording): " << materialId << "\n");
                     pendingMaterialUpdates_.push_back(material);
                     return;
                 }
@@ -1337,7 +1368,6 @@ namespace OnYuu {
 
         materialDeleteObserverID_ = AssetManager::instance().registerOnMaterialRemovalObserver(
             [this](const std::string& materialId, bool) {
-                std::cout << "Material removed: " << materialId << "\n";
                 invalidateMaterial(AssetManager::instance().getMaterialPtr(materialId));
             });
     }
@@ -1519,6 +1549,19 @@ namespace OnYuu {
 
         if (!device_ || !device_->isValid()) {
             return;
+        }
+        LOG("Shutting down thread pool...\n");
+        threadPool_.shutdown(); // chiama ~ThreadPool() → stop_ = true → join di tutti i thread
+        LOG("✓ Thread pool shutdown\n");
+
+		LOG("Clearing ThreadResource...\n");
+        for (auto& [commandPool, commandBuffer] : renderThreads_) {
+			if (commandBuffer != VK_NULL_HANDLE) {
+				device_->getDispatch().freeCommandBuffers(commandPool, 1, &commandBuffer);
+			}
+			if (commandPool != VK_NULL_HANDLE) {
+				device_->getDispatch().destroyCommandPool(commandPool, nullptr);
+			}
         }
 
         LOG("VulkanRender: Beginning shutdown...\n");

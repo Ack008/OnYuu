@@ -151,6 +151,7 @@ namespace OnYuu {
 
     void AssetManager::notifyMaterialCreated(const std::string& materialName)
     {
+		std::cout << "[AssetManager] notifyMaterialCreated: material '" << materialName << "' created/added" << std::endl;
         auto mat = getMaterialPtr(materialName);
         if (!mat) return;
 		for (auto& obs : onMaterialCreated_) {
@@ -748,6 +749,7 @@ namespace OnYuu {
     void AssetManager::loadDefaultMaterials()
     {
 		materials_["default"] = std::make_shared<Material>("default");
+		notifyMaterialCreated("default");
     }
     void AssetManager::loadDefaultShaders()
     {
