@@ -169,9 +169,11 @@ namespace OnYuu {
 			// Distruzione dei moduli shader
 			if (vertexShaderModule != VK_NULL_HANDLE) {
 				vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, vertexShaderModule, nullptr);
+				vertexShaderModule = VK_NULL_HANDLE;
 			}
 			if (fragmentShaderModule != VK_NULL_HANDLE) {
 				vkDestroyShaderModule(((VulkanRender*)Render::getInstance().get())->getInit().device, fragmentShaderModule, nullptr);
+				fragmentShaderModule = VK_NULL_HANDLE;
 			}
 		}
 		initialized = false;

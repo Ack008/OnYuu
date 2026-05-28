@@ -16,7 +16,7 @@ namespace OnYuu {
 		virtual void submit() override;
 		virtual void Shutdown() override;
 		virtual void BeginFrame() override;
-		virtual void registeringCallbacks() override {}
+		virtual void registeringCallbacks() override { }
 		void BindGlobalVariables(OnYuu::BatchRender::RenderScene& scene);
 		OpenGLBatchRender();
 		~OpenGLBatchRender();

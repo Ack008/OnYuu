@@ -19,7 +19,7 @@ namespace OnYuu {
 		Input::reset();
 
 		Render::init();
-		AssetManager::instance();
+		AssetManager::instance().initializeDefaultAssets();
 		Render::getInstance()->registeringCallbacks();
 
 		imGuiLayer = new ImGuiLayer();

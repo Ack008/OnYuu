@@ -49,10 +49,11 @@ std::shared_ptr<Shader> Material::getShader() const
 
 void Material::set(const std::string& name, const UniformValue& value)
 {
+
 	uniforms_[name] = value;
 	alreadySet_[name] = false; // Mark as not set
-	// Notify AssetManager that this material was modified so renderers can react
 	AssetManager::instance().notifyMaterialModified(this);
+	// Notify AssetManager that this material was modified so renderers can react
 }
 void Material::bind()
 {

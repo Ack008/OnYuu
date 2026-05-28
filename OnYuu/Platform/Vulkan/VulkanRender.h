@@ -28,7 +28,7 @@ namespace OnYuu {
     class VulkanRender : public BatchRender {
     public:
         VulkanRender();
-        ~VulkanRender() ;
+        ~VulkanRender();
 
         // Non copiabile
         VulkanRender(const VulkanRender&) = delete;
@@ -42,12 +42,13 @@ namespace OnYuu {
         void pendingMaterialHandling();
         void submit() override;
         void invalidateShader(const std::shared_ptr<Shader>& shader) override;
-            void invalidateShaderByName(const std::string& shaderName) override;
-            void invalidateMaterial(const std::shared_ptr<Material>& material) override;
+        void invalidateShaderByName(const std::string& shaderName) override;
+        void invalidateMaterial(const std::shared_ptr<Material>& material) override;
         void Shutdown() override;
         void setSkyBox(SkyBoxComponent* skybox) override;
         void addMeshRender(RenderMeshComponent* mesh, glm::mat4 model) override;
-		void registeringCallbacks() override;
+        void registeringCallbacks() override;
+
         // Accessors per i delegate (per uso esterno se necessario)
         VkInstance getVkInstance() const { return instance_.instance; }
         VulkanDevice* getDevice() const { return device_.get(); }
@@ -60,10 +61,7 @@ namespace OnYuu {
         VmaAllocator getAllocator() const { return allocator_; }
         VkRenderPass getRenderPass() const { return renderPass_; }
 
-        // Restituisce la queue family index usata per la graphics queue
         uint32_t getQueueFamily() const {
-            // Assumendo che VulkanDevice abbia un metodo getGraphicsQueueFamily()
-            // Se non esiste, sostituire con il modo corretto per ottenere il queue family index
             return device_ ? device_->getGraphicsQueueFamily() : 0;
         }
 
@@ -72,7 +70,7 @@ namespace OnYuu {
 
         uint32_t getCurrentFrame() const { return currentFrame_; }
         void removeCachedMesh(const std::shared_ptr<Mesh>& mesh);
-        // Struttura Init per compatibilità con getInit()
+
         struct InitData {
             VkDevice device;
             struct {
@@ -80,11 +78,7 @@ namespace OnYuu {
                 VkFormat image_format;
             } swapchain;
         };
-        
 
-        
-
-        // Restituisce i dati di inizializzazione richiesti da ImGuiLayer
         InitData getInit() const {
             InitData data{};
             data.device = device_ ? device_->getDevice() : VK_NULL_HANDLE;
@@ -95,17 +89,15 @@ namespace OnYuu {
             return data;
         }
 
+        struct RenderData {};
 
-        struct RenderData {
-
-        };
         // Helper per operazioni single-time
         VkCommandBuffer beginSingleTimeCommands();
         void endSingleTimeCommands(VkCommandBuffer cmd);
 
     private:
         // ========================================================================
-        // DELEGATES - Gestiscono aree specifiche di responsabilità
+        // DELEGATES
         // ========================================================================
         std::unique_ptr<VulkanDevice> device_;
         std::unique_ptr<VulkanSwapchain> swapchain_;
@@ -115,7 +107,7 @@ namespace OnYuu {
         std::unique_ptr<VulkanPipelineManager> pipelineManager_;
 
         // ========================================================================
-        // CORE VULKAN OBJECTS (gestiti direttamente)
+        // CORE VULKAN OBJECTS
         // ========================================================================
         vkb::Instance instance_;
         VkSurfaceKHR surface_ = VK_NULL_HANDLE;
@@ -139,16 +131,16 @@ namespace OnYuu {
         static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
         uint32_t currentFrame_ = 0;
         uint32_t imageIndex_ = 0;
-		uint32_t frameNumber = 0;
+        uint32_t frameNumber = 0;
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;
         std::vector<VkFence> inFlightFences;
         std::vector<VkFence> imagesInFlight;
         bool swapchainNeedsRecreate_ = false;
-        bool isFrameRecording_ = false; // ? Traccia se il command buffer è in recording
+        bool isFrameRecording_ = false;
 
         // ========================================================================
-        // DESCRIPTOR SET LAYOUTS (condivisi tra frame)
+        // DESCRIPTOR SET LAYOUTS
         // ========================================================================
         VkDescriptorSetLayout globalDescriptorLayout_ = VK_NULL_HANDLE;
         VkDescriptorSetLayout materialDescriptorLayout_ = VK_NULL_HANDLE;
@@ -157,26 +149,29 @@ namespace OnYuu {
         // PER-SCENE RESOURCES
         // ========================================================================
         struct SceneResources {
-            std::vector<VkDescriptorSet> globalDescriptorSets; // uno per frame
+            std::vector<VkDescriptorSet> globalDescriptorSets;
             std::vector<std::shared_ptr<class VulkanUniformBuffer>> cameraUbos;
             std::vector<std::shared_ptr<class VulkanUniformBuffer>> lightUbos;
             std::vector<std::shared_ptr<class VulkanStorageBuffer>> modelMatrixSsbos;
         };
         std::unordered_map<int, SceneResources> sceneResources_;
         std::unordered_map<std::shared_ptr<RenderTarget>, std::vector<int>> sceneTarget;
-		std::vector<int> swapChainRenderedScenes;
+        std::vector<int> swapChainRenderedScenes;
 
         // ========================================================================
         // PER-MATERIAL RESOURCES
         // ========================================================================
         struct MaterialResources {
-            std::vector<VkDescriptorSet> descriptorSets; // uno per frame
+            std::vector<VkDescriptorSet> descriptorSets;
             std::vector<std::shared_ptr<class VulkanUniformBuffer>> ubos;
         };
         std::unordered_map<std::shared_ptr<class Material>, MaterialResources> materialResources_;
 
-        // Deferred deletion per materiali invalidati durante il frame
+        // FIX: due vettori separati per operazioni diverse
+        // - pendingMaterialInvalidations_: materiali da distruggere e ricreare
+        // - pendingMaterialUpdates_: materiali da aggiornare (nuove texture/uniform)
         std::vector<std::shared_ptr<class Material>> pendingMaterialInvalidations_;
+        std::vector<std::shared_ptr<class Material>> pendingMaterialUpdates_;
 
         // ========================================================================
         // PIPELINE CACHE
@@ -202,7 +197,6 @@ namespace OnYuu {
                 size_t h3 = std::hash<int>{}(static_cast<int>(k.colorFormat));
                 size_t h4 = std::hash<int>{}(static_cast<int>(k.depthFormat));
 
-                // Combine hashes
                 size_t hash = h1;
                 hash ^= h2 + 0x9e3779b9 + (hash << 6) + (hash >> 2);
                 hash ^= h3 + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -271,10 +265,13 @@ namespace OnYuu {
         void updateSceneDescriptors(int sceneIndex);
         void updateMaterialDescriptors(std::shared_ptr<class Material> material);
 
-		void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView, VkImage depthImage, VkImageView depthView, VkExtent2D extent, VkFormat depthFormat, bool isSwapchain = true, VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED);
-		void beginRenderPass(VkCommandBuffer cmd);
-		void endRenderPass(VkCommandBuffer cmd);
-		void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
+        void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView,
+            VkImage depthImage, VkImageView depthView, VkExtent2D extent,
+            VkFormat depthFormat, bool isSwapchain = true,
+            VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED);
+        void beginRenderPass(VkCommandBuffer cmd);
+        void endRenderPass(VkCommandBuffer cmd);
+        void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
         void renderScene(VkCommandBuffer cmd, int sceneIndex);
 
         // Pipeline management
@@ -294,6 +291,10 @@ namespace OnYuu {
         // Swapchain recreation
         bool recreateSwapchainResources();
         bool hasFramebufferResize() const;
+        private:
+			size_t materialModifyObserverID_ = -1;
+			size_t materialDeleteObserverID_ = -1;
+			size_t materialCreateObserverID_ = -1;
     };
 
 } // namespace OnYuu

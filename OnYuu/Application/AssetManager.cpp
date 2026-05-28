@@ -98,7 +98,6 @@ namespace {
 
 namespace OnYuu {
     AssetManager::AssetManager() {
-        loadDefaultAssets();
     }
 
     size_t AssetManager::registerOnMaterialCreationObserver(MaterialObserver obs)
@@ -122,9 +121,23 @@ namespace OnYuu {
 	void AssetManager::unregisterOnMaterialCreationObserver(size_t observerId)
 	{
 		if (observerId < onMaterialCreated_.size()) {
-			onMaterialCreated_[observerId] = nullptr;
+			onMaterialCreated_.erase(onMaterialCreated_.begin() + observerId);
 		}
 	}
+
+    void AssetManager::unregisterOnMaterialModificationObserver(size_t observerId)
+    {
+        if (observerId < onMaterialModified_.size()) {
+			onMaterialModified_.erase(onMaterialModified_.begin() + observerId);
+        }
+    }
+
+    void AssetManager::unregisterOnMaterialRemovalObserver(size_t observerId)
+    {
+		if (observerId < onMaterialRemoved_.size()) {
+			onMaterialRemoved_.erase(onMaterialRemoved_.begin() + observerId);
+		}
+    }
 
     void AssetManager::notifyMaterialModified(const std::string& materialName)
     {
@@ -141,7 +154,9 @@ namespace OnYuu {
         auto mat = getMaterialPtr(materialName);
         if (!mat) return;
 		for (auto& obs : onMaterialCreated_) {
-			if (obs) obs(materialName, false);
+            if (obs) {
+                obs(materialName, false);
+            }
 		}
     }
 
@@ -185,11 +200,13 @@ namespace OnYuu {
 
     AssetManager& AssetManager::instance() {
         static AssetManager mgr;
-        if (mgr.meshes_.empty() || mgr.materials_.empty() || mgr.shaders_.empty()) {
-            mgr.loadDefaultAssets();
-            mgr.rebuildShaderMaterialDependencies();
-        }
         return mgr;
+    }
+
+    void AssetManager::initializeDefaultAssets()
+    {
+        loadDefaultAssets();
+        rebuildShaderMaterialDependencies();
     }
 
     std::string AssetManager::findShaderNameForMaterial(const std::shared_ptr<Material>& material) const

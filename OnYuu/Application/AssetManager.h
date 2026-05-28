@@ -129,6 +129,7 @@ namespace OnYuu {
 
 		//Ricarica i materiali che dipendono da uno shader specifico. Utile quando uno shader viene modificato per assicurare che i materiali associati vengano aggiornati.
 		void reloadMaterialsUsingShader(const std::string& shaderName);
+		void initializeDefaultAssets();
 		// ottieni la mappa delle mesh
 		const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
 			return meshes_;

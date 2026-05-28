@@ -117,6 +117,7 @@ namespace OnYuu {
 
 		glDepthFunc(GL_LESS);
 	}
+	
 	void OpenGLBatchRender::drawScene(RenderScene& scene)
 	{
 	
