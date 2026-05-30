@@ -272,11 +272,11 @@ namespace OnYuu {
         void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView,
             VkImage depthImage, VkImageView depthView, VkExtent2D extent,
             VkFormat depthFormat, bool isSwapchain = true,
-            VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED);
+            VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED, bool useSecondary = false);
         void beginRenderPass(VkCommandBuffer cmd);
         void endRenderPass(VkCommandBuffer cmd);
         void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
-        void renderScene(VkCommandBuffer cmd, int sceneIndex);
+        void renderScene(VkCommandBuffer cmd, int sceneIndex, VkExtent2D extent);
 
         void renderBatches(std::unordered_map<OnYuu::BatchCouple, std::vector<OnYuu::BatchRender::RenderData>, OnYuu::BatchCoupleHash>& batchedRenderData, VkCommandBuffer cmd, OnYuu::VulkanRender::SceneResources& sceneRes, int sceneIndex);
 
@@ -303,15 +303,18 @@ namespace OnYuu {
 		// ========================================================================
 		// MULTITHREADING RESOURCES
 		// ========================================================================
-        struct ThreadResources {
-            VkCommandPool   commandPool;   // risorse Vulkan per thread
-            VkCommandBuffer commandBuffer;
-            // nessun std::thread qui
-        };
-        std::vector<ThreadResources> renderThreads_; // risorse, non thread
-        ThreadPool threadPool_;
+		struct ThreadResources {
+			VkCommandPool   commandPool;   // risorse Vulkan per thread
+			std::vector<VkCommandBuffer> commandBuffers;
+			// nessun std::thread qui
+		};
+		std::vector<ThreadResources> renderThreads_; // risorse, non thread
+		ThreadPool threadPool_;
 		std::shared_mutex pipelineCacheMutex_;
 		void initThreadResources();
-    };
+		void renderSceneMultithreaded(int sceneIndex, VkExtent2D extent);
+		bool recordThreadCommands(ThreadResources& rt, int start, int end, int sceneIndex, VkExtent2D extent);
+
+	};
 
 } // namespace OnYuu
