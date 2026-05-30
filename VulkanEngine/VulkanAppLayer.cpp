@@ -73,7 +73,7 @@ void VulkanAppLayer::onAttach()
 	mat2->set("color", glm::vec4(.0f, 0.0f, 1.0f, 1.0f));
 
 
-	renderMesh.setMaterialID("default_material");
+	renderMesh.setMaterialID("default_material2");
 	renderMesh.setMesh(AssetManager::instance().getMeshPtr("sphere"));
 	renderMesh2.setMesh(AssetManager::instance().getMeshPtr("cube"));
 	renderMesh2.setMaterialID("default_material2");

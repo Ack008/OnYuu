@@ -739,7 +739,6 @@ namespace OnYuu {
         renderOnTarget(cmd);
         renderOnSwapChain(cmd);
 
-
         if (frameNumber % 60 == 0) {
             geometryPool_->collectGarbage(frameNumber, 180);
         }
@@ -748,51 +747,54 @@ namespace OnYuu {
             swapchain_->getFrame(imageIndex_).view,
             depthImage_, depthImageView_,
             swapchain_->getExtent(), depthFormat_,
-            true, VK_IMAGE_LAYOUT_UNDEFINED, false);
+            true, VK_IMAGE_LAYOUT_UNDEFINED, false, false);
     }
 
-    void VulkanRender::renderOnSwapChain(VkCommandBuffer cmd)
-    {
-        activeColorFormat_ = swapchain_->getFormat();
-        activeDepthFormat_ = depthFormat_;
-        for (int index : swapChainRenderedScenes) {
-		    bool isMultithreaded = renderScenes[index].batches.size() > threadPool_.size() * 2; // Soglia arbitraria per decidere se usare il multithreading
-            beginRendering(cmd,
-                swapchain_->getFrame(imageIndex_).image,
-                swapchain_->getFrame(imageIndex_).view,
-                depthImage_, depthImageView_,
-                swapchain_->getExtent(), depthFormat_,
-                true, VK_IMAGE_LAYOUT_UNDEFINED, isMultithreaded);
-            renderScene(cmd, index, swapchain_->getExtent());
-            VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
-            endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
-        }
-    }
+	void VulkanRender::renderOnSwapChain(VkCommandBuffer cmd)
+	{
+		activeColorFormat_ = swapchain_->getFormat();
+		activeDepthFormat_ = depthFormat_;
+		bool isFirstScene = true;
+		for (int index : swapChainRenderedScenes) {
+			bool isMultithreaded = renderScenes[index].batches.size() > threadPool_.size() * 2;
+			beginRendering(cmd,
+				swapchain_->getFrame(imageIndex_).image,
+				swapchain_->getFrame(imageIndex_).view,
+				depthImage_, depthImageView_,
+				swapchain_->getExtent(), depthFormat_,
+				true, VK_IMAGE_LAYOUT_UNDEFINED, isMultithreaded, isFirstScene);
+			isFirstScene = false;
+			renderScene(cmd, index, swapchain_->getExtent());
+			endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
+		}
+	}
 
-    void VulkanRender::renderOnTarget(VkCommandBuffer cmd)
-    {
-        for (const auto& [target, indices] : sceneTarget) {
-            auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
-            activeColorFormat_ = vulkanTarget->getColorFormat();
-            activeDepthFormat_ = vulkanTarget->getDepthFormat();
-            const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
-            for (int index : indices) {
-				bool isMultithreaded = renderScenes[index].batches.size() > threadPool_.size() * 2; // Soglia arbitraria per decidere se usare il multithreading
-                beginRendering(cmd,
-                    vulkanTarget->getColorImage(currentFrame_),
-                    vulkanTarget->getColorImageView(currentFrame_),
-                    vulkanTarget->getDepthImage(currentFrame_),
-                    vulkanTarget->getDepthImageView(currentFrame_),
-                    vulkanTarget->getExtent(),
-                    vulkanTarget->getDepthFormat(),
-                    false, targetOldLayout, isMultithreaded);
-                vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-                renderScene(cmd, index,vulkanTarget->getExtent());
-                endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
-            }
-            vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        }
-    }
+	void VulkanRender::renderOnTarget(VkCommandBuffer cmd)
+	{
+		for (const auto& [target, indices] : sceneTarget) {
+			auto* vulkanTarget = static_cast<VulkanRenderTarget*>(target.get());
+			activeColorFormat_ = vulkanTarget->getColorFormat();
+			activeDepthFormat_ = vulkanTarget->getDepthFormat();
+			const VkImageLayout targetOldLayout = vulkanTarget->getColorLayout(currentFrame_);
+			bool isFirstScene = true;
+			for (int index : indices) {
+				bool isMultithreaded = renderScenes[index].batches.size() > threadPool_.size() * 2;
+				beginRendering(cmd,
+					vulkanTarget->getColorImage(currentFrame_),
+					vulkanTarget->getColorImageView(currentFrame_),
+					vulkanTarget->getDepthImage(currentFrame_),
+					vulkanTarget->getDepthImageView(currentFrame_),
+					vulkanTarget->getExtent(),
+					vulkanTarget->getDepthFormat(),
+					false, targetOldLayout, isMultithreaded, isFirstScene);
+				isFirstScene = false;
+				vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+				renderScene(cmd, index,vulkanTarget->getExtent());
+				endRendering(cmd, vulkanTarget->getColorImage(currentFrame_), false);
+			}
+			vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		}
+	}
 
     void VulkanRender::acquireImageAndBeginFrame(bool& retFlag)
     {
@@ -885,14 +887,14 @@ namespace OnYuu {
         }
     }
 
-    void VulkanRender::submit() {
-        static int submitNumber = 0;
-        submitNumber++;
+	void VulkanRender::submit() {
+		static int submitNumber = 0;
+		submitNumber++;
 
 		VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
 		endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
-        sceneTarget.clear();
-        swapChainRenderedScenes.clear();
+		sceneTarget.clear();
+		swapChainRenderedScenes.clear();
 
         if (!commandManager_->end(currentFrame_)) {
             std::cerr << "✗ Failed to end command buffer!\n";
@@ -946,7 +948,7 @@ namespace OnYuu {
         VkImage colorImage, VkImageView colorView,
         VkImage depthImage, VkImageView depthView,
         VkExtent2D extent, VkFormat depthFormat,
-        bool isSwapchain, VkImageLayout colorOldLayout, bool useSecondary)
+        bool isSwapchain, VkImageLayout colorOldLayout, bool useSecondary, bool shouldClear)
     {
         VkImageMemoryBarrier colorBarrier{};
         colorBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -998,7 +1000,7 @@ namespace OnYuu {
         colorAttachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         colorAttachment.imageView = colorView;
         colorAttachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachment.loadOp = shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
         colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
         colorAttachment.clearValue = clearColor;
 
@@ -1006,7 +1008,7 @@ namespace OnYuu {
         depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
         depthAttachmentInfo.imageView = depthView;
         depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        depthAttachmentInfo.loadOp = shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
         depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         depthAttachmentInfo.clearValue = clearDepth;
 
@@ -1115,7 +1117,12 @@ namespace OnYuu {
         }
         auto batchedRenderData = scene.batches;
         {
-            renderBatches(batchedRenderData, cmd, sceneRes, sceneIndex);
+			if (batchedRenderData.size() > threadPool_.size() * 2) {
+				renderSceneMultithreaded(sceneIndex, extent);
+            }
+            else {
+                renderBatches(batchedRenderData, cmd, sceneRes, sceneIndex);
+            }
         }
     }
 

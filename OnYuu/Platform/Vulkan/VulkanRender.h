@@ -272,7 +272,7 @@ namespace OnYuu {
         void beginRendering(VkCommandBuffer cmd, VkImage colorImage, VkImageView colorView,
             VkImage depthImage, VkImageView depthView, VkExtent2D extent,
             VkFormat depthFormat, bool isSwapchain = true,
-            VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED, bool useSecondary = false);
+            VkImageLayout colorOldLayout = VK_IMAGE_LAYOUT_UNDEFINED, bool useSecondary = false, bool shouldClear = true);
         void beginRenderPass(VkCommandBuffer cmd);
         void endRenderPass(VkCommandBuffer cmd);
         void endRendering(VkCommandBuffer cmd, VkImage colorImage, bool isSwapchain = true);
