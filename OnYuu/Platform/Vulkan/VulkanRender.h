@@ -231,14 +231,16 @@ namespace OnYuu {
         // ========================================================================
         // UBO DATA STRUCTURES
         // ========================================================================
-        struct LightData {
-            alignas(16) glm::vec3 position;
-            alignas(16) glm::vec3 color;
-            alignas(16) float intensity;
+        struct alignas(16) LightData {
+           glm::vec3 position;
+            float padding;
+            glm::vec3 color;
+           float intensity;
         };
 
         struct LightBufferData {
             alignas(16) int count;
+			int padding[3]; // Padding per allineamento
             alignas(16) LightData lights[125];
         };
 

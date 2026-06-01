@@ -463,6 +463,7 @@ void VulkanVisitor::visit(MemberExpr* expr) {
 
 void VulkanVisitor::visit(PostfixExpr* expr) {
     expr->operand->accept(this);
+    output += expr->op;
 }
 
 void VulkanVisitor::visit(UnaryExpr* expr) {

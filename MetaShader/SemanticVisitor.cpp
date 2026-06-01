@@ -101,7 +101,7 @@ void SemanticVisitor::initBuiltinFunctionSignatures() {
     addBuiltInStruct("Light", {
         {"vec4", "position"},
         {"float", "intensity"},
-        {"vec4", "color"}
+        {"vec3", "color"}
         });
     addBuiltInStruct("vec2", {
         {"float", "x"},

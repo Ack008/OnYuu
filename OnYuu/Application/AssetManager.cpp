@@ -97,6 +97,43 @@ namespace {
 }
 
 namespace OnYuu {
+
+// Compute per-vertex normals from indexed triangles. This function accumulates face
+// normals for each triangle then normalizes per-vertex to obtain smooth normals.
+static void computeNormalsForMesh(Mesh& mesh) {
+    mesh.normal.clear();
+    mesh.normal.resize(mesh.position.size(), glm::vec3(0.0f));
+
+    // Accumulate face normals
+    for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
+        uint32_t ia = mesh.indices[i];
+        uint32_t ib = mesh.indices[i + 1];
+        uint32_t ic = mesh.indices[i + 2];
+        if (ia >= mesh.position.size() || ib >= mesh.position.size() || ic >= mesh.position.size())
+            continue;
+        const glm::vec3& a = mesh.position[ia];
+        const glm::vec3& b = mesh.position[ib];
+        const glm::vec3& c = mesh.position[ic];
+
+        glm::vec3 face = glm::cross(b - a, c - a);
+        float len = glm::length(face);
+        if (len > 1e-9f) face = face / len; // normalize
+        else face = glm::vec3(0.0f, 0.0f, 0.0f);
+
+        mesh.normal[ia] += face;
+        mesh.normal[ib] += face;
+        mesh.normal[ic] += face;
+    }
+
+    // Normalize per-vertex
+    for (auto& n : mesh.normal) {
+        float l = glm::length(n);
+        if (l > 1e-6f) n = n / l;
+        else n = glm::vec3(0.0f, 1.0f, 0.0f); // fallback normal
+    }
+}
+
+
     AssetManager::AssetManager() {
     }
 
@@ -510,7 +547,8 @@ namespace OnYuu {
 		loadDefaultShaders();
 		loadDefaultMaterials();
     }
-    void AssetManager::loadCube()
+   
+ void AssetManager::loadCube()
     {
         addMesh("cube", std::make_shared<Mesh>(Mesh()));
         Mesh* mesh = getMesh("cube");
@@ -562,6 +600,8 @@ namespace OnYuu {
         mesh->indices.push_back(3); mesh->indices.push_back(2); mesh->indices.push_back(6);
         mesh->indices.push_back(6); mesh->indices.push_back(7); mesh->indices.push_back(3);
 
+        // For cube we prefer flat normals per face for sharper look
+        mesh->normal.clear();
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, 1)));
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, 1)));
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, 1)));
@@ -570,6 +610,8 @@ namespace OnYuu {
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, -1)));
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, -1)));
         mesh->normal.push_back(glm::normalize(glm::vec3(0, 0, -1)));
+
+        computeNormalsForMesh(*mesh); // ensure smooth fallback for any use-case
     }
     void AssetManager::loadSphere()
     {
@@ -626,6 +668,8 @@ namespace OnYuu {
                 mesh->indices.push_back(first + 1);
             }
         }
+        
+        //computeNormalsForMesh(*mesh);
     }
     void AssetManager::loadCylinder()
     {
@@ -678,7 +722,7 @@ namespace OnYuu {
             mesh->indices.push_back(i + 1);
         }
 
-
+        computeNormalsForMesh(*mesh);
 
     }
     void AssetManager::loadQuad()
@@ -689,32 +733,34 @@ namespace OnYuu {
         mesh->position.push_back(glm::vec3(-1, -1.0, 0));
         mesh->color.push_back(color);
 		mesh->texCoord.push_back(glm::vec2(0,0));
-		mesh->normal.push_back(glm::vec3(0, 0, 0));
+		mesh->normal.push_back(glm::vec3(0, 0, 1));
         //
         mesh->position.push_back(glm::vec3(-1, 1.0, 0));
         mesh->color.push_back(color);
         mesh->texCoord.push_back(glm::vec2(0, 1));
-        mesh->normal.push_back(glm::vec3(0, 1, 0));
+        mesh->normal.push_back(glm::vec3(0, 0, -1));
         //
         mesh->position.push_back(glm::vec3(1, 1.0, 0));
         mesh->color.push_back(color);
         mesh->texCoord.push_back(glm::vec2(1, 1));
-        mesh->normal.push_back(glm::vec3(0, 1, 0));
+        mesh->normal.push_back(glm::vec3(0, 0, -1));
         //
 		mesh->position.push_back(glm::vec3(1, -1.0, 0));
         mesh->color.push_back(color);
         mesh->texCoord.push_back(glm::vec2(1, 0));
-        mesh->normal.push_back(glm::vec3(0, 1, 0));
+        mesh->normal.push_back(glm::vec3(0, 0, -1));
         //
-        mesh->indices.push_back(0);
-        mesh->indices.push_back(1);
-        mesh->indices.push_back(2);
-        //
-        mesh->indices.push_back(0);
-        mesh->indices.push_back(2);
-		mesh->indices.push_back(3);
-    }
-    void AssetManager::loadPlane()
+		mesh->indices.push_back(0);
+		mesh->indices.push_back(1);
+		mesh->indices.push_back(2);
+		//
+		mesh->indices.push_back(0);
+		mesh->indices.push_back(2);
+	    mesh->indices.push_back(3);
+
+		computeNormalsForMesh(*mesh);
+	}
+	void AssetManager::loadPlane()
     {
         glm::vec4 color = { 0.5,0.5,0.5,1 };
         auto mesh = addMesh("plane", std::make_shared<Mesh>(Mesh()));

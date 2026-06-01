@@ -18,4 +18,5 @@ private:
 	std::string m_materialId;
 	std::filesystem::path m_shaderPath;
 	std::string m_shaderId;
+	char m_materialNameBuffer[256] = {};
 };

@@ -230,6 +230,31 @@ namespace OnYuu {
                     m_Context->createEntity().getComponent<TagComponent>().tag = "New Entity";
 
                 ImGui::Spacing();
+                ImGui::TextColored(Theme::TextDim, "LIGHTS");
+                ImGui::Separator();
+                if (ImGui::MenuItem("Directional Light")) {
+                    GameObject light = m_Context->createEntity();
+                    light.getComponent<TagComponent>().tag = "Directional Light";
+                    auto& lc = light.addComponent<LightComponent>();
+                    lc.intensity = 1.0f;
+                    lc.color = glm::vec4(1.0f);
+                }
+                if (ImGui::MenuItem("Point Light")) {
+                    GameObject light = m_Context->createEntity();
+                    light.getComponent<TagComponent>().tag = "Point Light";
+                    auto& lc = light.addComponent<LightComponent>();
+                    lc.intensity = 1.0f;
+                    lc.color = glm::vec4(1.0f);
+                }
+                if (ImGui::MenuItem("Spot Light")) {
+                    GameObject light = m_Context->createEntity();
+                    light.getComponent<TagComponent>().tag = "Spot Light";
+                    auto& lc = light.addComponent<LightComponent>();
+                    lc.intensity = 1.0f;
+                    lc.color = glm::vec4(1.0f);
+                }
+
+                ImGui::Spacing();
                 ImGui::TextColored(Theme::TextDim, "PRIMITIVES");
                 ImGui::Separator();
                 makeObj("○  Sphere", "sphere", "New Sphere");
@@ -622,6 +647,22 @@ namespace OnYuu {
                 bool active = c.getActive();
                 if (ImGui::Checkbox("Active", &active)) c.setActive(active);
             }, { 0.55f, 0.75f, 1.f, 1.f });
+
+        // ── Light ─────────────────────────────────────────────────────────────
+        DrawComponent<LightComponent>("\xef\x8e\xac", "Light", entity, [](auto& c)
+            {
+                float intensity = c.intensity;
+                if (ImGui::DragFloat("Intensity", &intensity, 0.1f, 0.0f, 100.0f))
+                    c.intensity = intensity;
+
+                ImGui::Spacing();
+                ImGui::TextColored(Theme::TextDim, "Color");
+                ImGui::SameLine(80.f);
+                ImGui::SetNextItemWidth(-1.f);
+                if (ImGui::ColorEdit4("##LightColor", glm::value_ptr(c.color))) {
+                    // color updated directly on component
+                }
+            }, { 0.95f, 0.75f, 0.25f, 1.f });
 
         // ── Mesh Renderer ──────────────────────────────────────────────────────
         DrawComponent<RenderMeshComponent>("\xef\x83\xa1", "Mesh Renderer", entity, [](auto& c)

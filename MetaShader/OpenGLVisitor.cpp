@@ -446,6 +446,7 @@ void OpenGLVisitor::visit(MemberExpr* expr) {
 
 void OpenGLVisitor::visit(PostfixExpr* expr) {
     expr->operand->accept(this);
+    output += expr->op;
 }
 
 void OpenGLVisitor::visit(UnaryExpr* expr) {
@@ -555,7 +556,7 @@ void OpenGLVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
 struct Light {
     vec4 position;
     float intensity;
-    vec4 color;
+    vec3 color;
 };
 
 layout(std140, binding = 1) uniform lightsInfo {

@@ -90,7 +90,7 @@ namespace OnYuu {
 					ImGui::EndDragDropSource();
 				}
 			}
-
+			itemContextualMenu(path);
 
 			if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 				if (entry.is_directory()) {
@@ -118,5 +118,27 @@ namespace OnYuu {
 		fileCreatorMachine.update(0.0f);
 		materialEditorStateMachine.update(0.0f);
 		shaderEditorStateMachine.update(0.0f);
+	}
+	void ContentBrowsingPanel::itemContextualMenu(std::filesystem::path& path)
+	{
+		// open context menu on right click on item
+		if (ImGui::BeginPopupContextItem()) {
+			m_contextItemPath = path;
+			if (path.extension() == ".shader") {
+				if (ImGui::MenuItem("Create Material")) {
+					std::string shaderID = std::filesystem::relative(path, Project::getInstance().getAssetsPath()).string();
+					std::filesystem::path shaderPath = path;
+					if (AssetManager::instance().getShaderPtr(shaderID) == nullptr) {
+						AssetManager::instance().addShader(shaderID);
+					}
+					fileCreatorMachine.changeState(new ChoosingMaterialNameState(&fileCreatorMachine, shaderPath, shaderID));
+				}
+			}
+			if (ImGui::MenuItem("Delete")) {
+				std::error_code ec;
+				std::filesystem::remove(path, ec);
+			}
+			ImGui::EndPopup();
+		}
 	}
 }

@@ -1,3 +1,4 @@
+
 #include "MaterialEditingState.h"
 #include "Core/Engine.h"
 #include "imgui.h"
@@ -189,7 +190,7 @@ void MaterialEditingState::onImGuiRender()
 				ImGui::SameLine();
 				if (ImGui::Button("Browse")) {
 					IGFD::FileDialogConfig config;
-					config.path = ".";
+					config.path = Project::getInstance().getAssetsPath(); 
 					ImGuiFileDialog::Instance()->OpenDialog("ChooseTextureDlgKey_" + editor.name, "Choose a Texture", ".png,.jpg,.jpeg", config);
 				}
 				

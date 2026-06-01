@@ -89,41 +89,44 @@ namespace OnYuu {
 		vertexShaderModule = createShaderModule(vertShaderCode);
 		fragmentShaderModule = createShaderModule(fragShaderCode);
 
-		// Converti il buffer char (byte) in vector<uint32_t> per SPIRV-Cross
-		if (vertShaderCode.size() % 4 != 0) {
-			throw std::runtime_error("SPIR-V binary size is not a multiple of 4");
-		}
-		std::vector<uint32_t> spirv_binary(vertShaderCode.size() / 4);
-		std::memcpy(spirv_binary.data(), vertShaderCode.data(), vertShaderCode.size());
+		auto collectUniformData = [&](const std::vector<char>& spirvCode) {
+			if (spirvCode.size() % 4 != 0) {
+				throw std::runtime_error("SPIR-V binary size is not a multiple of 4");
+			}
 
-		// Costruisci il CompilerGLSL passando puntatore e dimensione per evitare problemi di ABI e heap di std::vector tra diverse versioni del Vulkan SDK
-		spirv_cross::Compiler glsl(spirv_binary.data(), spirv_binary.size());
-		spirv_cross::ShaderResources resources = glsl.get_shader_resources();
-		uint32_t targetSet = 2;   // oppure 3
-		size_t materialBufferSize = 0;
-		for (const auto& ub : resources.uniform_buffers)
-		{
-			uint32_t set = glsl.get_decoration(ub.id, spv::DecorationDescriptorSet);
-			uint32_t binding = glsl.get_decoration(ub.id, spv::DecorationBinding);
-			LOG( "SPIR-V UBO: name=\"" << ub.name << "\" set=" << set << " binding=" << binding
-				<< " type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n");
+			std::vector<uint32_t> spirv_binary(spirvCode.size() / 4);
+			std::memcpy(spirv_binary.data(), spirvCode.data(), spirvCode.size());
 
-			if (set == 1)
+			// Costruisci il CompilerGLSL passando puntatore e dimensione per evitare problemi di ABI e heap di std::vector tra diverse versioni del Vulkan SDK
+			spirv_cross::Compiler glsl(spirv_binary.data(), spirv_binary.size());
+			spirv_cross::ShaderResources resources = glsl.get_shader_resources();
+
+			for (const auto& ub : resources.uniform_buffers)
 			{
-				LOG( "UBO: name=\"" << ub.name << "\" type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n");
+				uint32_t set = glsl.get_decoration(ub.id, spv::DecorationDescriptorSet);
+				uint32_t binding = glsl.get_decoration(ub.id, spv::DecorationBinding);
+				LOG("SPIR-V UBO: name=\"" << ub.name << "\" set=" << set << " binding=" << binding
+					<< " type_id=" << ub.type_id << " base_type_id=" << ub.base_type_id << "\n");
+
+				if (set != 1 || binding != 0)
+				{
+					continue;
+				}
 
 				// usa base_type_id se presente: è il struct reale che contiene i nomi dei membri
 				uint32_t inspect_id = ub.base_type_id ? ub.base_type_id : ub.type_id;
 				auto type = glsl.get_type(inspect_id);
-				LOG( "  member count = " << type.member_types.size() << "\n");
+				LOG("  member count = " << type.member_types.size() << "\n");
 				size_t bufferSize = glsl.get_declared_struct_size(type);
-				LOG( "Buffer size = " << bufferSize << " bytes\n");
-				uniformBuffer.resize(bufferSize, 0);
+				LOG("Buffer size = " << bufferSize << " bytes\n");
+				if (uniformBuffer.size() < bufferSize) {
+					uniformBuffer.resize(bufferSize, 0);
+				}
 				for (uint32_t member_index = 0; member_index < type.member_types.size(); ++member_index)
 				{
 					uint32_t member_type_id = type.member_types[member_index];
 					auto member_type = glsl.get_type(member_type_id);
-					std::string member_name = glsl.get_member_name(inspect_id, member_index); // <-- usa inspect_id
+					std::string member_name = glsl.get_member_name(inspect_id, member_index);
 					size_t offset = glsl.type_struct_member_offset(type, member_index);
 					LOG("  Membro " << member_index
 						<< " nome: \"" << member_name << "\""
@@ -136,28 +139,15 @@ namespace OnYuu {
 						<< " offset=" << offset
 						<< "\n");
 					uniformData[member_name] = offset;
-					// aggiorno la size dei material
-
-
-					// se è una struct annidata (o array di struct) puoi ispezionare i suoi membri così:
-					if (member_type.member_types.size() > 0)
-					{
-						auto nested_id = member_type_id;
-						auto nested_type = glsl.get_type(nested_id);
-						for (uint32_t n = 0; n < nested_type.member_types.size(); ++n)
-						{
-							LOG("    nested [" << n << "] name=\"" << glsl.get_member_name(nested_id, n) << "\"\n");
-						}
-					}
-					// Calcola la dimensione del buffer materiale
-					// (semplice esempio, non copre tutti i casi)
-
 				}
 			}
-		}
+		};
+
+		collectUniformData(vertShaderCode);
+		collectUniformData(fragShaderCode);
 		printMappingInfo();
 		int frames_in_flight = ((VulkanRender*)(Render::getInstance().get()))->getSwapchain()->getImageCount();
-		
+
 		flushCostants();
 	}
 	void VulkanShader::shutdown()

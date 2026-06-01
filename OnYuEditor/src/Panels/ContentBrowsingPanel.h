@@ -11,6 +11,7 @@ namespace OnYuu {
 		ContentBrowsingPanel();
 		~ContentBrowsingPanel();
 		void OnImGuiRender();
+		void itemContextualMenu(std::filesystem::path& path);
 		void openRenamePopup();
 
 

@@ -13,12 +13,16 @@ void ChoosingMaterialNameState::onExit()
 void ChoosingMaterialNameState::onImGuiRender()
 {
 	ImGui::Begin("Create Material");
-	static char materialNameBuffer[256] = {};
-	ImGui::InputText("Material Name", materialNameBuffer, sizeof(materialNameBuffer));
+	ImGui::InputText("Material Name", m_materialNameBuffer, sizeof(m_materialNameBuffer));
 	if (ImGui::Button("Create")) {
-		m_materialPath = std::filesystem::path(m_shaderPath).parent_path() / (std::string(materialNameBuffer) + ".mat");
-		m_materialId = std::filesystem::relative(m_materialPath, Project::getInstance().getAssetsPath()).string();
-		m_stateMachine->changeState(new IdleState(m_stateMachine));
+		std::string nameStr = std::string(m_materialNameBuffer);
+		if (nameStr.empty()) {
+			ImGui::OpenPopup("ErrorPopup");
+		} else {
+			m_materialPath = std::filesystem::path(m_shaderPath).parent_path() / (nameStr + ".mat");
+			m_materialId = std::filesystem::relative(m_materialPath, Project::getInstance().getAssetsPath()).string();
+			m_stateMachine->changeState(new IdleState(m_stateMachine));
+		}
 	}
 	if (ImGui::BeginPopupModal("ErrorPopup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 	{
