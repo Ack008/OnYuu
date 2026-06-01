@@ -729,9 +729,9 @@ void main() {
     mat4 u_model = modelMatrices.models[gl_InstanceIndex];
     vColor = aColor;
     vUV = aTexCoord;
-    vNormal = vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);;
+    vNormal = vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);
     vWorldPos = (u_model *vec4(aPos, 1.0)).xyz;
-    gl_Position = camera.proj *  camera.view * modelMatrices.models[gl_InstanceIndex] *vec4(vWorldPos, 1.0);
+    gl_Position = camera.proj *  camera.view *vec4(vWorldPos, 1.0);
 })";
 }
 
