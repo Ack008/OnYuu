@@ -136,6 +136,7 @@ namespace OnYuu {
 			Render::getInstance()->setSkyBox(&skybox);
 			break;
 		}
+		auto allLights = reg->view<LightComponent>();
 		auto lightView = reg->view<LightComponent, Transform>();
 		for (auto [entity, lightComp, transform] : lightView.each()) {
 			Render::getInstance()->addLight(lightComp, transform.getPosition());

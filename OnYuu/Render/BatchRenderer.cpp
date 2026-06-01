@@ -92,7 +92,7 @@ namespace OnYuu {
         {
             throw std::runtime_error("Cannot submit while a scene is active. Call EndScene() before submitting.");
         }
-        LOG("BatchRender::submit() - Numero di scene da renderizzare: " << renderScenes.size());
+        //LOG("BatchRender::submit() - Numero di scene da renderizzare: " << renderScenes.size());
 
         // stampa di debug
         for (const auto& scene : renderScenes) {
@@ -100,11 +100,11 @@ namespace OnYuu {
             size_t meshCount = scene.meshRenders.size();
             SkyBoxComponent* skybox = scene.skybox;
             Background2DRender* background2D = scene.background2D;
-           LOG("Scene - Camera: " << (cam ? "Set" : "Not Set")
+           /*LOG("Scene - Camera: " << (cam ? "Set" : "Not Set")
                 << ", Mesh Renders: " << meshCount
                 << ", SkyBox: " << (skybox ? "Set" : "Not Set")
                 << ", Background2D: " << (background2D ? "Set" : "Not Set")
-                << std::endl);
+                << std::endl);*/
 
 
         }

@@ -29,14 +29,15 @@ namespace OnYuu {
 			glm::mat4 projection;
 			glm::vec4 position;
 		};
-		struct Light {
+		struct alignas(16) Light {
 			glm::vec4 position;
+			glm::vec3 color;
 			float intensity;
-			glm::vec4 color;
 		};
-		struct LightInfo {
-			int count;
-			Light lights[128];
+		struct alignas(16) LightInfo {
+			alignas(16) int count;
+			int padding[3]; // Padding per allineamento
+			alignas(16) Light lights[125];
 		};
 		std::shared_ptr<UniformBuffer> cameraUBO;
 		std::shared_ptr<UniformBuffer> lightsUBO;

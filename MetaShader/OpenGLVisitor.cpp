@@ -496,21 +496,21 @@ void OpenGLVisitor::produceShaders(const ShaderInfo& shader) {
 void OpenGLVisitor::produceVertexInputInfo(const ShaderInfo& shader) {
     output += R"(#version 450 core
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
+layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec2 aTexCoord;
-layout(location = 3) in vec4 aColor;
+layout(location = 3) in vec3 aNormal;
 out vec3 vWorldPos;
 out vec3 vNormal;
 out vec2 vUV;
 out vec4 vColor;
 struct Light {
     vec4 position;
+    vec3 color;
     float intensity;
-    vec4 color;
 };
 
 layout(std140, binding = 1) uniform lightsInfo {
-    float count;
+    int count;
     Light lights[128];
 };
 
@@ -555,12 +555,12 @@ void OpenGLVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
     output += R"(
 struct Light {
     vec4 position;
-    float intensity;
     vec3 color;
+    float intensity;
 };
 
 layout(std140, binding = 1) uniform lightsInfo {
-    float count;
+    int count;
     Light lights[128];
 };
 
@@ -635,21 +635,21 @@ void OpenGLVisitor::produceFragmentShader(const ShaderInfo& shader) {
 void OpenGLVisitor::produceStandardVertexShader() {
     output += R"(#version 450 core
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
+layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec2 aTexCoord;
-layout(location = 3) in vec4 aColor;
+layout(location = 3) in vec3 aNormal;
 out vec3 vWorldPos;
 out vec3 vNormal;
 out vec2 vUV;
 out vec4 vColor;
 struct Light {
     vec4 position;
+    vec3 color;
     float intensity;
-    vec4 color;
 };
 
 layout(std140, binding = 1) uniform lightsInfo {
-    float count;
+    int count;
     Light lights[128];
 };
 
