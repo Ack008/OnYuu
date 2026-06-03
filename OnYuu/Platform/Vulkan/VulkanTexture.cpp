@@ -31,6 +31,7 @@ namespace OnYuu {
 
 	void VulkanTexture::createTextureImage(const std::string& path)
 	{
+		VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
 		// Implementazione della creazione dell'immagine Vulkan dalla texture caricata
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -68,7 +69,7 @@ namespace OnYuu {
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		imageInfo.format = renderer->getInit().swapchain.image_format;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage =
@@ -90,17 +91,17 @@ namespace OnYuu {
 
 	void VulkanTexture::createTextureImageView()
 	{
+		VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
 		VkImageViewCreateInfo viewInfo{};
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = textureImage;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		viewInfo.format = renderer->getInit().swapchain.image_format;
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = 1;
-		VulkanRender* renderer = (VulkanRender*)(Render::getInstance().get());
 		vkCreateImageView(renderer->getInit().device, &viewInfo, nullptr, &textureImageView);
 	}
 
