@@ -433,14 +433,34 @@ void OpenGLVisitor::visit(FunctionCallExpr* expr) {
 }
 
 void OpenGLVisitor::visit(IndexExpr* expr) {
+    bool needsParens = expr->object &&
+        (std::dynamic_pointer_cast<BinaryExpr>(expr->object) ||
+            std::dynamic_pointer_cast<AssignExpr>(expr->object) ||
+            std::dynamic_pointer_cast<TernaryExpr>(expr->object));
+
+    if (needsParens) output += "(";
     expr->object->accept(this);
+    if (needsParens) output += ")";
     output += "[";
     expr->index->accept(this);
     output += "]";
 }
 
 void OpenGLVisitor::visit(MemberExpr* expr) {
+    // Se l'oggetto è un'espressione composta (binaria, ternaria, assign, ecc.),
+    // va parentesizzata per preservare la semantica dell'accesso al membro.
+    bool needsParens = expr->object &&
+        (std::dynamic_pointer_cast<BinaryExpr>(expr->object) ||
+         std::dynamic_pointer_cast<AssignExpr>(expr->object) ||
+         std::dynamic_pointer_cast<TernaryExpr>(expr->object) ||
+         std::dynamic_pointer_cast<UnaryExpr>(expr->object) ||
+         std::dynamic_pointer_cast<CommaExpr>(expr->object) ||
+         std::dynamic_pointer_cast<FunctionCallExpr>(expr->object) ||
+         std::dynamic_pointer_cast<CallExpr>(expr->object));
+
+    if (needsParens) output += "(";
     expr->object->accept(this);
+    if (needsParens) output += ")";
     output += "." + expr->field;
 }
 
@@ -504,7 +524,7 @@ out vec3 vNormal;
 out vec2 vUV;
 out vec4 vColor;
 struct Light {
-    vec4 position;
+    vec3 position;
     vec3 color;
     float intensity;
 };
@@ -517,7 +537,7 @@ layout(std140, binding = 1) uniform lightsInfo {
 layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_view;
     mat4 u_projection;
-    vec4 u_position; // camera world position
+    vec3 u_position; // camera world position
 };
 uniform mat4 u_model;
 )";
@@ -554,7 +574,7 @@ void OpenGLVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
     output += "out vec4 fragColor;\n";
     output += R"(
 struct Light {
-    vec4 position;
+    vec3 position;
     vec3 color;
     float intensity;
 };
@@ -567,7 +587,7 @@ layout(std140, binding = 1) uniform lightsInfo {
 layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_view;
     mat4 u_projection;
-    vec4 u_position; // camera world position
+    vec3 u_position; // camera world position
 };
 )";
 
@@ -590,6 +610,18 @@ layout(std140, binding = 2) uniform CameraInfo {
     for (const auto& global : shader.globalVariables) {
         output += getTransformedType(global.type) + " " + getOrCreateRandomName(global.name);
         if (global.arraySize != -1) output += "[" + std::to_string(global.arraySize) + "]";
+        if (global.initializer.empty() && global.initializerExpr) {
+            std::cerr << "Warning: Global variable '" << global.name << "' has an initializer expression which is not supported for uniform variables. Ignoring initializer.\n";
+        }
+        else if (!global.initializer.empty()) {
+            if (global.initializerExpr) {
+                output += "=";
+                global.initializerExpr->accept(this);
+            }
+            else {
+                output += " = " + global.initializer;
+            }
+        }
         output += ";\n";
     }
 }
@@ -643,7 +675,7 @@ out vec3 vNormal;
 out vec2 vUV;
 out vec4 vColor;
 struct Light {
-    vec4 position;
+    vec3 position;
     vec3 color;
     float intensity;
 };
@@ -656,7 +688,7 @@ layout(std140, binding = 1) uniform lightsInfo {
 layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_view;
     mat4 u_projection;
-    vec4 u_position; // camera world position
+    vec3 u_position; // camera world position
 };
 uniform mat4 u_model;
 void main() {

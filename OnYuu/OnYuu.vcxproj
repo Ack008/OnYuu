@@ -204,17 +204,6 @@
     <ClCompile Include="Core\Shader.cpp" />
     <ClCompile Include="Render\VertexArray.cpp" />
     <ClCompile Include="Core\View\View.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cfg.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cpp.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cross.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cross_c.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cross_parsed_ir.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_cross_util.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_glsl.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_hlsl.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_msl.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_parser.cpp" />
-    <ClCompile Include="vendor\spir-v-cross\spirv_reflect.cpp" />
     <ClCompile Include="vendor\stb.cpp" />
     <ClCompile Include="vendor\VkBootstrap.cpp" />
     <ClCompile Include="vendor\vma\VmaUsage.cpp" />
@@ -297,23 +286,6 @@
     <ClInclude Include="Render\RenderTarget.h" />
     <ClInclude Include="Render\VertexArray.h" />
     <ClInclude Include="Core\View\View.h" />
-    <ClInclude Include="vendor\spir-v-cross\GLSL.std.450.h" />
-    <ClInclude Include="vendor\spir-v-cross\spirv.h" />
-    <ClInclude Include="vendor\spir-v-cross\spirv.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cfg.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_common.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cpp.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross_c.h" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross_containers.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross_error_handling.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross_parsed_ir.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_cross_util.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_glsl.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_hlsl.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_msl.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_parser.hpp" />
-    <ClInclude Include="vendor\spir-v-cross\spirv_reflect.hpp" />
     <ClInclude Include="vendor\vma\VmaUsage.h" />
   </ItemGroup>
   <ItemGroup>

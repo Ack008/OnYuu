@@ -450,14 +450,34 @@ void VulkanVisitor::visit(FunctionCallExpr* expr) {
 }
 
 void VulkanVisitor::visit(IndexExpr* expr) {
+    bool needsParens = expr->object &&
+        (std::dynamic_pointer_cast<BinaryExpr>(expr->object) ||
+            std::dynamic_pointer_cast<AssignExpr>(expr->object) ||
+            std::dynamic_pointer_cast<TernaryExpr>(expr->object));
+
+    if (needsParens) output += "(";
     expr->object->accept(this);
+    if (needsParens) output += ")";
     output += "[";
     expr->index->accept(this);
     output += "]";
 }
 
 void VulkanVisitor::visit(MemberExpr* expr) {
+    // Se l'oggetto è un'espressione composta (binaria, ternaria, assign, ecc.),
+    // va parentesizzata per preservare la semantica dell'accesso al membro.
+    bool needsParens = expr->object &&
+        (std::dynamic_pointer_cast<BinaryExpr>(expr->object) ||
+            std::dynamic_pointer_cast<AssignExpr>(expr->object) ||
+            std::dynamic_pointer_cast<TernaryExpr>(expr->object) ||
+            std::dynamic_pointer_cast<UnaryExpr>(expr->object) ||
+            std::dynamic_pointer_cast<CommaExpr>(expr->object) ||
+            std::dynamic_pointer_cast<FunctionCallExpr>(expr->object) ||
+            std::dynamic_pointer_cast<CallExpr>(expr->object));
+
+    if (needsParens) output += "(";
     expr->object->accept(this);
+    if (needsParens) output += ")";
     output += "." + expr->field;
 }
 
@@ -522,7 +542,7 @@ layout(location = 3) in vec3 aNormal;
 layout(set = 0,binding = 1) uniform CameraUniform {
         mat4 proj;
         mat4 view;
-        vec4 position;
+        vec3 position;
 } camera;
 
 struct Light{
@@ -588,7 +608,7 @@ void VulkanVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
 layout(set = 0,binding = 1) uniform CameraUniform {
         mat4 proj;
         mat4 view;
-        vec4 position;
+        vec3 position;
 } camera;
 
 struct Light{
@@ -634,6 +654,18 @@ layout(std140, set = 0, binding = 3) readonly buffer ModelMatrices {
     for (const auto& global : shader.globalVariables) {
         output += getTransformedType(global.type) + " " + getOrCreateRandomName(global.name);
         if (global.arraySize != -1) output += "[" + std::to_string(global.arraySize) + "]";
+		if (global.initializer.empty() && global.initializerExpr) {
+			std::cerr << "Warning: Global variable '" << global.name << "' has an initializer expression which is not supported for uniform variables. Ignoring initializer.\n";
+		}
+        else if (!global.initializer.empty()) {
+            if (global.initializerExpr) {
+				output += "=";
+				global.initializerExpr->accept(this);
+			}
+			else {
+                output += " = " + global.initializer;
+            }
+        }
         output += ";\n";
     }
 }
@@ -687,7 +719,7 @@ layout(location = 3) in vec3 aNormal;
 layout(set = 0,binding = 1) uniform CameraUniform {
         mat4 proj;
         mat4 view;
-        vec4 position;
+        vec3 position;
 } camera;
 
 struct Light{

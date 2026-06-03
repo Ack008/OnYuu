@@ -95,11 +95,21 @@ void SemanticVisitor::initBuiltinFunctionSignatures() {
     addBuiltinFunction("clamp", { "vec3", "vec3", "vec3" }, "vec3");
     addBuiltinFunction("clamp", { "vec4", "vec4", "vec4" }, "vec4");
 
+	addBuiltinFunction("reflect", { "vec3", "vec3" }, "vec3");
+	addBuiltinFunction("refract", { "vec3", "vec3", "float" }, "vec3");
+
+    addBuiltinFunction("pow", { "float", "float" }, "float");
+    addBuiltinFunction("pow", { "vec2", "float" }, "vec2");
+    addBuiltinFunction("pow", { "vec3", "float" }, "vec3");
+    addBuiltinFunction("pow", { "vec4", "float" }, "vec4");
+
+
+
     addBuiltinFunction("texture", { "sampler2D", "vec2" }, "vec4");
     addBuiltinFunction("texture", { "samplerCube", "vec3" }, "vec4");
 
     addBuiltInStruct("Light", {
-        {"vec4", "position"},
+        {"vec3", "position"},
         {"float", "intensity"},
         {"vec3", "color"}
         });
@@ -183,6 +193,15 @@ void SemanticVisitor::initConstructorSignatures() {
         {"vec4", "vec4", "vec4", "vec4"},
         {"mat4"}
     };
+	constructorSigs_["mat3"] = {
+		{"float"},
+		{"float", "float", "float",
+		 "float", "float", "float",
+		 "float", "float", "float"},
+		{"vec3", "vec3", "vec3"},
+		{"mat3"},
+        {"mat4"}
+	};
     constructorSigs_["sampler2D"] = {};
 }
 
@@ -822,6 +841,10 @@ void SemanticVisitor::visit(BinaryExpr* e) {
         }
         if (leftType == "mat4" && rightType == "vec4") {
             setType(e, "vec4");
+            return;
+        }
+        if (leftType == "mat3" && rightType == "vec3") {
+            setType(e, "vec3");
             return;
         }
     }

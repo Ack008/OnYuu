@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifdef _BEBUG
 #define LOG(X) std::cout << X << std::endl;
 #else
@@ -26,7 +26,7 @@ namespace OnYuu {
 
     /**
      * VulkanRender - Classe principale renderer Vulkan (REFACTORED)
-     * Responsabilit�: Orchestrazione dei delegate, rendering loop, gestione risorse alto livello
+     * Responsabilità: Orchestrazione dei delegate, rendering loop, gestione risorse alto livello
      */
     class VulkanRender : public BatchRender {
 
@@ -232,10 +232,10 @@ namespace OnYuu {
         // UBO DATA STRUCTURES
         // ========================================================================
         struct alignas(16) LightData {
-           glm::vec3 position;
-            float padding;
+            glm::vec3 position;
+            float pad;
             glm::vec3 color;
-           float intensity;
+            float intensity;
         };
 
         struct LightBufferData {
@@ -316,6 +316,8 @@ namespace OnYuu {
 		void initThreadResources();
 		void renderSceneMultithreaded(int sceneIndex, VkExtent2D extent);
 		bool recordThreadCommands(ThreadResources& rt, int start, int end, int sceneIndex, VkExtent2D extent);
+        VkImageLayout swapchainImageLayout_ = VK_IMAGE_LAYOUT_UNDEFINED;
+
 
 	};
 

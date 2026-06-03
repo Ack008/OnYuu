@@ -494,9 +494,14 @@ namespace OnYuu {
 
 	void VulkanRender::renderSceneMultithreaded(int sceneIndex, VkExtent2D extent)
 	{
-        
-		uint32_t threadCount = static_cast<uint32_t>(renderThreads_.size());
-		uint32_t totalBatches = static_cast<uint32_t>(renderScenes[sceneIndex].batches.size());
+        uint32_t threadCount = 0;
+		if (renderScenes[sceneIndex].batches.size() > renderThreads_.size() * 2) {
+		    threadCount = renderThreads_.size();
+        }
+        else {
+			threadCount = 1;
+        }
+		uint32_t totalBatches = renderScenes[sceneIndex].batches.size();
 		if (threadCount == 0 || totalBatches == 0) {
 			return;
 		}
@@ -742,12 +747,20 @@ namespace OnYuu {
         if (frameNumber % 60 == 0) {
             geometryPool_->collectGarbage(frameNumber, 180);
         }
+        VkImageLayout layoutBeforeImGui = swapChainRenderedScenes.empty()
+            ? VK_IMAGE_LAYOUT_UNDEFINED
+            : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+       
         beginRendering(cmd,
             swapchain_->getFrame(imageIndex_).image,
             swapchain_->getFrame(imageIndex_).view,
             depthImage_, depthImageView_,
             swapchain_->getExtent(), depthFormat_,
-            true, VK_IMAGE_LAYOUT_UNDEFINED, false, false);
+            true,
+            layoutBeforeImGui,
+            false,
+            false);
+
     }
 
 	void VulkanRender::renderOnSwapChain(VkCommandBuffer cmd)
@@ -755,6 +768,7 @@ namespace OnYuu {
 		activeColorFormat_ = swapchain_->getFormat();
 		activeDepthFormat_ = depthFormat_;
 		bool isFirstScene = true;
+        VkImageLayout currentSwapchainLayout = swapchainImageLayout_;  // nuovo membro
 		for (int index : swapChainRenderedScenes) {
 			bool isMultithreaded = renderScenes[index].batches.size() > threadPool_.size() * 2;
 			beginRendering(cmd,
@@ -762,11 +776,12 @@ namespace OnYuu {
 				swapchain_->getFrame(imageIndex_).view,
 				depthImage_, depthImageView_,
 				swapchain_->getExtent(), depthFormat_,
-				true, VK_IMAGE_LAYOUT_UNDEFINED, isMultithreaded, isFirstScene);
+				true, currentSwapchainLayout, true, isFirstScene);
 			isFirstScene = false;
 			renderScene(cmd, index, swapchain_->getExtent());
 			endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
 		}
+        swapchainImageLayout_ = currentSwapchainLayout;
 	}
 
 	void VulkanRender::renderOnTarget(VkCommandBuffer cmd)
@@ -786,7 +801,7 @@ namespace OnYuu {
 					vulkanTarget->getDepthImageView(currentFrame_),
 					vulkanTarget->getExtent(),
 					vulkanTarget->getDepthFormat(),
-					false, targetOldLayout, isMultithreaded, isFirstScene);
+					false, targetOldLayout, true, isFirstScene);
 				isFirstScene = false;
 				vulkanTarget->setColorLayout(currentFrame_, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 				renderScene(cmd, index,vulkanTarget->getExtent());
@@ -809,6 +824,7 @@ namespace OnYuu {
         }
 
         VkResult result = swapchain_->acquireNextImage(imageAvailableSemaphores[currentFrame_], &imageIndex_);
+		
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             LOG("! Swapchain acquire returned out-of-date/suboptimal, recreating...\n");
@@ -829,7 +845,7 @@ namespace OnYuu {
             return;
         }
 
-        if (imagesInFlight[imageIndex_] != VK_NULL_HANDLE) {
+        if (imagesInFlight[imageIndex_] != VK_NULL_HANDLE && imagesInFlight[imageIndex_] != inFlightFences[currentFrame_]) {
             vkWaitForFences(device_->getDevice(), 1, &imagesInFlight[imageIndex_], VK_TRUE, UINT64_MAX);
         }
 
@@ -890,7 +906,7 @@ namespace OnYuu {
 	void VulkanRender::submit() {
 		static int submitNumber = 0;
 		submitNumber++;
-
+     
 		VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
 		endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
 		sceneTarget.clear();
@@ -1117,12 +1133,7 @@ namespace OnYuu {
         }
         auto batchedRenderData = scene.batches;
         {
-			if (batchedRenderData.size() > threadPool_.size() * 2) {
-				renderSceneMultithreaded(sceneIndex, extent);
-            }
-            else {
-                renderBatches(batchedRenderData, cmd, sceneRes, sceneIndex);
-            }
+			renderSceneMultithreaded(sceneIndex, extent);
         }
     }
 
@@ -1254,7 +1265,7 @@ namespace OnYuu {
         LightBufferData lightData{};
         lightData.count = std::min(static_cast<int>(scene.sceneLight.size()), 125);
         for (int i = 0; i < lightData.count; ++i) {
-            lightData.lights[i].position = scene.sceneLight[i].position;
+            lightData.lights[i].position = glm::vec4(scene.sceneLight[i].position, 1.0f);
             lightData.lights[i].color = scene.sceneLight[i].light.color;
             lightData.lights[i].intensity = scene.sceneLight[i].light.intensity;
         }
