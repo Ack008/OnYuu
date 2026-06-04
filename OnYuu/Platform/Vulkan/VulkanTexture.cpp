@@ -14,6 +14,7 @@ namespace OnYuu {
 
 	VulkanTexture::~VulkanTexture()
 	{
+		
 	}
 
 	void VulkanTexture::bind(uint32_t slot)

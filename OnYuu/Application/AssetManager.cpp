@@ -402,8 +402,13 @@ static void computeNormalsForMesh(Mesh& mesh) {
         }
     }
 
-    std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::shared_ptr<Texture> tex) {
-        textures_[name] = std::move(tex);
+    std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::string texturePath) {
+		
+		if (textures_.find(name) == textures_.end()) {
+			
+            textures_[name] = std::move(Texture::createTexture(texturePath));
+			
+		}
         return textures_[name];
     }
 
@@ -948,10 +953,11 @@ void vertexMain()
 
         for (const auto& [uniformName, textureRef] : metadata.textures) {
             std::shared_ptr<Texture> texture = getTexturePtr(textureRef);
-            if (!texture && std::filesystem::exists(textureRef)) {
-                texture = Texture::createTexture(textureRef);
+            std::string textureNormalizedPath = textureRef;
+            std::replace(textureNormalizedPath.begin(), textureNormalizedPath.end(), '\\', '/');
+            if (!texture && std::filesystem::exists(textureNormalizedPath)) {
+                addTexture(textureRef, textureNormalizedPath);
                 if (texture) {
-                    addTexture(textureRef, texture);
                 }
             }
 

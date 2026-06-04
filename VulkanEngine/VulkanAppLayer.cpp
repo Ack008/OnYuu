@@ -63,8 +63,8 @@ void VulkanAppLayer::onAttach()
 	auto mat2 = AssetManager::instance().addMaterial("default_material2", std::make_shared<Material>("default"));
 
 
-	auto texture = AssetManager::instance().addTexture("gatto", Texture::createTexture("Asset/Texture/gatto.png"));
-	auto texture2 = AssetManager::instance().addTexture("ai", Texture::createTexture("Asset/Texture/ai.png"));
+	auto texture = AssetManager::instance().addTexture("gatto", "Asset/Texture/gatto.png");
+	auto texture2 = AssetManager::instance().addTexture("ai", "Asset/Texture/ai.png");
 
 	mat->set("tex", texture2);
 	mat->set("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -263,7 +263,7 @@ namespace OnYuu {
                 if (ImGui::MenuItem("Import Mesh")) {
                     IGFD::FileDialogConfig config;
                     config.path = Project::getInstance().getAssetsPath();
-                    ImGuiFileDialog::Instance()->OpenDialog(kImportMeshDialogId, "Import Mesh", ".obj", config);
+                    ImGuiFileDialog::Instance()->OpenDialog(kImportMeshDialogId, "Import Mesh", ".obj, .fbx", config);
                 }
                 ImGui::EndPopup();
             }
