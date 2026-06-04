@@ -13,9 +13,9 @@ namespace OnYuu {
 	Application::Application(API api)
 	{
 		Render::setAPI(api);
-		Application::instance = this;
+ 		Application::instance = this;
 
-		window = Window::create(1280, 720);
+		window = Window::create(1600, 900);
 		Input::reset();
 
 		Render::init();

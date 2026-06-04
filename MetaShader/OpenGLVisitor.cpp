@@ -539,7 +539,10 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
-uniform mat4 u_model;
+layout(std140, binding = 3) buffer Model {
+    mat4 model[];
+} modelBuffer;
+;
 )";
 
     for (const auto& structPair : shader.structs) {
@@ -589,6 +592,10 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
+layout(std140, binding = 3) buffer Model {
+    mat4 model[];
+} modelBuffer;
+
 )";
 
     for (const auto& structPair : shader.structs) {
@@ -690,8 +697,12 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
-uniform mat4 u_model;
+layout(std140, binding = 3) buffer Model {
+    mat4 model[];
+} modelBuffer;
+;
 void main() {
+    mat4 u_model = modelBuffer.model[gl_InstanceID];
     vWorldPos = (u_model * vec4(aPosition, 1.0)).xyz;
     vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);
     vUV = aTexCoord;
@@ -750,11 +761,12 @@ void OpenGLVisitor::injectVertexVaryingInitialization() {
     bool hasColorInit = vertexShaderCode_.find("vColor =") != std::string::npos;
 
     std::string injectedCode;
+ 
     if (!hasWorldPosInit) {
-        injectedCode += "\n    vWorldPos = (u_model * vec4(aPosition, 1.0)).xyz;";
+        injectedCode += "\n    vWorldPos = (modelBuffer.model[gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
     }
     if (!hasNormalInit) {
-        injectedCode += "\n    vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);";
+        injectedCode += "\n    vNormal = mat3(transpose(inverse(modelBuffer.model[gl_InstanceID]))) * normalize(aNormal);";
     }
     if (!hasUVInit) {
         injectedCode += "\n    vUV = aTexCoord;";

@@ -153,6 +153,8 @@
     <ClCompile Include="Core\ThreadPool.cpp" />
     <ClCompile Include="Math\Math.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLCubeMap.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLGeometryPool.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLIndirectDraw.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLMetaShader.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLRenderTarget.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLTexture.cpp" />
@@ -229,6 +231,8 @@
     <ClInclude Include="Application\ImGuiTextureWrapper.h" />
     <ClInclude Include="Core\Model\Components\BackGround2DRender.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLCubeMap.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLGeometryPool.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLIndirectDraw.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLMetaShader.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLRenderTarget.h" />
     <ClInclude Include="Platform\OpenGL\OpenGLTexture.h" />

@@ -138,6 +138,8 @@
     <ClCompile Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanImGuiTextureWrapper.cpp" />
     <ClCompile Include="Core\ThreadPool.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLIndirectDraw.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLGeometryPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
@@ -217,6 +219,8 @@
     <ClInclude Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.h" />
     <ClInclude Include="Platform\Vulkan\VulkanImGuiTextureWrapper.h" />
     <ClInclude Include="Core\ThreadPool.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLGeometryPool.h" />
+    <ClInclude Include="Platform\OpenGL\OpenGLIndirectDraw.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShaderC.glsl">

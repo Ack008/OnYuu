@@ -3,34 +3,27 @@
 #include <algorithm>
 #include <iostream>
 #include <cstring>
-// Add to OpenGLBatchRender.cpp
-static void checkGLError(const char* operation) {
-    GLenum error;
-    while ((error = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "[OpenGL ERROR] " << operation << ": "
-            << std::hex << error << std::dec << std::endl;
-    }
-}
+
 namespace OnYuu {
 
     // ============================================================================
     // Costanti layout vertex (devono combaciare con setupVAO)
     //   pos3 (12) + col4 (16) + uv2 (8) + norm3 (12) = 48 byte
     // ============================================================================
-    static constexpr GLsizei VERTEX_STRIDE      = 12 * sizeof(float); // 48 byte
-    static constexpr GLintptr POS_OFFSET        = 0;
-    static constexpr GLintptr COL_OFFSET        = 3 * sizeof(float);
-    static constexpr GLintptr UV_OFFSET         = 7 * sizeof(float);
-    static constexpr GLintptr NORM_OFFSET       = 9 * sizeof(float);
+    static constexpr GLsizei VERTEX_STRIDE = 12 * sizeof(float); // 48 byte
+    static constexpr GLintptr POS_OFFSET = 0;
+    static constexpr GLintptr COL_OFFSET = 3 * sizeof(float);
+    static constexpr GLintptr UV_OFFSET = 7 * sizeof(float);
+    static constexpr GLintptr NORM_OFFSET = 9 * sizeof(float);
 
     // ============================================================================
     // OpenGLGeometryPool
     // ============================================================================
 
     OpenGLGeometryPool::OpenGLGeometryPool(GLsizeiptr initialVertexBytes,
-                                           GLsizeiptr initialIndexBytes)
+        GLsizeiptr initialIndexBytes)
         : vertexBufferSize_(initialVertexBytes)
-        , indexBufferSize_ (initialIndexBytes)
+        , indexBufferSize_(initialIndexBytes)
     {
         // Crea VBO unificato (immutabile se GL 4.4, altrimenti DYNAMIC_DRAW)
         glGenBuffers(1, &vbo_);
@@ -49,7 +42,7 @@ namespace OnYuu {
         setupVAO();
 
         std::cout << "[OpenGLGeometryPool] Created: VBO=" << vertexBufferSize_
-                  << " IBO=" << indexBufferSize_ << " bytes\n";
+            << " IBO=" << indexBufferSize_ << " bytes\n";
     }
 
     OpenGLGeometryPool::~OpenGLGeometryPool() {
@@ -66,22 +59,22 @@ namespace OnYuu {
         // attrib 0: position (vec3)
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE,
-                              reinterpret_cast<void*>(POS_OFFSET));
+            reinterpret_cast<void*>(POS_OFFSET));
 
         // attrib 1: color (vec4)
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, VERTEX_STRIDE,
-                              reinterpret_cast<void*>(COL_OFFSET));
+            reinterpret_cast<void*>(COL_OFFSET));
 
         // attrib 2: texCoord (vec2)
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, VERTEX_STRIDE,
-                              reinterpret_cast<void*>(UV_OFFSET));
+            reinterpret_cast<void*>(UV_OFFSET));
 
         // attrib 3: normal (vec3)
         glEnableVertexAttribArray(3);
         glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, VERTEX_STRIDE,
-                              reinterpret_cast<void*>(NORM_OFFSET));
+            reinterpret_cast<void*>(NORM_OFFSET));
 
         glBindVertexArray(0);
     }
@@ -106,7 +99,7 @@ namespace OnYuu {
             if (it->size >= size) {
                 GLBufferRegion region{ vbo_, it->offset, size, false };
                 it->offset += size;
-                it->size   -= size;
+                it->size -= size;
                 if (it->size == 0) vertexFreeList_.erase(it);
                 return region;
             }
@@ -132,7 +125,7 @@ namespace OnYuu {
             if (it->size >= size) {
                 GLBufferRegion region{ ibo_, it->offset, size, true };
                 it->offset += size;
-                it->size   -= size;
+                it->size -= size;
                 if (it->size == 0) indexFreeList_.erase(it);
                 return region;
             }
@@ -149,23 +142,14 @@ namespace OnYuu {
 
     // ------------------------------------------------------------------ upload
     void OpenGLGeometryPool::uploadVertexData(const GLBufferRegion& region,
-                                               const void* data, GLsizeiptr size) {
-        std::cout << "[DEBUG] Uploading " << size << " bytes to VBO at offset "
-            << region.offset << std::endl;
-
+        const void* data, GLsizeiptr size) {
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
         glBufferSubData(GL_ARRAY_BUFFER, region.offset, size, data);
-
-        GLenum error = glGetError();
-        if (error != GL_NO_ERROR) {
-            std::cerr << "[ERROR] glBufferSubData failed: " << std::hex << error << std::endl;
-        }
-
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void OpenGLGeometryPool::uploadIndexData(const GLBufferRegion& region,
-                                              const void* data, GLsizeiptr size) {
+        const void* data, GLsizeiptr size) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, region.offset, size, data);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -178,27 +162,30 @@ namespace OnYuu {
         if (!region.isIndex) {
             vertexFreeList_.push_back({ region.offset, region.size });
             std::sort(vertexFreeList_.begin(), vertexFreeList_.end(),
-                      [](const FreeBlock& a, const FreeBlock& b){ return a.offset < b.offset; });
+                [](const FreeBlock& a, const FreeBlock& b) { return a.offset < b.offset; });
             // Merge blocchi adiacenti
             for (size_t i = 0; i + 1 < vertexFreeList_.size(); ) {
-                auto& cur  = vertexFreeList_[i];
+                auto& cur = vertexFreeList_[i];
                 auto& next = vertexFreeList_[i + 1];
                 if (cur.offset + cur.size == next.offset) {
                     cur.size += next.size;
                     vertexFreeList_.erase(vertexFreeList_.begin() + static_cast<ptrdiff_t>(i) + 1);
-                } else { ++i; }
+                }
+                else { ++i; }
             }
-        } else {
+        }
+        else {
             indexFreeList_.push_back({ region.offset, region.size });
             std::sort(indexFreeList_.begin(), indexFreeList_.end(),
-                      [](const FreeBlock& a, const FreeBlock& b){ return a.offset < b.offset; });
+                [](const FreeBlock& a, const FreeBlock& b) { return a.offset < b.offset; });
             for (size_t i = 0; i + 1 < indexFreeList_.size(); ) {
-                auto& cur  = indexFreeList_[i];
+                auto& cur = indexFreeList_[i];
                 auto& next = indexFreeList_[i + 1];
                 if (cur.offset + cur.size == next.offset) {
                     cur.size += next.size;
                     indexFreeList_.erase(indexFreeList_.begin() + static_cast<ptrdiff_t>(i) + 1);
-                } else { ++i; }
+                }
+                else { ++i; }
             }
         }
     }
@@ -206,7 +193,7 @@ namespace OnYuu {
     // ------------------------------------------------------------------ grow
     void OpenGLGeometryPool::growVertexBuffer(GLsizeiptr newSize) {
         std::cout << "[OpenGLGeometryPool] Growing VBO " << vertexBufferSize_
-                  << " -> " << newSize << " bytes\n";
+            << " -> " << newSize << " bytes\n";
 
         // Leggi dati esistenti, crea nuovo buffer più grande, ricopia
         std::vector<uint8_t> tmp(static_cast<size_t>(vertexUsedSize_));
@@ -226,7 +213,7 @@ namespace OnYuu {
 
     void OpenGLGeometryPool::growIndexBuffer(GLsizeiptr newSize) {
         std::cout << "[OpenGLGeometryPool] Growing IBO " << indexBufferSize_
-                  << " -> " << newSize << " bytes\n";
+            << " -> " << newSize << " bytes\n";
 
         std::vector<uint8_t> tmp(static_cast<size_t>(indexUsedSize_));
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
@@ -242,32 +229,33 @@ namespace OnYuu {
 
     // ------------------------------------------------------------------ LRU
     void OpenGLGeometryPool::registerMesh(const std::shared_ptr<Mesh>& mesh,
-                                           uint64_t currentFrame) {
+        uint64_t currentFrame) {
         std::lock_guard<std::mutex> lock(trackerMutex_);
         auto& info = meshUsageTracker_[mesh];
-        info.lastUsedFrame     = currentFrame;
-        info.refCount          = 1;
+        info.lastUsedFrame = currentFrame;
+        info.refCount = 1;
         info.markedForDeletion = false;
     }
 
     void OpenGLGeometryPool::updateMeshUsage(const std::shared_ptr<Mesh>& mesh,
-                                              uint64_t currentFrame) {
+        uint64_t currentFrame) {
         std::lock_guard<std::mutex> lock(trackerMutex_);
         auto it = meshUsageTracker_.find(mesh);
         if (it != meshUsageTracker_.end()) {
             it->second.lastUsedFrame = currentFrame;
             it->second.refCount++;
-        } else {
+        }
+        else {
             std::cerr << "[OpenGLGeometryPool] WARNING: Mesh used but not registered!\n";
             auto& info = meshUsageTracker_[mesh];
             info.lastUsedFrame = currentFrame;
-            info.refCount      = 1;
+            info.refCount = 1;
         }
     }
 
     void OpenGLGeometryPool::collectGarbage(uint64_t currentFrame,
-                                             uint32_t framesToKeep,
-                                             OpenGLBatchRender* renderer) {
+        uint32_t framesToKeep,
+        OpenGLBatchRender* renderer) {
         std::vector<std::shared_ptr<Mesh>> toDelete;
 
         {
@@ -283,7 +271,7 @@ namespace OnYuu {
 
         if (!toDelete.empty()) {
             std::cout << "[OpenGLGeometryPool] GC: removing " << toDelete.size()
-                      << " unused meshes\n";
+                << " unused meshes\n";
             for (const auto& mesh : toDelete) {
                 renderer->removeCachedMesh(mesh);
                 std::lock_guard<std::mutex> lock(trackerMutex_);
@@ -304,7 +292,8 @@ namespace OnYuu {
     // ============================================================================
 
     PooledMeshGL::PooledMeshGL(Mesh& mesh, std::shared_ptr<OpenGLGeometryPool> pool)
-        : mesh_(mesh), pool_(pool) {}
+        : mesh_(mesh), pool_(pool) {
+    }
 
     PooledMeshGL::~PooledMeshGL() { shutdown(); }
 
@@ -312,7 +301,7 @@ namespace OnYuu {
         if (uploaded_ || mesh_.empty()) return;
 
         vertexCount_ = static_cast<uint32_t>(mesh_.position.size());
-        indexCount_  = static_cast<uint32_t>(mesh_.indices.size());
+        indexCount_ = static_cast<uint32_t>(mesh_.indices.size());
 
         // Prepara vertex data interlacciati (pos3 col4 uv2 norm3)
         std::vector<float> vertexData;
@@ -328,14 +317,16 @@ namespace OnYuu {
                 vertexData.push_back(mesh_.color[i].g);
                 vertexData.push_back(mesh_.color[i].b);
                 vertexData.push_back(mesh_.color[i].a);
-            } else {
+            }
+            else {
                 vertexData.insert(vertexData.end(), { 1.f, 1.f, 1.f, 1.f });
             }
 
             if (i < mesh_.texCoord.size()) {
                 vertexData.push_back(mesh_.texCoord[i].x);
                 vertexData.push_back(mesh_.texCoord[i].y);
-            } else {
+            }
+            else {
                 vertexData.insert(vertexData.end(), { 0.f, 0.f });
             }
 
@@ -343,13 +334,14 @@ namespace OnYuu {
                 vertexData.push_back(mesh_.normal[i].x);
                 vertexData.push_back(mesh_.normal[i].y);
                 vertexData.push_back(mesh_.normal[i].z);
-            } else {
+            }
+            else {
                 vertexData.insert(vertexData.end(), { 0.f, 1.f, 0.f });
             }
         }
 
-            GLsizeiptr vertexBytes = static_cast<GLsizeiptr>(vertexData.size() * sizeof(float));
-        GLsizeiptr indexBytes  = static_cast<GLsizeiptr>(indexCount_ * sizeof(uint32_t));
+        GLsizeiptr vertexBytes = static_cast<GLsizeiptr>(vertexData.size() * sizeof(float));
+        GLsizeiptr indexBytes = static_cast<GLsizeiptr>(indexCount_ * sizeof(uint32_t));
 
         vertexRegion_ = pool_->allocateVertexRegion(vertexBytes);
         pool_->uploadVertexData(vertexRegion_, vertexData.data(), vertexBytes);
@@ -363,7 +355,7 @@ namespace OnYuu {
     }
 
     PooledMeshGL::DrawCommand PooledMeshGL::buildDrawCommand(uint32_t instanceCount,
-                                                              uint32_t baseInstance) const {
+        uint32_t baseInstance) const {
         return DrawCommand{
             indexCount_,
             instanceCount,
@@ -385,10 +377,11 @@ namespace OnYuu {
                 reinterpret_cast<void*>(static_cast<uintptr_t>(indexRegion_.offset)),
                 getBaseVertex()
             );
-        } else {
+        }
+        else {
             glDrawArrays(GL_TRIANGLES,
-                         getBaseVertex(),
-                         static_cast<GLsizei>(vertexCount_));
+                getBaseVertex(),
+                static_cast<GLsizei>(vertexCount_));
         }
         (void)instanceCount; // TODO: istanze con glDrawElementsInstancedBaseVertex
     }

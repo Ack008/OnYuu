@@ -40,7 +40,7 @@ namespace OnYuu {
     public:
         // initialVertexBytes / initialIndexBytes: dimensioni iniziali dei buffer
         explicit OpenGLGeometryPool(GLsizeiptr initialVertexBytes = 64 * 1024 * 1024,
-                                    GLsizeiptr initialIndexBytes  = 16 * 1024 * 1024);
+            GLsizeiptr initialIndexBytes = 16 * 1024 * 1024);
         ~OpenGLGeometryPool();
 
         // Non copiabile
@@ -62,7 +62,7 @@ namespace OnYuu {
         void registerMesh(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
         void updateMeshUsage(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
         void collectGarbage(uint64_t currentFrame, uint32_t framesToKeep,
-                            OpenGLBatchRender* renderer);
+            OpenGLBatchRender* renderer);
 
         GLuint getVBO() const { return vbo_; }
         GLuint getIBO() const { return ibo_; }
@@ -82,11 +82,11 @@ namespace OnYuu {
         GLuint ibo_ = 0;
 
         GLsizeiptr vertexBufferSize_ = 0;
-        GLsizeiptr vertexUsedSize_   = 0;
+        GLsizeiptr vertexUsedSize_ = 0;
         std::vector<FreeBlock> vertexFreeList_;
 
         GLsizeiptr indexBufferSize_ = 0;
-        GLsizeiptr indexUsedSize_   = 0;
+        GLsizeiptr indexUsedSize_ = 0;
         std::vector<FreeBlock> indexFreeList_;
 
         std::unordered_map<std::shared_ptr<Mesh>, GLMeshUsageInfo> meshUsageTracker_;
@@ -122,7 +122,7 @@ namespace OnYuu {
             GLuint  baseInstance;
         };
         DrawCommand buildDrawCommand(uint32_t instanceCount = 1,
-                                     uint32_t baseInstance  = 0) const;
+            uint32_t baseInstance = 0) const;
 
         bool isUploaded() const { return uploaded_; }
         const Mesh& getMesh() const { return mesh_; }
@@ -145,9 +145,9 @@ namespace OnYuu {
 
         GLBufferRegion vertexRegion_;
         GLBufferRegion indexRegion_;
-        uint32_t indexCount_  = 0;
+        uint32_t indexCount_ = 0;
         uint32_t vertexCount_ = 0;
-        bool     uploaded_    = false;
+        bool     uploaded_ = false;
     };
 
 } // namespace OnYuu
