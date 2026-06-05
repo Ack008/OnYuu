@@ -10,35 +10,51 @@ namespace OnYuu {
 
     // Rappresenta un range all'interno di un buffer OpenGL
     struct GLBufferRegion {
-        GLuint buffer = 0;        // VBO/IBO handle
-        GLintptr offset = 0;      // byte offset nel buffer
-        GLsizeiptr size = 0;      // dimensione in byte
-        bool isIndex = false;
+        GLuint     buffer = 0;
+        GLintptr   offset = 0;
+        GLsizeiptr size = 0;
+        bool       isIndex = false;
     };
 
     // Tracking LRU per mesh (analogo a Vulkan)
     struct GLMeshUsageInfo {
         uint64_t lastUsedFrame = 0;
         uint32_t refCount = 0;
-        bool markedForDeletion = false;
+        bool     markedForDeletion = false;
     };
 
     // Callback per rimuovere mesh dallo store del renderer
     class OpenGLBatchRender;
 
     /**
-     * GeometryPool OpenGL
+     * Layout vertex IDENTICO a MeshGPUusage (stride VARIABILE per mesh):
+     *   pos3 (sempre)
+     *   col4 (se mesh.color non vuoto)
+     *   uv2  (se mesh.texCoord non vuoto)
+     *   norm3 (se mesh.normal non vuoto)
      *
-     * Alloca un unico VBO e un unico IBO grandi, poi sub-alloca regioni per ogni
-     * mesh tramite una free-list (equivalente al GeometryPool Vulkan).
+     * Per il pool unificato usiamo stride FISSO 48 byte (12 float) con tutti
+     * i canali sempre presenti (padding con valori di default se mancanti).
+     * Il VAO viene configurato una volta sola con questo stride.
      *
-     * Richiede OpenGL 4.4+ (glBufferStorage) oppure fallback con glBufferData.
-     * Il VAO globale viene creato qui e condiviso; il formato vertex è fisso
-     * (pos3 col4 uv2 norm3 = 12 float = 48 byte per vertex).
+     * VERTEX ATTRIBUTE LOCATIONS (devono combaciare con gli shader):
+     *   0 = position (vec3)
+     *   1 = color    (vec4)
+     *   2 = texCoord (vec2)
+     *   3 = normal   (vec3)
+     *
+     * Due mutex separati per evitare deadlock:
+     *   allocMutex_   → protegge alloc/free delle regioni (non rientrante)
+     *   trackerMutex_ → protegge meshUsageTracker_ (LRU)
      */
     class OpenGLGeometryPool {
     public:
-        // initialVertexBytes / initialIndexBytes: dimensioni iniziali dei buffer
+        static constexpr GLsizei  VERTEX_STRIDE = 12 * sizeof(float); // 48 byte
+        static constexpr GLintptr POS_OFFSET = 0;
+        static constexpr GLintptr COL_OFFSET = 3 * sizeof(float);
+        static constexpr GLintptr UV_OFFSET = 7 * sizeof(float);
+        static constexpr GLintptr NORM_OFFSET = 9 * sizeof(float);
+
         explicit OpenGLGeometryPool(GLsizeiptr initialVertexBytes = 64 * 1024 * 1024,
             GLsizeiptr initialIndexBytes = 16 * 1024 * 1024);
         ~OpenGLGeometryPool();
@@ -47,7 +63,7 @@ namespace OnYuu {
         OpenGLGeometryPool(const OpenGLGeometryPool&) = delete;
         OpenGLGeometryPool& operator=(const OpenGLGeometryPool&) = delete;
 
-        // Alloca regioni (thread-safe tramite mutex)
+        // Alloca regioni — NON thread-safe rispetto all'upload, chiamare dal main thread
         GLBufferRegion allocateVertexRegion(GLsizeiptr size);
         GLBufferRegion allocateIndexRegion(GLsizeiptr size);
 
@@ -58,7 +74,7 @@ namespace OnYuu {
         // Libera regione (aggiunge alla free-list)
         void freeRegion(const GLBufferRegion& region);
 
-        // LRU tracking
+        // LRU tracking (mutex separato da allocMutex_)
         void registerMesh(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
         void updateMeshUsage(const std::shared_ptr<Mesh>& mesh, uint64_t currentFrame);
         void collectGarbage(uint64_t currentFrame, uint32_t framesToKeep,
@@ -68,8 +84,7 @@ namespace OnYuu {
         GLuint getIBO() const { return ibo_; }
         GLuint getVAO() const { return vao_; }
 
-        // Bind VAO + VBO + IBO in un colpo solo (necessario prima di drawcall)
-        void bind() const;
+        void bind()   const;
         void unbind() const;
 
         void shutdown();
@@ -89,62 +104,60 @@ namespace OnYuu {
         GLsizeiptr indexUsedSize_ = 0;
         std::vector<FreeBlock> indexFreeList_;
 
-        std::unordered_map<std::shared_ptr<Mesh>, GLMeshUsageInfo> meshUsageTracker_;
+        // Mutex separati — allocMutex_ NON è rientrante
+        std::mutex allocMutex_;
         std::mutex trackerMutex_;
 
+        std::unordered_map<std::shared_ptr<Mesh>, GLMeshUsageInfo> meshUsageTracker_;
+
         void setupVAO();
+        // Grow chiamato SENZA allocMutex_ già tenuto
         void growVertexBuffer(GLsizeiptr newSize);
         void growIndexBuffer(GLsizeiptr newSize);
+        // Merge blocchi adiacenti nella free-list (già dentro il lock)
+        static void mergeFreeList(std::vector<FreeBlock>& list);
     };
 
     /**
      * PooledMeshGL
-     *
-     * Equivalente di PooledMeshGPU per OpenGL.
-     * Alloca regioni nel pool, carica i dati, e offre draw diretta con offset.
+     * Carica una Mesh nel GeometryPool e offre draw con offset.
      */
     class PooledMeshGL {
     public:
-        PooledMeshGL(Mesh& mesh, std::shared_ptr<OpenGLGeometryPool> pool);
+        PooledMeshGL(const Mesh& mesh, std::shared_ptr<OpenGLGeometryPool> pool);
         ~PooledMeshGL();
 
         void uploadToGPU();
         void shutdown();
 
-        // Disegna usando glDrawElementsBaseVertex con offset nel buffer pooled
-        void drawInstanced(uint32_t instanceCount = 1, uint32_t baseInstance = 0);
-        // Variante per multi-draw indirect: popola una struct DrawElementsIndirectCommand
-        struct DrawCommand {
-            GLuint  count;          // numero di indici
-            GLuint  instanceCount;
-            GLuint  firstIndex;     // offset in unità di indici nel IBO
-            GLint   baseVertex;     // offset in unità di vertici nel VBO
-            GLuint  baseInstance;
-        };
-        DrawCommand buildDrawCommand(uint32_t instanceCount = 1,
-            uint32_t baseInstance = 0) const;
+        // Draw diretta (es. skybox) — richiede VAO già bindato
+        void drawInstanced(uint32_t instanceCount = 1);
+
+        bool isUploaded()  const { return uploaded_; }
 
         bool isUploaded() const { return uploaded_; }
         const Mesh& getMesh() const { return mesh_; }
         const GLBufferRegion& getVertexRegion() const { return vertexRegion_; }
         const GLBufferRegion& getIndexRegion()  const { return indexRegion_; }
+
         uint32_t getIndexCount()  const { return indexCount_; }
         uint32_t getVertexCount() const { return vertexCount_; }
-        // firstIndex in unità di indici (non byte)
-        GLuint   getFirstIndex()  const {
+
+        // firstIndex: offset in unità di uint32_t nel IBO globale
+        GLuint getFirstIndex() const {
             return static_cast<GLuint>(indexRegion_.offset / sizeof(uint32_t));
         }
-        // baseVertex in unità di vertici (non byte); 48 = sizeof(Vertex)
-        GLint    getBaseVertex()  const {
-            return static_cast<GLint>(vertexRegion_.offset / (12 * sizeof(float)));
+        // baseVertex: offset in unità di vertici nel VBO globale
+        GLint getBaseVertex() const {
+            return static_cast<GLint>(
+                vertexRegion_.offset / OpenGLGeometryPool::VERTEX_STRIDE);
         }
 
     private:
-        Mesh& mesh_;
-        std::shared_ptr<OpenGLGeometryPool> pool_;
-
-        GLBufferRegion vertexRegion_;
-        GLBufferRegion indexRegion_;
+        const Mesh& mesh_;
+        std::shared_ptr<OpenGLGeometryPool>   pool_;
+        GLBufferRegion vertexRegion_{};
+        GLBufferRegion indexRegion_{};
         uint32_t indexCount_ = 0;
         uint32_t vertexCount_ = 0;
         bool     uploaded_ = false;

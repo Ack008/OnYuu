@@ -148,6 +148,8 @@ namespace OnYuu {
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
         glfwSetWindowAspectRatio(window, 16, 9);
         glEnable(GL_DEPTH_TEST); // Abilita il depth test per il rendering 3D
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(0); // Disabilita il V-Sync
     }
 
     OpenGLWindow::~OpenGLWindow()

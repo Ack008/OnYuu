@@ -80,13 +80,18 @@ namespace OnYuu {
 			mymesh[nm].getComponent<TagComponent>().tag = name;
 			std::shared_ptr<Material> mat = AssetManager::instance().addMaterial(name, std::make_shared<Material>(shaderID));
 			// Read mtl file vertex data
+			aiString textureRelativePath;
+					// Read mtl file vertex data
 			if (material->GetTexture(aiTextureType_AMBIENT, 0, &textureRelativePath) == AI_SUCCESS)
 			{
 				std::string texturePath = fs::path(filePath).parent_path().string() + "/" + textureRelativePath.C_Str();
 				if (filesystem::exists(texturePath)) {
 					std::cout << "ambient Texture path: " << texturePath << std::endl;
 					std::string textureID = name + "_ambientTexture";
-					auto texture = AssetManager::instance().addTexture(textureID, texturePath);
+					auto texture = AssetManager::instance().getTexturePtr(textureID);
+					if (!texture) {
+						texture = AssetManager::instance().addTexture(textureID, Texture::createTexture(texturePath));
+					}
 					mat->set("ambientTexture", texture);
 				}
 				else {
@@ -98,8 +103,11 @@ namespace OnYuu {
 				std::string texturePath = fs::path(filePath).parent_path().string() + "/" + textureRelativePath.C_Str();
 				if (filesystem::exists(texturePath)) {
 					std::cout << "diffuse Texture path: " << texturePath << std::endl;
-					std::string textureID = name + "_diffuseTexture";
-					auto texture = AssetManager::instance().addTexture(textureID, texturePath);
+					std::string textureID = name + "_diffuseTexture	";
+					auto texture = AssetManager::instance().getTexturePtr(textureID);
+					if (!texture) {
+						texture = AssetManager::instance().addTexture(textureID, Texture::createTexture(texturePath));
+					}
 					mat->set("diffuseTexture", texture);
 				}
 				else {
@@ -112,13 +120,16 @@ namespace OnYuu {
 				if (filesystem::exists(texturePath)) {
 					std::cout << "displacement Texture path: " << texturePath << std::endl;
 					std::string textureID = name + "_displacementTexture";
-					auto texture = AssetManager::instance().addTexture(textureID, texturePath);
+					auto texture = AssetManager::instance().getTexturePtr(textureID);
+					if (!texture) {
+						texture = AssetManager::instance().addTexture(textureID, Texture::createTexture(texturePath));
+					}
 					mat->set("displacementTexture", texture);
 				}
 				else {
 					std::cout << "Texture file not found: " << texturePath << std::endl;
 				}
-				
+
 			}
 			if (aiReturn_SUCCESS == material->Get(AI_MATKEY_COLOR_AMBIENT, color))
 			{

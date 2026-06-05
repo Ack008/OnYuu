@@ -514,7 +514,8 @@ void OpenGLVisitor::produceShaders(const ShaderInfo& shader) {
 }
 
 void OpenGLVisitor::produceVertexInputInfo(const ShaderInfo& shader) {
-    output += R"(#version 450 core
+    output += R"(#version 460 core
+#extension GL_ARB_shader_draw_parameters : require
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec2 aTexCoord;
@@ -543,6 +544,10 @@ layout(std140, binding = 3) buffer Model {
     mat4 model[];
 } modelBuffer;
 ;
+layout(std430, binding = 3) readonly buffer ModelMatrices {
+    mat4 u_models[];
+};
+
 )";
 
     for (const auto& structPair : shader.structs) {
@@ -569,7 +574,8 @@ layout(std140, binding = 3) buffer Model {
 }
 
 void OpenGLVisitor::produceFragmentInputInfo(const ShaderInfo& shader) {
-    output += "#version 450 core\n";
+    output += "#version 460 core\n";
+    output += "#extension GL_ARB_shader_draw_parameters : require\n";
     output += "in vec3 vWorldPos;\n";
     output += "in vec3 vNormal;\n";
     output += "in vec2 vUV;\n";
@@ -596,6 +602,9 @@ layout(std140, binding = 3) buffer Model {
     mat4 model[];
 } modelBuffer;
 
+layout(std430, binding = 3) readonly buffer ModelMatrices {
+    mat4 u_models[];
+};
 )";
 
     for (const auto& structPair : shader.structs) {
@@ -672,7 +681,10 @@ void OpenGLVisitor::produceFragmentShader(const ShaderInfo& shader) {
 }
 
 void OpenGLVisitor::produceStandardVertexShader() {
-    output += R"(#version 450 core
+    output += R"(
+
+#version 460 core
+#extension GL_ARB_shader_draw_parameters : require
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec4 aColor;
 layout(location = 2) in vec2 aTexCoord;
@@ -701,8 +713,14 @@ layout(std140, binding = 3) buffer Model {
     mat4 model[];
 } modelBuffer;
 ;
+
+layout(std430, binding = 3) readonly buffer ModelMatrices {
+    mat4 u_models[];
+};
+
 void main() {
     mat4 u_model = modelBuffer.model[gl_InstanceID];
+    mat4 u_model = u_models[gl_BaseInstance + gl_InstanceID];
     vWorldPos = (u_model * vec4(aPosition, 1.0)).xyz;
     vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);
     vUV = aTexCoord;
@@ -764,9 +782,11 @@ void OpenGLVisitor::injectVertexVaryingInitialization() {
  
     if (!hasWorldPosInit) {
         injectedCode += "\n    vWorldPos = (modelBuffer.model[gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
+        injectedCode += "\n    vWorldPos = (u_models[gl_BaseInstance + gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
     }
     if (!hasNormalInit) {
         injectedCode += "\n    vNormal = mat3(transpose(inverse(modelBuffer.model[gl_InstanceID]))) * normalize(aNormal);";
+        injectedCode += "\n    vNormal = mat3(transpose(inverse(u_models[gl_BaseInstance + gl_InstanceID]))) * normalize(aNormal);";
     }
     if (!hasUVInit) {
         injectedCode += "\n    vUV = aTexCoord;";

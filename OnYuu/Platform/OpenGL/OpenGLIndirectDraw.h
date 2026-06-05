@@ -58,7 +58,7 @@ namespace OnYuu {
         void shutdown();
 
     private:
-        GLuint   dibo_ = 0;       // Draw Indirect Buffer Object
+        GLuint   dibo_            = 0;       // Draw Indirect Buffer Object
         uint32_t maxDrawCommands_ = 0;
         uint32_t currentDrawCount_ = 0;
 
@@ -71,14 +71,14 @@ namespace OnYuu {
      * Identica alla SceneMaterialKey Vulkan.
      */
     struct GLSceneMaterialKey {
-        int sceneIndex = -1;
+        int sceneIndex            = -1;
         std::shared_ptr<Material> material;
-        GLenum topology = GL_TRIANGLES;
+        GLenum topology           = GL_TRIANGLES;
 
         bool operator==(const GLSceneMaterialKey& o) const {
-            return sceneIndex == o.sceneIndex
+            return sceneIndex   == o.sceneIndex
                 && material.get() == o.material.get()
-                && topology == o.topology;
+                && topology     == o.topology;
         }
     };
 
@@ -87,8 +87,8 @@ namespace OnYuu {
             size_t h1 = std::hash<int>{}(k.sceneIndex);
             size_t h2 = std::hash<void*>{}(k.material.get());
             size_t h3 = std::hash<uint32_t>{}(static_cast<uint32_t>(k.topology));
-            size_t h = h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
-            return      h ^ (h3 + 0x9e3779b9 + (h << 6) + (h >> 2));
+            size_t h  = h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+            return      h  ^ (h3 + 0x9e3779b9 + (h  << 6) + (h  >> 2));
         }
     };
 
@@ -116,8 +116,8 @@ namespace OnYuu {
 
     private:
         std::unordered_map<GLSceneMaterialKey,
-            std::shared_ptr<OpenGLIndirectBuffer>,
-            GLSceneMaterialKeyHash> buffers_;
+                           std::shared_ptr<OpenGLIndirectBuffer>,
+                           GLSceneMaterialKeyHash> buffers_;
     };
 
 } // namespace OnYuu

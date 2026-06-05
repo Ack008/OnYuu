@@ -17,14 +17,14 @@ namespace OnYuu {
         glGenBuffers(1, &dibo_);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, dibo_);
         glBufferData(GL_DRAW_INDIRECT_BUFFER,
-            static_cast<GLsizeiptr>(sizeof(GLDrawElementsIndirectCommand) * maxDraws),
-            nullptr,
-            GL_DYNAMIC_DRAW);
+                     static_cast<GLsizeiptr>(sizeof(GLDrawElementsIndirectCommand) * maxDraws),
+                     nullptr,
+                     GL_DYNAMIC_DRAW);
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 
         std::cout << "[OpenGLIndirectBuffer] Created: max " << maxDraws
-            << " draws (" << sizeof(GLDrawElementsIndirectCommand) * maxDraws
-            << " bytes)\n";
+                  << " draws (" << sizeof(GLDrawElementsIndirectCommand) * maxDraws
+                  << " bytes)\n";
     }
 
     OpenGLIndirectBuffer::~OpenGLIndirectBuffer() {

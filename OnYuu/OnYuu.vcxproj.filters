@@ -138,8 +138,8 @@
     <ClCompile Include="Platform\OpenGL\OpenGLImGuiTextureWrapper.cpp" />
     <ClCompile Include="Platform\Vulkan\VulkanImGuiTextureWrapper.cpp" />
     <ClCompile Include="Core\ThreadPool.cpp" />
-    <ClCompile Include="Platform\OpenGL\OpenGLIndirectDraw.cpp" />
     <ClCompile Include="Platform\OpenGL\OpenGLGeometryPool.cpp" />
+    <ClCompile Include="Platform\OpenGL\OpenGLIndirectDraw.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\API.h" />
