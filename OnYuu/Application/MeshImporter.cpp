@@ -68,7 +68,6 @@ namespace OnYuu {
 			//Per ogni mesh dell'oggetto 
 			mesh = scene->mMeshes[nm];
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			aiString textureRelativePath;
 			
 			aiColor3D color;
 			float value;

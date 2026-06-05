@@ -45,24 +45,24 @@ namespace OnYuu {
 
     class AssetManager {
     public:
-            using MaterialObserver = std::function<void(const std::string MaterialID, bool /*modified*/)>;
-            // Register observer; returns observer id for later unregister
-            size_t registerOnMaterialCreationObserver(MaterialObserver obs);
-            size_t registerOnMaterialModificationObserver(MaterialObserver obs);
-            size_t registerOnMaterialRemovalObserver(MaterialObserver obs);
-            void unregisterOnMaterialCreationObserver(size_t observerId);
-            void unregisterOnMaterialModificationObserver(size_t observerId);
-            void unregisterOnMaterialRemovalObserver(size_t observerId);
-            void notifyMaterialModified(const std::string& materialId);
-            void notifyMaterialCreated(const std::string& materialId);
-			void notifyMaterialRemoved(const std::string& materialId);
-			// overload per notificare usando un puntatore (es. quando non si conosce o non e rilevante)
-            void notifyMaterialModified(const class Material* material);
-			void notifyMaterialCreated(const class Material* material);
-			void notifyMaterialRemoved(const class Material* material);
-      
+        using MaterialObserver = std::function<void(const std::string MaterialID, bool /*modified*/)>;
+        // Register observer; returns observer id for later unregister
+        size_t registerOnMaterialCreationObserver(MaterialObserver obs);
+        size_t registerOnMaterialModificationObserver(MaterialObserver obs);
+        size_t registerOnMaterialRemovalObserver(MaterialObserver obs);
+        void unregisterOnMaterialCreationObserver(size_t observerId);
+        void unregisterOnMaterialModificationObserver(size_t observerId);
+        void unregisterOnMaterialRemovalObserver(size_t observerId);
+        void notifyMaterialModified(const std::string& materialId);
+        void notifyMaterialCreated(const std::string& materialId);
+        void notifyMaterialRemoved(const std::string& materialId);
+        // overload per notificare usando un puntatore (es. quando non si conosce o non e rilevante)
+        void notifyMaterialModified(const class Material* material);
+        void notifyMaterialCreated(const class Material* material);
+        void notifyMaterialRemoved(const class Material* material);
 
-            struct MaterialParam {
+
+        struct MaterialParam {
             enum class Type {
                 Int, Float, Vec2, Vec3, Vec4, Mat3, Mat4, Bool
             };
@@ -98,8 +98,8 @@ namespace OnYuu {
         std::shared_ptr<Material> addMaterial(const std::string& name, std::shared_ptr<Material> mat);
         // Restituisce lo shared_ptr per il materiale (vuoto se non trovato).
         std::shared_ptr<Material> getMaterialPtr(const std::string& name) const;
-		// Rimuove un materiale dal manager. Se il materiale non esiste, non fa nulla.
-		void removeMaterial(const std::string& name);
+        // Rimuove un materiale dal manager. Se il materiale non esiste, non fa nulla.
+        void removeMaterial(const std::string& name);
 
         // Puntatore grezzo comodita (puo essere nullptr).
         Material* getMaterial(const std::string& name) const;
@@ -111,7 +111,7 @@ namespace OnYuu {
         bool importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName = "");
         bool createMaterialFromMetadata(const std::string& materialName);
 
-        std::shared_ptr<Texture> addTexture(const std::string& name, std::string texturePath);
+        std::shared_ptr<Texture> addTexture(const std::string& name, std::shared_ptr<Texture> tex);
         std::shared_ptr<Texture> getTexturePtr(const std::string& name) const;
         Texture* getTexture(const std::string& name) const;
 
@@ -120,58 +120,58 @@ namespace OnYuu {
         CubeMap* getCubeMap(const std::string& name) const;
 
 
-		std::shared_ptr<MetaShader> addShader(const std::string& name);
-		std::shared_ptr<MetaShader> getShaderPtr(const std::string& name) const;
+        std::shared_ptr<MetaShader> addShader(const std::string& name);
+        std::shared_ptr<MetaShader> getShaderPtr(const std::string& name) const;
 
         // Load a material from file if not already loaded
         std::shared_ptr<Material> loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath = "");
-        
 
-		//Ricarica i materiali che dipendono da uno shader specifico. Utile quando uno shader viene modificato per assicurare che i materiali associati vengano aggiornati.
-		void reloadMaterialsUsingShader(const std::string& shaderName);
-		void initializeDefaultAssets();
-		// ottieni la mappa delle mesh
-		const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
-			return meshes_;
-		}
-		// ottieni la mappa dei materiali
-		const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
-			return materials_;
-		}
 
-		// Trova il nome registrato di una shader dato il suo shared_ptr (vuoto se non trovato)
-		std::string findShaderNameForShader(const std::shared_ptr<Shader>& shader) const;
+        //Ricarica i materiali che dipendono da uno shader specifico. Utile quando uno shader viene modificato per assicurare che i materiali associati vengano aggiornati.
+        void reloadMaterialsUsingShader(const std::string& shaderName);
+        void initializeDefaultAssets();
+        // ottieni la mappa delle mesh
+        const std::unordered_map<std::string, std::shared_ptr<Mesh>>& getMeshes() const {
+            return meshes_;
+        }
+        // ottieni la mappa dei materiali
+        const std::unordered_map<std::string, std::shared_ptr<Material>>& getMaterials() const {
+            return materials_;
+        }
 
-		void shutdown();
+        // Trova il nome registrato di una shader dato il suo shared_ptr (vuoto se non trovato)
+        std::string findShaderNameForShader(const std::shared_ptr<Shader>& shader) const;
+
+        void shutdown();
     private:
 
         // Considerare di cancellare copy/move per far rispettare il comportamento singleton.
-		std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
-		std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
-		std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
-		std::unordered_map<std::string, std::shared_ptr<MetaShader>> shaders_;
-		std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
-		std::unordered_map<std::string, MaterialMetadata> materialMetadatas_;
-		std::unordered_map<std::string, std::unordered_set<std::string>> shaderToMaterials_;
+        std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes_;
+        std::unordered_map<std::string, std::shared_ptr<Material>> materials_;
+        std::unordered_map<std::string, std::shared_ptr<Texture>> textures_;
+        std::unordered_map<std::string, std::shared_ptr<MetaShader>> shaders_;
+        std::unordered_map<std::string, std::shared_ptr<CubeMap>> cubeMaps_;
+        std::unordered_map<std::string, MaterialMetadata> materialMetadatas_;
+        std::unordered_map<std::string, std::unordered_set<std::string>> shaderToMaterials_;
 
-		// Observers for material create/modify events
-		std::vector<MaterialObserver> onMaterialModified_;
-		std::vector<MaterialObserver> onMaterialCreated_;
-		std::vector<MaterialObserver> onMaterialRemoved_;
+        // Observers for material create/modify events
+        std::vector<MaterialObserver> onMaterialModified_;
+        std::vector<MaterialObserver> onMaterialCreated_;
+        std::vector<MaterialObserver> onMaterialRemoved_;
 
-	private:
+    private:
         // Disabilita copy e assign per il singleton
         AssetManager(const AssetManager&) = delete;
-		AssetManager& operator=(const AssetManager&) = delete;
-		void loadDefaultAssets();
+        AssetManager& operator=(const AssetManager&) = delete;
+        void loadDefaultAssets();
         void loadCube();
-		void loadSphere();
-		void loadCylinder();
-		void loadQuad();
+        void loadSphere();
+        void loadCylinder();
+        void loadQuad();
         void loadPlane();
-		void loadDefaultMaterials();
-			void loadDefaultShaders();
-			std::string findShaderNameForMaterial(const std::shared_ptr<Material>& material) const;
+        void loadDefaultMaterials();
+        void loadDefaultShaders();
+        std::string findShaderNameForMaterial(const std::shared_ptr<Material>& material) const;
 
-		};
+    };
 } // namespace OnYuu

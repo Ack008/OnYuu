@@ -16,21 +16,16 @@ namespace OnYuu {
         : vertexBufferSize_(initialVertexBytes)
         , indexBufferSize_(initialIndexBytes)
     {
-        // Crea VBO unificato (immutabile se GL 4.4, altrimenti DYNAMIC_DRAW)
         glGenBuffers(1, &vbo_);
         glBindBuffer(GL_ARRAY_BUFFER, vbo_);
         glBufferData(GL_ARRAY_BUFFER, vertexBufferSize_, nullptr, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        // Crea IBO unificato
         glGenBuffers(1, &ibo_);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize_, nullptr, GL_DYNAMIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        // VAO globale con layout fisso
         setupVAO();
 
         std::cout << "[OpenGLGeometryPool] Created VBO=" << initialVertexBytes
@@ -191,7 +186,6 @@ namespace OnYuu {
             else { ++i; }
         }
     }
-    }
 
     // -------------------------------------------------------------------------
     // grow — ricrea il buffer con glBufferData (stesso handle)
@@ -211,9 +205,7 @@ namespace OnYuu {
         glBufferData(GL_ARRAY_BUFFER, newSize, nullptr, GL_DYNAMIC_DRAW);
         if (vertexUsedSize_ > 0)
             glBufferSubData(GL_ARRAY_BUFFER, 0, vertexUsedSize_, tmp.data());
-
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        vertexBufferSize_ = newSize;
 
         // Il VAO punta a vbo_ per GL_ARRAY_BUFFER via glVertexAttribPointer —
         // il binding è per handle, non per dati, quindi rimane valido.
@@ -232,7 +224,6 @@ namespace OnYuu {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, newSize, nullptr, GL_DYNAMIC_DRAW);
         if (indexUsedSize_ > 0)
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexUsedSize_, tmp.data());
-
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // CRITICO: il VAO memorizza il binding GL_ELEMENT_ARRAY_BUFFER al momento
@@ -268,7 +259,6 @@ namespace OnYuu {
         uint32_t framesToKeep,
         OpenGLBatchRender* renderer) {
         std::vector<std::shared_ptr<Mesh>> toDelete;
-
         {
             std::lock_guard<std::mutex> lock(trackerMutex_);
             for (auto& [mesh, info] : meshUsageTracker_) {
@@ -279,10 +269,6 @@ namespace OnYuu {
                 }
             }
         }
-
-        if (!toDelete.empty()) {
-            std::cout << "[OpenGLGeometryPool] GC: removing " << toDelete.size()
-                << " unused meshes\n";
         for (const auto& mesh : toDelete) {
             renderer->removeCachedMesh(mesh);
             std::lock_guard<std::mutex> lock(trackerMutex_);
@@ -394,7 +380,6 @@ namespace OnYuu {
         }
 
         uploaded_ = true;
-    }
 
         std::cout << "[PooledMeshGL] Uploaded " << vertexCount_ << " verts, "
             << indexCount_ << " idx | vOffset=" << vertexRegion_.offset
@@ -437,7 +422,6 @@ namespace OnYuu {
                 getBaseVertex(),
                 static_cast<GLsizei>(vertexCount_));
         }
-        (void)instanceCount; // TODO: istanze con glDrawElementsInstancedBaseVertex
     }
 
     void PooledMeshGL::shutdown() {

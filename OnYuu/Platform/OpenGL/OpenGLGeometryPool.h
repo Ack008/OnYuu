@@ -8,7 +8,6 @@
 
 namespace OnYuu {
 
-    // Rappresenta un range all'interno di un buffer OpenGL
     struct GLBufferRegion {
         GLuint     buffer = 0;
         GLintptr   offset = 0;
@@ -16,14 +15,12 @@ namespace OnYuu {
         bool       isIndex = false;
     };
 
-    // Tracking LRU per mesh (analogo a Vulkan)
     struct GLMeshUsageInfo {
         uint64_t lastUsedFrame = 0;
         uint32_t refCount = 0;
         bool     markedForDeletion = false;
     };
 
-    // Callback per rimuovere mesh dallo store del renderer
     class OpenGLBatchRender;
 
     /**
@@ -59,7 +56,6 @@ namespace OnYuu {
             GLsizeiptr initialIndexBytes = 16 * 1024 * 1024);
         ~OpenGLGeometryPool();
 
-        // Non copiabile
         OpenGLGeometryPool(const OpenGLGeometryPool&) = delete;
         OpenGLGeometryPool& operator=(const OpenGLGeometryPool&) = delete;
 
@@ -67,11 +63,9 @@ namespace OnYuu {
         GLBufferRegion allocateVertexRegion(GLsizeiptr size);
         GLBufferRegion allocateIndexRegion(GLsizeiptr size);
 
-        // Carica dati nella regione
         void uploadVertexData(const GLBufferRegion& region, const void* data, GLsizeiptr size);
         void uploadIndexData(const GLBufferRegion& region, const void* data, GLsizeiptr size);
 
-        // Libera regione (aggiunge alla free-list)
         void freeRegion(const GLBufferRegion& region);
 
         // LRU tracking (mutex separato da allocMutex_)
@@ -86,7 +80,6 @@ namespace OnYuu {
 
         void bind()   const;
         void unbind() const;
-
         void shutdown();
 
     private:
@@ -135,8 +128,6 @@ namespace OnYuu {
 
         bool isUploaded()  const { return uploaded_; }
 
-        bool isUploaded() const { return uploaded_; }
-        const Mesh& getMesh() const { return mesh_; }
         const GLBufferRegion& getVertexRegion() const { return vertexRegion_; }
         const GLBufferRegion& getIndexRegion()  const { return indexRegion_; }
 

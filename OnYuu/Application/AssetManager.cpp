@@ -98,40 +98,40 @@ namespace {
 
 namespace OnYuu {
 
-// Compute per-vertex normals from indexed triangles. This function accumulates face
-// normals for each triangle then normalizes per-vertex to obtain smooth normals.
-static void computeNormalsForMesh(Mesh& mesh) {
-    mesh.normal.clear();
-    mesh.normal.resize(mesh.position.size(), glm::vec3(0.0f));
+    // Compute per-vertex normals from indexed triangles. This function accumulates face
+    // normals for each triangle then normalizes per-vertex to obtain smooth normals.
+    static void computeNormalsForMesh(Mesh& mesh) {
+        mesh.normal.clear();
+        mesh.normal.resize(mesh.position.size(), glm::vec3(0.0f));
 
-    // Accumulate face normals
-    for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
-        uint32_t ia = mesh.indices[i];
-        uint32_t ib = mesh.indices[i + 1];
-        uint32_t ic = mesh.indices[i + 2];
-        if (ia >= mesh.position.size() || ib >= mesh.position.size() || ic >= mesh.position.size())
-            continue;
-        const glm::vec3& a = mesh.position[ia];
-        const glm::vec3& b = mesh.position[ib];
-        const glm::vec3& c = mesh.position[ic];
+        // Accumulate face normals
+        for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
+            uint32_t ia = mesh.indices[i];
+            uint32_t ib = mesh.indices[i + 1];
+            uint32_t ic = mesh.indices[i + 2];
+            if (ia >= mesh.position.size() || ib >= mesh.position.size() || ic >= mesh.position.size())
+                continue;
+            const glm::vec3& a = mesh.position[ia];
+            const glm::vec3& b = mesh.position[ib];
+            const glm::vec3& c = mesh.position[ic];
 
-        glm::vec3 face = glm::cross(b - a, c - a);
-        float len = glm::length(face);
-        if (len > 1e-9f) face = face / len; // normalize
-        else face = glm::vec3(0.0f, 0.0f, 0.0f);
+            glm::vec3 face = glm::cross(b - a, c - a);
+            float len = glm::length(face);
+            if (len > 1e-9f) face = face / len; // normalize
+            else face = glm::vec3(0.0f, 0.0f, 0.0f);
 
-        mesh.normal[ia] += face;
-        mesh.normal[ib] += face;
-        mesh.normal[ic] += face;
+            mesh.normal[ia] += face;
+            mesh.normal[ib] += face;
+            mesh.normal[ic] += face;
+        }
+
+        // Normalize per-vertex
+        for (auto& n : mesh.normal) {
+            float l = glm::length(n);
+            if (l > 1e-6f) n = n / l;
+            else n = glm::vec3(0.0f, 1.0f, 0.0f); // fallback normal
+        }
     }
-
-    // Normalize per-vertex
-    for (auto& n : mesh.normal) {
-        float l = glm::length(n);
-        if (l > 1e-6f) n = n / l;
-        else n = glm::vec3(0.0f, 1.0f, 0.0f); // fallback normal
-    }
-}
 
 
     AssetManager::AssetManager() {
@@ -155,47 +155,47 @@ static void computeNormalsForMesh(Mesh& mesh) {
         return onMaterialRemoved_.size() - 1;
     }
 
-	void AssetManager::unregisterOnMaterialCreationObserver(size_t observerId)
-	{
-		if (observerId < onMaterialCreated_.size()) {
-			onMaterialCreated_.erase(onMaterialCreated_.begin() + observerId);
-		}
-	}
+    void AssetManager::unregisterOnMaterialCreationObserver(size_t observerId)
+    {
+        if (observerId < onMaterialCreated_.size()) {
+            onMaterialCreated_.erase(onMaterialCreated_.begin() + observerId);
+        }
+    }
 
     void AssetManager::unregisterOnMaterialModificationObserver(size_t observerId)
     {
         if (observerId < onMaterialModified_.size()) {
-			onMaterialModified_.erase(onMaterialModified_.begin() + observerId);
+            onMaterialModified_.erase(onMaterialModified_.begin() + observerId);
         }
     }
 
     void AssetManager::unregisterOnMaterialRemovalObserver(size_t observerId)
     {
-		if (observerId < onMaterialRemoved_.size()) {
-			onMaterialRemoved_.erase(onMaterialRemoved_.begin() + observerId);
-		}
+        if (observerId < onMaterialRemoved_.size()) {
+            onMaterialRemoved_.erase(onMaterialRemoved_.begin() + observerId);
+        }
     }
 
     void AssetManager::notifyMaterialModified(const std::string& materialName)
     {
         auto mat = getMaterialPtr(materialName);
         if (!mat) return;
-     
-		for (auto& obs : onMaterialModified_) {
-			if (obs) obs(materialName, true);
-		}
+
+        for (auto& obs : onMaterialModified_) {
+            if (obs) obs(materialName, true);
+        }
     }
 
     void AssetManager::notifyMaterialCreated(const std::string& materialName)
     {
-		std::cout << "[AssetManager] notifyMaterialCreated: material '" << materialName << "' created/added" << std::endl;
+        std::cout << "[AssetManager] notifyMaterialCreated: material '" << materialName << "' created/added" << std::endl;
         auto mat = getMaterialPtr(materialName);
         if (!mat) return;
-		for (auto& obs : onMaterialCreated_) {
+        for (auto& obs : onMaterialCreated_) {
             if (obs) {
                 obs(materialName, false);
             }
-		}
+        }
     }
 
     void AssetManager::notifyMaterialRemoved(const std::string& materialName)
@@ -205,36 +205,36 @@ static void computeNormalsForMesh(Mesh& mesh) {
         }
     }
 
-	void AssetManager::notifyMaterialModified(const Material* material)
-	{
-		if (!material) return;
-		for (auto sharedPtr : materials_) {
-			if (sharedPtr.second.get() == material) {
-				notifyMaterialModified(sharedPtr.first);
-				return;
-			}
-		}
-	}
-	void AssetManager::notifyMaterialCreated(const Material* material)
-	{
-		if (!material) return;
-		for (auto sharedPtr : materials_) {
-			if (sharedPtr.second.get() == material) {
-				notifyMaterialCreated(sharedPtr.first);
-				return;
-			}
-		}
-	}
-	void AssetManager::notifyMaterialRemoved(const Material* material)
-	{
-		if (!material) return;
-		for (auto sharedPtr : materials_) {
-			if (sharedPtr.second.get() == material) {
-				notifyMaterialRemoved(sharedPtr.first);
-				return;
-			}
-		}
-	}
+    void AssetManager::notifyMaterialModified(const Material* material)
+    {
+        if (!material) return;
+        for (auto sharedPtr : materials_) {
+            if (sharedPtr.second.get() == material) {
+                notifyMaterialModified(sharedPtr.first);
+                return;
+            }
+        }
+    }
+    void AssetManager::notifyMaterialCreated(const Material* material)
+    {
+        if (!material) return;
+        for (auto sharedPtr : materials_) {
+            if (sharedPtr.second.get() == material) {
+                notifyMaterialCreated(sharedPtr.first);
+                return;
+            }
+        }
+    }
+    void AssetManager::notifyMaterialRemoved(const Material* material)
+    {
+        if (!material) return;
+        for (auto sharedPtr : materials_) {
+            if (sharedPtr.second.get() == material) {
+                notifyMaterialRemoved(sharedPtr.first);
+                return;
+            }
+        }
+    }
 
     AssetManager& AssetManager::instance() {
         static AssetManager mgr;
@@ -321,8 +321,8 @@ static void computeNormalsForMesh(Mesh& mesh) {
     }
 
     std::shared_ptr<Material> AssetManager::getMaterialPtr(const std::string& name) const {
-		std::string normalizedName = name;
-		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        std::string normalizedName = name;
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
         auto it = materials_.find(normalizedName);
         if (it != materials_.end()) {
             return it->second;
@@ -332,10 +332,10 @@ static void computeNormalsForMesh(Mesh& mesh) {
 
     void AssetManager::removeMaterial(const std::string& name)
     {
-		std::string normalizedName = name;
-		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
-		notifyMaterialRemoved(normalizedName);
-		materials_.erase(normalizedName);
+        std::string normalizedName = name;
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        notifyMaterialRemoved(normalizedName);
+        materials_.erase(normalizedName);
     }
 
     Material* AssetManager::getMaterial(const std::string& name) const {
@@ -346,8 +346,8 @@ static void computeNormalsForMesh(Mesh& mesh) {
 
     void AssetManager::setMaterialMetadata(const std::string& materialName, const MaterialMetadata& metadata)
     {
-		std::string  normalizedName = materialName;
-		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        std::string  normalizedName = materialName;
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
         auto oldIt = materialMetadatas_.find(normalizedName);
         if (oldIt != materialMetadatas_.end() && !oldIt->second.shaderName.empty()) {
             auto depIt = shaderToMaterials_.find(oldIt->second.shaderName);
@@ -364,8 +364,8 @@ static void computeNormalsForMesh(Mesh& mesh) {
 
     const AssetManager::MaterialMetadata* AssetManager::getMaterialMetadata(const std::string& materialName) const
     {
-		std::string normalizedName = materialName;
-		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        std::string normalizedName = materialName;
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
         auto it = materialMetadatas_.find(normalizedName);
         return it != materialMetadatas_.end() ? &it->second : nullptr;
     }
@@ -397,18 +397,13 @@ static void computeNormalsForMesh(Mesh& mesh) {
 
             if (!metadata.shaderName.empty()) {
                 shaderToMaterials_[metadata.shaderName].insert(materialName);
-                
+
             }
         }
     }
 
-    std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::string texturePath) {
-		
-		if (textures_.find(name) == textures_.end()) {
-			
-            textures_[name] = std::move(Texture::createTexture(texturePath));
-			
-		}
+    std::shared_ptr<Texture> AssetManager::addTexture(const std::string& name, std::shared_ptr<Texture> tex) {
+        textures_[name] = std::move(tex);
         return textures_[name];
     }
 
@@ -438,38 +433,39 @@ static void computeNormalsForMesh(Mesh& mesh) {
         return getCubeMapPtr(name).get();
     }
 
-	std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name)
-	{
-		std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
-		std::string normalizedName = name;
-		std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
-		std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
-		try {
-
-			auto metaShader = MetaShader::create(fullPath);
-
-			// Normalize path separators to ensure consistent keys across OS
-
-			// Only add under the requested normalized name
-			shaders_[normalizedName] = std::move(metaShader);
-
-			rebuildShaderMaterialDependencies();
-			return shaders_[normalizedName];
-		} catch (const std::exception& e) {
-			std::cerr << "[AssetManager] Failed to load shader '" << normalizedName << "': " << e.what() << std::endl;
-			return nullptr;
-		}
-
-	}
-	std::shared_ptr<MetaShader> AssetManager::getShaderPtr(const std::string& name) const
-	{
-		std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
-		std::string normalizedName = name;
-		std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+    std::shared_ptr<MetaShader> AssetManager::addShader(const std::string& name)
+    {
+        std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
+        std::string normalizedName = name;
+        std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
         std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
-		auto it = shaders_.find(normalizedName);
-		return it != shaders_.end() ? it->second : nullptr;
-	}
+        try {
+
+            auto metaShader = MetaShader::create(fullPath);
+
+            // Normalize path separators to ensure consistent keys across OS
+
+            // Only add under the requested normalized name
+            shaders_[normalizedName] = std::move(metaShader);
+
+            rebuildShaderMaterialDependencies();
+            return shaders_[normalizedName];
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[AssetManager] Failed to load shader '" << normalizedName << "': " << e.what() << std::endl;
+            return nullptr;
+        }
+
+    }
+    std::shared_ptr<MetaShader> AssetManager::getShaderPtr(const std::string& name) const
+    {
+        std::string fullPath = Project::getInstance().getAssetsPath() + "/" + name;
+        std::string normalizedName = name;
+        std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
+        std::replace(normalizedName.begin(), normalizedName.end(), '\\', '/');
+        auto it = shaders_.find(normalizedName);
+        return it != shaders_.end() ? it->second : nullptr;
+    }
 
     std::shared_ptr<Material> AssetManager::loadMaterialIfNeeded(const std::string& materialName, const std::string& materialPath)
     {
@@ -510,16 +506,16 @@ static void computeNormalsForMesh(Mesh& mesh) {
 
     void AssetManager::reloadMaterialsUsingShader(const std::string& shaderName)
     {
-		for (const auto& materialName : getMaterialsUsingShader(shaderName)) {
-			const auto* metadata = getMaterialMetadata(materialName);
-			if (!metadata) {
-				std::cerr << "[AssetManager] reloadMaterialsUsingShader: no metadata found for material '" << materialName << "'\n";
-				continue;
-			}
-			if (!createMaterialFromMetadata(materialName)) {
-				std::cerr << "[AssetManager] reloadMaterialsUsingShader: failed to recreate material '" << materialName << "' from metadata\n";
-			}
-		}
+        for (const auto& materialName : getMaterialsUsingShader(shaderName)) {
+            const auto* metadata = getMaterialMetadata(materialName);
+            if (!metadata) {
+                std::cerr << "[AssetManager] reloadMaterialsUsingShader: no metadata found for material '" << materialName << "'\n";
+                continue;
+            }
+            if (!createMaterialFromMetadata(materialName)) {
+                std::cerr << "[AssetManager] reloadMaterialsUsingShader: failed to recreate material '" << materialName << "' from metadata\n";
+            }
+        }
     }
 
     void AssetManager::shutdown() {
@@ -531,7 +527,7 @@ static void computeNormalsForMesh(Mesh& mesh) {
         for (auto& [name, shader] : shaders_) {
             if (shader) {
                 shader->shutdown();
-			}
+            }
         }
         meshes_.clear();
         materials_.clear();
@@ -544,16 +540,16 @@ static void computeNormalsForMesh(Mesh& mesh) {
     }
     void AssetManager::loadDefaultAssets()
     {
-		loadCube();
-		loadSphere();
-		loadCylinder();
-		loadQuad();
-		loadPlane();
-		loadDefaultShaders();
-		loadDefaultMaterials();
+        loadCube();
+        loadSphere();
+        loadCylinder();
+        loadQuad();
+        loadPlane();
+        loadDefaultShaders();
+        loadDefaultMaterials();
     }
-   
- void AssetManager::loadCube()
+
+    void AssetManager::loadCube()
     {
         addMesh("cube", std::make_shared<Mesh>(Mesh()));
         Mesh* mesh = getMesh("cube");
@@ -620,9 +616,9 @@ static void computeNormalsForMesh(Mesh& mesh) {
     }
     void AssetManager::loadSphere()
     {
-		const int stacks = 50;
-		const int slices = 50;
-		glm::vec4 color(.5f, .5f, 0.5f, 1.0f);
+        const int stacks = 50;
+        const int slices = 50;
+        glm::vec4 color(.5f, .5f, 0.5f, 1.0f);
         addMesh("sphere", std::make_shared<Mesh>(Mesh()));
         Mesh* mesh = getMesh("sphere");
 
@@ -673,12 +669,12 @@ static void computeNormalsForMesh(Mesh& mesh) {
                 mesh->indices.push_back(first + 1);
             }
         }
-        
+
         //computeNormalsForMesh(*mesh);
     }
     void AssetManager::loadCylinder()
     {
-		glm::vec4 color(.5f, .5f, 0.5f, 1.0f);
+        glm::vec4 color(.5f, .5f, 0.5f, 1.0f);
         addMesh("cylinder", std::make_shared<Mesh>(Mesh()));
         Mesh* mesh = getMesh("cylinder");
         int Stacks = 30;  //numero di suddivisioni sull'asse x
@@ -737,8 +733,8 @@ static void computeNormalsForMesh(Mesh& mesh) {
         Mesh* mesh = getMesh("quad");
         mesh->position.push_back(glm::vec3(-1, -1.0, 0));
         mesh->color.push_back(color);
-		mesh->texCoord.push_back(glm::vec2(0,0));
-		mesh->normal.push_back(glm::vec3(0, 0, 1));
+        mesh->texCoord.push_back(glm::vec2(0, 0));
+        mesh->normal.push_back(glm::vec3(0, 0, 1));
         //
         mesh->position.push_back(glm::vec3(-1, 1.0, 0));
         mesh->color.push_back(color);
@@ -750,22 +746,22 @@ static void computeNormalsForMesh(Mesh& mesh) {
         mesh->texCoord.push_back(glm::vec2(1, 1));
         mesh->normal.push_back(glm::vec3(0, 0, -1));
         //
-		mesh->position.push_back(glm::vec3(1, -1.0, 0));
+        mesh->position.push_back(glm::vec3(1, -1.0, 0));
         mesh->color.push_back(color);
         mesh->texCoord.push_back(glm::vec2(1, 0));
         mesh->normal.push_back(glm::vec3(0, 0, -1));
         //
-		mesh->indices.push_back(0);
-		mesh->indices.push_back(1);
-		mesh->indices.push_back(2);
-		//
-		mesh->indices.push_back(0);
-		mesh->indices.push_back(2);
-	    mesh->indices.push_back(3);
+        mesh->indices.push_back(0);
+        mesh->indices.push_back(1);
+        mesh->indices.push_back(2);
+        //
+        mesh->indices.push_back(0);
+        mesh->indices.push_back(2);
+        mesh->indices.push_back(3);
 
-		computeNormalsForMesh(*mesh);
-	}
-	void AssetManager::loadPlane()
+        computeNormalsForMesh(*mesh);
+    }
+    void AssetManager::loadPlane()
     {
         glm::vec4 color = { 0.5,0.5,0.5,1 };
         auto mesh = addMesh("plane", std::make_shared<Mesh>(Mesh()));
@@ -799,8 +795,8 @@ static void computeNormalsForMesh(Mesh& mesh) {
     }
     void AssetManager::loadDefaultMaterials()
     {
-		materials_["default"] = std::make_shared<Material>("default");
-		notifyMaterialCreated("default");
+        materials_["default"] = std::make_shared<Material>("default");
+        notifyMaterialCreated("default");
     }
     void AssetManager::loadDefaultShaders()
     {
@@ -816,15 +812,15 @@ void vertexMain()
 	POSITION = CAMERA_PROJ * CAMERA_VIEW * vec4(V_WORLD_POS,1);
 }
         )";
-		shaders_["default"] = MetaShader::create(defaultMetaShaderCode, true);
+        shaders_["default"] = MetaShader::create(defaultMetaShaderCode, true);
     }
 
     bool AssetManager::importMaterialMetadataFromJson(const std::string& jsonPath, const std::string& materialName)
     {
-		std::string  normPath = jsonPath;
-		std::replace(normPath.begin(), normPath.end(), '\\', '/');
-		std::string normalMaterialName = materialName;
-		std::replace(normalMaterialName.begin(), normalMaterialName.end(), '\\', '/');
+        std::string  normPath = jsonPath;
+        std::replace(normPath.begin(), normPath.end(), '\\', '/');
+        std::string normalMaterialName = materialName;
+        std::replace(normalMaterialName.begin(), normalMaterialName.end(), '\\', '/');
         std::ifstream in(normPath);
         if (!in.is_open()) {
             std::cerr << "[AssetManager] importMaterialMetadataFromJson: cannot open file '" << normPath << "'\n";
@@ -843,7 +839,7 @@ void vertexMain()
 
         MaterialMetadata metadata{};
         metadata.shaderName = j.value("shaderName", std::string{});
-        
+
         // Load sourcePath and resolve relative paths
         std::string sourcePath = j.value("sourcePath", std::string{});
         if (!sourcePath.empty()) {
@@ -855,10 +851,11 @@ void vertexMain()
             std::string normPath = shaderPath.string();
             std::replace(normPath.begin(), normPath.end(), '\\', '/');
             metadata.sourcePath = normPath;
-        } else {
+        }
+        else {
             metadata.sourcePath = normPath;
         }
-        
+
         metadata.version = j.value("version", 1u);
 
         if (metadata.shaderName.empty()) {
@@ -918,8 +915,8 @@ void vertexMain()
             std::cerr << "[AssetManager] createMaterialFromMetadata: shader not found for material '" << normalizedName << "'\n";
             return false;
         }
-		std::string normalizedShaderName = metadata.shaderName;
-		std::replace(normalizedShaderName.begin(), normalizedShaderName.end(), '\\', '/');
+        std::string normalizedShaderName = metadata.shaderName;
+        std::replace(normalizedShaderName.begin(), normalizedShaderName.end(), '\\', '/');
         auto material = std::make_shared<Material>(normalizedShaderName);
 
         for (const auto& [paramName, param] : metadata.params) {
@@ -953,11 +950,10 @@ void vertexMain()
 
         for (const auto& [uniformName, textureRef] : metadata.textures) {
             std::shared_ptr<Texture> texture = getTexturePtr(textureRef);
-            std::string textureNormalizedPath = textureRef;
-            std::replace(textureNormalizedPath.begin(), textureNormalizedPath.end(), '\\', '/');
-            if (!texture && std::filesystem::exists(textureNormalizedPath)) {
-                addTexture(textureRef, textureNormalizedPath);
+            if (!texture && std::filesystem::exists(textureRef)) {
+                texture = Texture::createTexture(textureRef);
                 if (texture) {
+                    addTexture(textureRef, texture);
                 }
             }
 
