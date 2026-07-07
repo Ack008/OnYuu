@@ -14,7 +14,7 @@ namespace OnYuu {
 
 	VulkanTexture::~VulkanTexture()
 	{
-		
+
 	}
 
 	void VulkanTexture::bind(uint32_t slot)
@@ -28,6 +28,47 @@ namespace OnYuu {
 		vkDestroySampler(renderer->getInit().device, textureSampler, nullptr);
 		vkDestroyImageView(renderer->getInit().device, textureImageView, nullptr);
 		vmaDestroyImage(renderer->getAllocator(), textureImage, textureImageAllocation);
+	}
+
+	// -------------------------------------------------------------------------
+	// pickTextureFormat
+	//   Interroga vkGetPhysicalDeviceFormatProperties per trovare il miglior
+	//   formato RGBA supportato come SAMPLED + TRANSFER_DST (necessario per upload).
+	//   Ordine di preferenza:
+	//     1. R8G8B8A8_SRGB  — RGBA, gamma corretta (ideale per texture di colore)
+	//     2. R8G8B8A8_UNORM — RGBA, lineare (fallback senza gamma)
+	//     3. B8G8R8A8_SRGB  — BGRA, stb carica RGBA quindi serve swizzle nella view
+	//     4. B8G8R8A8_UNORM — BGRA lineare (ultimo fallback)
+	//   Se nessuno è disponibile lancia eccezione — impossibile su qualsiasi GPU
+	//   Vulkan reale (R8G8B8A8_UNORM è required dall'spec §37.3).
+	// -------------------------------------------------------------------------
+	VkFormat VulkanTexture::pickTextureFormat(VulkanRender* renderer) {
+		VkPhysicalDevice physDevice = renderer->getDevice()->getPhysicalDevice();
+
+		// Feature richieste: sampling da shader + destinazione transfer
+		constexpr VkFormatFeatureFlags required =
+			VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
+			VK_FORMAT_FEATURE_TRANSFER_DST_BIT;
+
+		// Lista in ordine di preferenza
+		const VkFormat candidates[] = {
+			VK_FORMAT_R8G8B8A8_SRGB,
+			VK_FORMAT_R8G8B8A8_UNORM,
+			VK_FORMAT_B8G8R8A8_SRGB,
+			VK_FORMAT_B8G8R8A8_UNORM,
+		};
+
+		for (VkFormat fmt : candidates) {
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(physDevice, fmt, &props);
+			// Ottimal tiling (necessario per SAMPLED image in GPU)
+			if ((props.optimalTilingFeatures & required) == required) {
+				std::cout << "[VulkanTexture] Using texture format " << fmt << "\n";
+				return fmt;
+			}
+		}
+
+		throw std::runtime_error("[VulkanTexture] No suitable RGBA texture format found!");
 	}
 
 	void VulkanTexture::createTextureImage(const std::string& path)
@@ -70,7 +111,13 @@ namespace OnYuu {
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
-		imageInfo.format = renderer->getInit().swapchain.image_format;
+		// NON usare swapchain.image_format: la swapchain è quasi sempre BGRA
+		// (VK_FORMAT_B8G8R8A8_*) mentre stb carica in RGBA → i canali R e B
+		// risulterebbero invertiti (tinte bluognole/rossastre).
+		// Scegliamo il miglior formato RGBA supportato dalla GPU:
+		// preferenza: R8G8B8A8_SRGB (gamma corretta) → R8G8B8A8_UNORM (lineare) → BGRA_SRGB con swizzle
+		textureFormat_ = pickTextureFormat(renderer);
+		imageInfo.format = textureFormat_;
 		imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage =
@@ -97,7 +144,25 @@ namespace OnYuu {
 		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		viewInfo.image = textureImage;
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = renderer->getInit().swapchain.image_format;
+		// Deve combaciare con il formato dell'immagine scelto in createTextureImage
+		viewInfo.format = textureFormat_;
+
+		// Se la GPU ha solo formati BGRA, i pixel caricati da stb (RGBA) risulterebbero
+		// con R e B invertiti. Lo swizzle nella view corregge la mappatura a costo zero.
+		if (textureFormat_ == VK_FORMAT_B8G8R8A8_SRGB ||
+			textureFormat_ == VK_FORMAT_B8G8R8A8_UNORM) {
+			viewInfo.components.r = VK_COMPONENT_SWIZZLE_B; // leggi B dal pixel, metti in R
+			viewInfo.components.g = VK_COMPONENT_SWIZZLE_G;
+			viewInfo.components.b = VK_COMPONENT_SWIZZLE_R; // leggi R dal pixel, metti in B
+			viewInfo.components.a = VK_COMPONENT_SWIZZLE_A;
+		}
+		else {
+			// RGBA: nessun swizzle necessario
+			viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		}
 		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
@@ -135,16 +200,37 @@ namespace OnYuu {
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = 1;
-		barrier.srcAccessMask = 0; // TODO
-		barrier.dstAccessMask = 0; // TODO
-		vkCmdPipelineBarrier(
-			cmd,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier
-		);
+		// Transizione UNDEFINED → TRANSFER_DST: nessun accesso precedente da aspettare,
+		// il dst deve essere pronto per la scrittura del transfer.
+		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+			newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			vkCmdPipelineBarrier(cmd,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
+		// Transizione TRANSFER_DST → SHADER_READ_ONLY: aspetta che il transfer finisca,
+		// poi rende l'immagine leggibile dagli shader fragment.
+		else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+			newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			vkCmdPipelineBarrier(cmd,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
+		else {
+			// Transizione generica (fallback conservativo)
+			barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+			vkCmdPipelineBarrier(cmd,
+				VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+				VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+				0, 0, nullptr, 0, nullptr, 1, &barrier);
+		}
 	}
 
 	void VulkanTexture::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)

@@ -20,6 +20,31 @@ public:
 	virtual void onDetach() override;
 
 	std::shared_ptr<RenderTarget> getRenderTarget() const { return m_renderTarget; }
+private:
+    // ========================================================================
+// MOVING AVERAGE - Frame History per Stats Smoothing
+// ========================================================================
+
+// Dati di un singolo frame
+    struct FrameData {
+        float fps = 0.0f;
+        float frameTimeMs = 0.0f;
+        uint32_t indirectDrawCalls = 0;
+        uint32_t totalBatches = 0;
+    };
+
+    // Configurazione moving average
+    static constexpr int FRAME_HISTORY_SIZE = 5000;  // 1 secondo @ 60Hz
+
+    // Array circolare per la storia dei frame
+    std::array<FrameData, FRAME_HISTORY_SIZE> frameHistory_{};
+
+    // Indice corrente per il circular buffer
+    int frameHistoryIndex_ = 0;
+
+    // Helper functions
+    void updateStatsHistory();      // Aggiungi frame corrente alla history
+    FrameData getAverageStats() const;  // Calcola media degli ultimi FRAME_HISTORY_SIZE frame
 
 private:
 	std::shared_ptr<Scene> m_scene;

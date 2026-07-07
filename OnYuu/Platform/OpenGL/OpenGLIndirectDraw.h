@@ -48,7 +48,6 @@ namespace OnYuu {
 
         // Svuota i comandi per il frame successivo
         void reset();
-
         // Esegue glMultiDrawElementsIndirect — richiede VAO + shader già bindati
         void executeMultiDraw(GLenum primitiveMode = GL_TRIANGLES);
 
@@ -113,6 +112,7 @@ namespace OnYuu {
         void resetAll();
         void finalizeAll();
         void shutdown();
+		uint32_t getTotalIndirectDrawCalls() const;
 
     private:
         std::unordered_map<GLSceneMaterialKey,

@@ -61,6 +61,7 @@ namespace OnYuu {
         needsUpdate_ = false;
     }
 
+
     void OpenGLIndirectBuffer::executeMultiDraw(GLenum primitiveMode) {
         if (currentDrawCount_ == 0) return;
 
@@ -118,6 +119,15 @@ namespace OnYuu {
     void OpenGLIndirectDrawManager::shutdown() {
         for (auto& [key, buf] : buffers_) buf->shutdown();
         buffers_.clear();
+    }
+
+    uint32_t OpenGLIndirectDrawManager::getTotalIndirectDrawCalls() const
+    {
+		uint32_t total = 0;
+		for (const auto& [key, buf] : buffers_) {
+			total += buf->getDrawCount();
+		}
+		return total;
     }
 
 } // namespace OnYuu

@@ -81,8 +81,13 @@ namespace OnYuu {
     // =========================================================================
     // BeginFrame
     // =========================================================================
-
+	void OpenGLBatchRender::resetStats() {
+        lastFrameTime_ = Application::getInstance()->getWindow()->getTime();
+		indirectDrawCalls_ = 0;
+		totalBatches_ = 0;
+	}
     void OpenGLBatchRender::BeginFrame() {
+		resetStats();   
         lazyInit();
         processPendingInvalidations();
         frameNumber_++;
@@ -118,11 +123,19 @@ namespace OnYuu {
 
             renderScene(scene, sceneIndex++);
         }
-
+		indirectDrawCalls_ = indirectManager_->getTotalIndirectDrawCalls();
+        for (auto rd : renderScenes) {
+            totalBatches_ += rd.batches.size();
+        }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         auto w = Application::getInstance()->getWindow()->getWidth();
         auto h = Application::getInstance()->getWindow()->getHeight();
         glViewport(0, 0, static_cast<GLsizei>(w), static_cast<GLsizei>(h));
+		auto& stats = getStatsRef();
+		stats.indirectDrawCalls = indirectDrawCalls_;
+		stats.totalBatches = totalBatches_;
+		stats.frameTime = Application::getInstance()->getWindow()->getTime() - lastFrameTime_;
+
     }
 
     // =========================================================================
@@ -169,7 +182,8 @@ namespace OnYuu {
 
             // bind()+apply() solo se dirty (uniform cambiate dall'ultimo frame)
             applyMaterialIfDirty(materialId, materialPtr.get());
-
+			materialPtr->bind();
+			materialPtr->apply();
             // Una sola GL draw call per tutto il bucket
             executeDrawBucket(sceneIndex, materialPtr, topology);
         }

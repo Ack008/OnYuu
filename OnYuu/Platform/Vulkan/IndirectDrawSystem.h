@@ -86,6 +86,7 @@ namespace OnYuu {
         void finalizeAll(uint32_t currentFrame);
 
         void shutdown();
+		uint32_t getIndirectDrawCount(uint32_t currentFrame) const;
     private:
         VmaAllocator allocator;
         uint32_t framesInFlight;

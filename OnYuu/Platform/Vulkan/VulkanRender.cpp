@@ -12,6 +12,8 @@
 #include <iostream>
 #include <array>
 #include <unordered_set>
+#include <chrono>
+using namespace std::chrono;
 
 namespace OnYuu {
 
@@ -191,7 +193,7 @@ namespace OnYuu {
 #ifdef _DEBUG
         bool enableValidation = true;
 #else
-        bool enableValidation = false;
+        bool enableValidation = true;
 #endif
 
         auto instRet = builder
@@ -505,7 +507,6 @@ namespace OnYuu {
 		if (threadCount == 0 || totalBatches == 0) {
 			return;
 		}
-
 		uint32_t batchesPerThread = (totalBatches + threadCount - 1) / threadCount;
 		std::vector<std::future<bool>> futures;
 		futures.reserve(threadCount);
@@ -708,10 +709,29 @@ namespace OnYuu {
     // ============================================================================
     // FRAME RENDERING METHODS
     // ============================================================================
+	void VulkanRender::resetStats() {
+        // Reset accumulo della frame corrente
+        currentFrameStats_.indirectDrawCalls = 0;
+        currentFrameStats_.totalBatches = 0;
+        currentFrameStats_.totalVertices = 0;
+		frameStartTime_ = Application::getInstance()->getWindow()->getTime();
 
+	}
+    void VulkanRender::finalizeStats()
+    {
+        // Calcola il frame time in SECONDI (EditorLayer * 1000 per ms)
+		auto frameEndTime = Application::getInstance()->getWindow()->getTime(); 
+		currentFrameStats_.frameTime = frameEndTime - frameStartTime_;
+
+        auto &stats = getStatsRef();
+		stats.frameTime = currentFrameStats_.frameTime;
+		stats.indirectDrawCalls = currentFrameStats_.indirectDrawCalls;
+		stats.totalBatches = currentFrameStats_.totalBatches;
+		stats.totalVertices = currentFrameStats_.totalVertices;
+    }
     void VulkanRender::BeginFrame() {
         frameNumber++;
-
+		resetStats();
         // STEP 0: Processa le operazioni differite dal frame precedente
         // Deve avvenire PRIMA di acquireImage, con la GPU idle assicurata dai fence
         pendingMaterialHandling();
@@ -751,6 +771,10 @@ namespace OnYuu {
             ? VK_IMAGE_LAYOUT_UNDEFINED
             : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
        
+        currentFrameStats_.indirectDrawCalls = indirectDrawManager_->getIndirectDrawCount(currentFrame_);
+		for (auto rd : renderScenes) {
+			currentFrameStats_.totalBatches += rd.batches.size();
+		}
         beginRendering(cmd,
             swapchain_->getFrame(imageIndex_).image,
             swapchain_->getFrame(imageIndex_).view,
@@ -760,6 +784,7 @@ namespace OnYuu {
             layoutBeforeImGui,
             false,
             false);
+
 
     }
 
@@ -904,9 +929,10 @@ namespace OnYuu {
     }
 
 	void VulkanRender::submit() {
+		auto& stats = getStatsRef();
+		finalizeStats();
 		static int submitNumber = 0;
 		submitNumber++;
-     
 		VkCommandBuffer cmd = commandManager_->getCommandBuffer(currentFrame_);
 		endRendering(cmd, swapchain_->getFrame(imageIndex_).image);
 		sceneTarget.clear();
@@ -1290,6 +1316,7 @@ namespace OnYuu {
                 toPrimitiveTopology(renderingType));
 
             for (const auto& [meshPtr, matrices] : meshInstances) {
+				currentFrameStats_.totalVertices += meshPtr->position.size() * matrices.size();
                 geometryPool_->updateMeshUsage(meshPtr, frameNumber);
                 uint32_t firstInstance = static_cast<uint32_t>(allModelMatrices.size());
 

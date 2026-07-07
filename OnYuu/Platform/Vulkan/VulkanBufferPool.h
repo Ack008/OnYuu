@@ -61,7 +61,6 @@ namespace OnYuu {
         // ✅ Garbage collection basato su LRU (Least Recently Used)
         void collectGarbage(uint64_t currentFrame, uint32_t framesToKeep = 180);
         void shutdown();
-
     private:
         struct FreeBlock {
             VkDeviceSize offset;

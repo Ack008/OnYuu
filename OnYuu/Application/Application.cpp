@@ -6,7 +6,7 @@
 #include "Application/Input/Input.h"
 
 OnYuu::Application* OnYuu::Application::instance = nullptr;
-API OnYuu::Application::s_startupAPI = API::Vulkan;
+API OnYuu::Application::s_startupAPI = API::OpenGL;
 bool OnYuu::Application::s_rendererChangeRequested = false;
 API OnYuu::Application::s_requestedRendererAPI = API::Vulkan;
 namespace OnYuu {

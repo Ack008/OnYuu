@@ -145,4 +145,14 @@ namespace OnYuu {
         buffers.clear();
     }
 
+
+    uint32_t IndirectDrawManager::getIndirectDrawCount(uint32_t currentFrame) const
+    {
+        uint32_t totalDrawCalls = 0;
+        for (const auto& [key, buffer] : buffers) {
+            totalDrawCalls += buffer->getDrawCount();
+        }
+        return totalDrawCalls;
+    }
+
 } // namespace OnYuu

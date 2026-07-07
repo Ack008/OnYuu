@@ -20,6 +20,8 @@
 #include "Application/AssetManager.h"
 #include <shared_mutex>
 #include <Core/ThreadPool.h>
+#include <chrono>
+using namespace std::chrono;
 
 
 namespace OnYuu {
@@ -317,7 +319,19 @@ namespace OnYuu {
 		void renderSceneMultithreaded(int sceneIndex, VkExtent2D extent);
 		bool recordThreadCommands(ThreadResources& rt, int start, int end, int sceneIndex, VkExtent2D extent);
         VkImageLayout swapchainImageLayout_ = VK_IMAGE_LAYOUT_UNDEFINED;
-
+		// ========================================================================
+		// STATS HANDLING
+		// ========================================================================
+		struct VulkanStats {
+			uint32_t indirectDrawCalls = 0;
+			uint32_t totalBatches = 0;
+			uint32_t totalVertices = 0;
+			double frameTime = 0.0f;
+		};
+		double frameStartTime_ = 0.0;
+		VulkanStats currentFrameStats_;
+		void resetStats();
+		void finalizeStats();
 
 	};
 

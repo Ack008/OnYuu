@@ -540,10 +540,6 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
-layout(std140, binding = 3) buffer Model {
-    mat4 model[];
-} modelBuffer;
-;
 layout(std430, binding = 3) readonly buffer ModelMatrices {
     mat4 u_models[];
 };
@@ -598,9 +594,7 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
-layout(std140, binding = 3) buffer Model {
-    mat4 model[];
-} modelBuffer;
+
 
 layout(std430, binding = 3) readonly buffer ModelMatrices {
     mat4 u_models[];
@@ -709,17 +703,13 @@ layout(std140, binding = 2) uniform CameraInfo {
     mat4 u_projection;
     vec3 u_position; // camera world position
 };
-layout(std140, binding = 3) buffer Model {
-    mat4 model[];
-} modelBuffer;
-;
+
 
 layout(std430, binding = 3) readonly buffer ModelMatrices {
     mat4 u_models[];
 };
 
 void main() {
-    mat4 u_model = modelBuffer.model[gl_InstanceID];
     mat4 u_model = u_models[gl_BaseInstance + gl_InstanceID];
     vWorldPos = (u_model * vec4(aPosition, 1.0)).xyz;
     vNormal = mat3(transpose(inverse(u_model))) * normalize(aNormal);
@@ -781,11 +771,10 @@ void OpenGLVisitor::injectVertexVaryingInitialization() {
     std::string injectedCode;
  
     if (!hasWorldPosInit) {
-        injectedCode += "\n    vWorldPos = (modelBuffer.model[gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
+        injectedCode += "\n    vWorldPos = ( u_models[gl_BaseInstance + gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
         injectedCode += "\n    vWorldPos = (u_models[gl_BaseInstance + gl_InstanceID] * vec4(aPosition, 1.0)).xyz;";
     }
     if (!hasNormalInit) {
-        injectedCode += "\n    vNormal = mat3(transpose(inverse(modelBuffer.model[gl_InstanceID]))) * normalize(aNormal);";
         injectedCode += "\n    vNormal = mat3(transpose(inverse(u_models[gl_BaseInstance + gl_InstanceID]))) * normalize(aNormal);";
     }
     if (!hasUVInit) {

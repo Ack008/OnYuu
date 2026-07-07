@@ -206,6 +206,11 @@ namespace OnYuu {
         void processPendingInvalidations();
 
         static GLenum toGLTopology(RenderingTypeEnum t);
+		// stastics
+		double lastFrameTime_ = 0.0;
+		uint32_t indirectDrawCalls_ = 0;
+		uint32_t totalBatches_ = 0;
+        void resetStats();
     };
 
 } // namespace OnYuu

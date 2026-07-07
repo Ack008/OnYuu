@@ -30,6 +30,13 @@ namespace OnYuu {
 	class Render
 	{
 	public:
+		struct Stats {
+			uint32_t indirectDrawCalls = 0;
+			uint32_t totalBatches = 0;
+			uint32_t totalVertices = 0;
+			double frameTime = 0.0f;
+		};
+	public:
 		Render() = default;
 		~Render() = default;
 		// draw: funzione pura; l'implementazione concreta dovrebbe iterare sulle
@@ -66,9 +73,10 @@ namespace OnYuu {
 		virtual void EndScene() {}
 		virtual void submit() {}
 		virtual void invalidateShader(const std::shared_ptr<Shader>& shader) {}
-			virtual void invalidateShaderByName(const std::string& shaderName) {}
-			virtual void invalidateMaterial(const std::shared_ptr<Material>& material) {}
-			virtual void Shutdown() = 0;
+		virtual void invalidateShaderByName(const std::string& shaderName) {}
+		virtual void invalidateMaterial(const std::shared_ptr<Material>& material) {}
+		virtual void Shutdown() = 0;
+		static Stats getStats() { return s_instance->stats; }
 		static void setAPI(API renderAPI) {
 			api = renderAPI;
 		}
@@ -87,11 +95,13 @@ namespace OnYuu {
 		// Mappa che associa Mesh (dati CPU) alla struttura che gestisce le risorse
 		// GPU (VBO, IBO, VAO, ecc.). Questo permette di riutilizzare buffer GPU
 		// quando più mesh condividono la stessa geometria.
+		Stats& getStatsRef() { return stats; }
 	private:
 		glm::mat4 cameraMatrix;
 		Camera* currentCamera = nullptr;
 		static std::shared_ptr<Render> s_instance;
 		static std::shared_ptr<Render> create();
 		static API api;
+		Stats stats;
 	};
 }
